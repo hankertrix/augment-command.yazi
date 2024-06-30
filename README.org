@@ -18,7 +18,6 @@ A [[https://github.com/sxyazi/yazi][Yazi]] plugin that enhances Yazi's default c
 #+begin_src sh
 git clone https://github.com/hankertrix/augment-command.yazi ~/.config/yazi/plugins/augment-command.yazi
 #+end_src
-```
 
 *** Yazi nightly (latest Git commit) (package manager)
 #+begin_src sh
@@ -47,7 +46,7 @@ ya pack -u
 | ~ignore_hidden_items~               | ~true~ or ~false~                | ~false~   | Ignore hidden items when determining whether a directory only has one subdirectory and no other items. Setting this option to ~false~ will mean that hidden items in a directory will stop the plugin from skipping the single subdirectory.                                                                                                                              |
 | ~wraparound_file_navigation~        | ~true~ or ~false~                | ~false~   | Wrap around from the bottom to the top or from the top to the bottom when using the ~arrow~ command to navigate.                                                                                                                                                                                                                                                          |
 
-To configure this plugin, add the code below to your ~~/.config/yazi/init.lua~ file:
+To configure this plugin, add the code below to your =~/.config/yazi/init.lua= file:
 #+begin_src lua
 -- ~/.config/yazi/init.lua
 
@@ -149,7 +148,7 @@ desc = "Move down in the parent directory"
 - This command opens the default pager set by the ~$PAGER~ environment variable.
 
 ** Usage
-Add the commands that you would like to use to your ~keymap.toml~ file, located at ~~/.config/yazi/keymap.toml~, in this format:
+Add the commands that you would like to use to your ~keymap.toml~ file, located at =~/.config/yazi/keymap.toml=, in this format:
 #+begin_src toml
 # ~/.config/yazi/keymap.toml
 [[manager.prepend_keymap]]
