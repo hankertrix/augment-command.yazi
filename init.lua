@@ -11,9 +11,16 @@ local ItemGroup = {
 
 -- The enum for the archive extraction behaviour
 local ExtractBehaviour = {
-    Overwrite = "-f",
-    Rename = "-r",
-    Skip = "-s"
+    Overwrite = "overwrite",
+    Rename = "rename",
+    Skip = "skip",
+}
+
+-- The enum for the flags for the archive extraction behaviour
+local ExtractBehaviourFlags = {
+    [ExtractBehaviour.Overwrite] = "-f",
+    [ExtractBehaviour.Rename] = "-r",
+    [ExtractBehaviour.Skip] = "-s",
 }
 
 -- The enum for the supported commands
@@ -37,9 +44,9 @@ local DEFAULT_CONFIG = {
     enter_archives = true,
     extract_behaviour = ExtractBehaviour.Skip,
     must_have_hovered_item = true,
-    ignore_hidden_items = true,
     skip_single_subdirectory_on_enter = true,
     skip_single_subdirectory_on_leave = true,
+    ignore_hidden_items = true,
 }
 
 -- The default notification options for this plugin
@@ -479,7 +486,7 @@ local function handle_open(args, config, command_table)
     local output, err = Command("unar")
         :args({
             "-d",
-            config.extract_behaviour,
+            ExtractBehaviourFlags[config.extract_behaviour],
             archive_path
         })
         :stdout(Command.PIPED)
@@ -649,7 +656,7 @@ end
 local function handle_paste(args, config)
 
     -- If the hovered item is a directory and smart paste is wanted
-    if hovered_item_is_dir() and config.smart_paste then
+    if hovered_item_is_dir() and (config.smart_paste or args.smart) then
 
         -- Enter the directory
         ya.manager_emit("enter", {})
