@@ -719,14 +719,17 @@ local wraparound_arrow = ya.sync(function(_, args)
     -- Get the step from the arguments given
     local step = table.remove(args, 1)
 
+    -- Get the number of files in the current tab
+    local number_of_files = #current_tab.files
+
     -- If there are no files in the current tab, exit the function
-    if #current_tab.files == 0 then return end
+    if number_of_files == 0 then return end
 
     -- Get the new cursor index,
     -- which is the current cursor position plus the step given
     -- to the arrow function, modulus the number of files in
     -- the current tab
-    local new_cursor_index = (current_tab.cursor + step) % #current_tab.files
+    local new_cursor_index = (current_tab.cursor + step) % number_of_files
 
     -- Emit the arrow function with the new cursor index minus
     -- the current cursor index to determine how to move the cursor
