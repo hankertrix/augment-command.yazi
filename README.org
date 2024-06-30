@@ -122,7 +122,13 @@ All commands that can operate on multiple files and directories, like ~open~, ~r
 
 *** Parent-arrow (~parent-arrow~)
 - This command behaves like the ~arrow~ command, but in the parent directory. It allows you to navigate the parent directory without leaving the current directory.
-- When ~wraparound_file_navigation~ is set to ~true~, this command will also wrap around from the bottom to the top or from top to the bottom when navigating in the parent directory. For this feature to work, you will need the [[https://www.gnu.org/software/coreutils/manual/html_node/ls-invocation.html#ls-invocation][ls]] command.
+- When ~wraparound_file_navigation~ is set to ~true~, this command will also wrap around from the bottom to the top or from top to the bottom when navigating in the parent directory. For this feature to work, you will need the [[https://www.gnu.org/software/coreutils/manual/html_node/ls-invocation.html#ls-invocation][ls]] command. You will also need to have your directories sorted first for this feature to work, i.e. in your =~/.config/yazi/yazi.toml= file:
+#+begin_src toml
+# ~/.config/yazi/yazi.toml
+[manager]
+sort_dir_first = true
+#+end_src
+
 - You can also replicate this using this series of commands below, but it doesn't work as well, and doesn't support wraparound navigation:
 #+begin_src toml
 # ~/.config/yazi/keymap.toml
