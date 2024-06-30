@@ -31,6 +31,8 @@ local Commands = {
     Rename = "rename",
     Remove = "remove",
     Paste = "paste",
+    Arrow = "arrow",
+    ParentArrow = "parent-arrow",
     Editor = "editor",
     Pager = "pager",
 }
@@ -46,7 +48,8 @@ local DEFAULT_CONFIG = {
     must_have_hovered_item = true,
     skip_single_subdirectory_on_enter = true,
     skip_single_subdirectory_on_leave = true,
-    ignore_hidden_items = true,
+    ignore_hidden_items = false,
+    wraparound_file_navigation = false,
 }
 
 -- The default notification options for this plugin
@@ -79,8 +82,8 @@ local ARCHIVE_MIME_TYPES = {
     "application/x-xz",
 }
 
--- The pattern to remove the double dash from the front of the argument
-local remove_double_dash_pattern = "^%-%-"
+-- The pattern to get the double dash from the front of the argument
+local double_dash_pattern = "^%-%-"
 
 -- The pattern to get the parent directory of the current directory
 local get_parent_directory_pattern = "(.*)/.*"
@@ -169,9 +172,25 @@ local function parse_args(args)
         -- which means it is the arguments to the command given
         if index ~= 1 then
 
-            -- Remove the double dash from the front of the argument
+            -- If the argument doesn't start with a double dash
+            if not argument:match(double_dash_pattern) then
+
+                -- Try to convert the argument to a number
+                local number_argument = tonumber(argument)
+
+                -- Add the argument to the list of options
+                table.insert(
+                    options,
+                    number_argument and number_argument or argument
+                )
+
+                -- Continue the loop
+                goto continue
+            end
+
+            -- Otherwise, remove the double dash from the front of the argument
             local cleaned_argument =
-                argument:gsub(remove_double_dash_pattern, "")
+                argument:gsub(double_dash_pattern, "")
 
             -- Replace all of the dashes with underscores
             cleaned_argument = cleaned_argument:gsub("%-", "_")
@@ -195,6 +214,8 @@ local function parse_args(args)
             options[arg_name] = arg_value
         end
 
+        -- The label to continue the loop
+        ::continue::
     end
 
     -- Return the table of options
@@ -225,6 +246,21 @@ end)
 -- Function to get the current working directory
 local get_current_directory = ya.sync(function(_)
     return tostring(cx.active.current.cwd)
+end)
+
+
+-- Function to get the parent working directory
+local get_parent_directory = ya.sync(function(_)
+
+    -- Get the parent directory
+    local parent_directory = cx.active.parent
+
+    -- If the parent directory doesn't exist,
+    -- return nil
+    if not parent_directory then return nil end
+
+    -- Otherwise, return the path of the parent directory
+    return tostring(parent_directory.cwd)
 end)
 
 
@@ -674,6 +710,152 @@ local function handle_paste(args, config)
 end
 
 
+-- Function to do the wraparound for the arrow command
+local wraparound_arrow = ya.sync(function(_, args)
+
+    -- Get the current tab
+    local current_tab = cx.active.current
+
+    -- Get the step from the arguments given
+    local step = table.remove(args, 1)
+
+    -- If there are no files in the current tab, exit the function
+    if #current_tab.files == 0 then return end
+
+    -- Get the new cursor index,
+    -- which is the current cursor position plus the step given
+    -- to the arrow function, modulus the number of files in
+    -- the current tab
+    local new_cursor_index = (current_tab.cursor + step) % #current_tab.files
+
+    -- Emit the arrow function with the new cursor index minus
+    -- the current cursor index to determine how to move the cursor
+    ya.manager_emit("arrow", merge_tables(
+        args,
+        { new_cursor_index - current_tab.cursor }
+    ))
+end)
+
+
+-- Function to handle the arrow command
+local function handle_arrow(args, config)
+
+    -- If wraparound file navigation isn't wanted,
+    -- then execute the arrow command
+    if not config.wraparound_file_navigation then
+        ya.manager_emit("arrow", args)
+
+    -- Otherwise, call the wraparound arrow function
+    else wraparound_arrow(args) end
+end
+
+
+-- Function to execute the parent arrow command
+local execute_parent_arrow_command = ya.sync(
+    function(state, args, number_of_directories)
+
+        -- Gets the parent directory
+        local parent_directory = cx.active.parent
+
+        -- If the parent directory doesn't exist,
+        -- then exit the function
+        if not parent_directory then return end
+
+        -- Get the step from the arguments given
+        local step = table.remove(args, 1)
+
+        -- Initialise the new cursor index
+        -- to the current parent cursor index
+        local new_cursor_index = parent_directory.cursor
+
+        -- Otherwise, if wraparound file navigation is wanted
+        -- and the number of directories is given and isn't 0
+        if
+            state.config.wraparound_file_navigation
+            and number_of_directories
+            and number_of_directories ~= 0
+        then
+
+            -- Get the new cursor index by adding the step,
+            -- and modding the whole thing by the number of
+            -- directories given.
+            new_cursor_index = (parent_directory.cursor + step)
+                % number_of_directories
+        else
+
+            -- Otherwise, get the new cursor index normally.
+            new_cursor_index = parent_directory.cursor + step
+        end
+
+        -- Increment the cursor index by 1.
+        -- The cursor index needs to be increased by 1
+        -- as the cursor index is 0-based, while Lua
+        -- tables are 1-based.
+        new_cursor_index = new_cursor_index + 1
+
+        -- Get the target directory
+        local target_directory = parent_directory.files[new_cursor_index]
+
+        -- If the target directory exists and is a directory
+        if target_directory and target_directory.cha.is_dir then
+
+            -- Emit the command to change directory
+            -- to the target directory
+            ya.manager_emit("cd", { target_directory.url })
+        end
+    end
+)
+
+
+-- Function to handle the parent arrow command
+local function handle_parent_arrow(args, config)
+
+    -- If wraparound file navigation isn't wanted,
+    -- then execute the parent arrow command and exit the function
+    if not config.wraparound_file_navigation then
+        return execute_parent_arrow_command(args)
+    end
+
+    -- Otherwise, get the path of the parent directory
+    local parent_directory_path = get_parent_directory()
+
+    -- If there is no parent directory, exit the function
+    if not parent_directory_path then return end
+
+    -- Call the ls command to get the number of directories
+    local output, _ = ls_command(
+        parent_directory_path,
+        config.ignore_hidden_items
+    )
+
+    -- If there is no output, exit the function
+    if not output then return end
+
+    -- Get the item in the parent directory
+    local directory_items = string_split(output.stdout, "\n")
+
+    -- Initialise the number of directories
+    local number_of_directories = 0
+
+    -- Iterate over the directory items
+    for _, item in ipairs(directory_items) do
+
+        -- If the item is a directory
+        if item:match(is_directory_pattern) then
+
+            -- Increment the number of directories by 1
+            number_of_directories = number_of_directories + 1
+
+        -- Otherwise, break out of the loop,
+        -- as the directories are grouped together
+        else break end
+    end
+
+    -- Call the function to execute the parent arrow command
+    execute_parent_arrow_command(args, number_of_directories)
+end
+
+
 -- Function to handle the pager command
 local function handle_pager(args)
 
@@ -733,6 +915,8 @@ local function run_command_func(command, args, config)
             handle_command("remove", args)
         end,
         [Commands.Paste] = handle_paste,
+        [Commands.Arrow] = handle_arrow,
+        [Commands.ParentArrow] = handle_parent_arrow,
         [Commands.Editor] = function(_)
             handle_shell_command("$EDITOR", args)
         end,
