@@ -314,7 +314,7 @@ you can refer to
 Essentially, all you need to do to use this plugin
 is to wrap a Yazi command in single quotes,
 like `'enter'`,
-then add `plugin augment-command --args`
+then add `plugin augment-command --args=`
 in front of it, which results in
 `plugin augment-command --args='enter'`.
 
