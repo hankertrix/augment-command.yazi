@@ -129,7 +129,7 @@ then it will operate on the selected items.
 - `--no-skip` flag, which only applies
   when `smart_enter` is used as it is passed to the `enter` command.
   More details about this flag can be found at the documentation
-  for the [enter command](<#enter-(enter)>).
+  for the [enter command](#enter-enter).
 - Automatically extracts and enters archive files,
   with support for skipping directories
   that contain only one subdirectory in the extracted archive.
