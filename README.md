@@ -331,4 +331,4 @@ Pull requests for Windows support are welcome!
 ## Licence
 
 This plugin is licenced under the GNU GPL v3 licence.
-You can view the full licence in the `LICENSE.txt` file.
+You can view the full licence in the `LICENSE` file.
