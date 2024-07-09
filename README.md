@@ -21,7 +21,7 @@ and the [fast-enter.yazi](https://github.com/ourongxing/fast-enter.yazi) plugin.
 
 ## Requirements
 
-- [Yazi](https://github.com/sxyazi/yazi) v0.2.4+.
+- [Yazi](https://github.com/sxyazi/yazi) v0.2.4+
 - [Unarchiver (unar)](https://theunarchiver.com/command-line)
 - [ls](https://www.gnu.org/software/coreutils/manual/html_node/ls-invocation.html#ls-invocation)
 - Linux or macOS
