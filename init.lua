@@ -208,6 +208,16 @@ local function parse_args(args)
 
                 -- Set the argument value to true
                 arg_value = true
+
+            -- Otherwise
+            else
+
+                -- Try to convert the argument value to a number
+                local number_arg_value = tonumber(arg_value)
+
+                -- Set the argument value to the number
+                -- if the the argument value can be converted to a number
+                arg_value = number_arg_value and number_arg_value or arg_value
             end
 
             -- Add the argument name and value to the options
