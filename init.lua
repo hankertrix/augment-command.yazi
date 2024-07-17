@@ -162,8 +162,8 @@ end
 -- This function takes the arguments passed to the entry function
 local function parse_args(args)
 
-    -- The table of options to pass to ya.manager_emit
-    local options = {}
+    -- The table of arguments to pass to ya.manager_emit
+    local parsed_arguments = {}
 
     -- Iterates over the arguments given
     for index, argument in ipairs(args) do
@@ -180,7 +180,7 @@ local function parse_args(args)
 
                 -- Add the argument to the list of options
                 table.insert(
-                    options,
+                    parsed_arguments,
                     number_argument and number_argument or argument
                 )
 
@@ -221,15 +221,15 @@ local function parse_args(args)
             end
 
             -- Add the argument name and value to the options
-            options[arg_name] = arg_value
+            parsed_arguments[arg_name] = arg_value
         end
 
         -- The label to continue the loop
         ::continue::
     end
 
-    -- Return the table of options
-    return options
+    -- Return the table of arguments
+    return parsed_arguments
 end
 
 
@@ -516,8 +516,11 @@ local function handle_open(args, config, command_table)
     -- or entering archives isn't wanted
     if not hovered_item_is_archive() or not config.enter_archives then
 
-        -- Simply emit the open command and exit the function
-        return ya.manager_emit("open", args)
+        -- Simply emit the open command,
+        -- opening only the hovered item
+        -- as the item group is the hovered item,
+        -- and exit the function
+        return ya.manager_emit("open", merge_tables(args, { hovered = true }))
     end
 
     -- Otherwise, the hovered item is an archive
