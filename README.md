@@ -167,7 +167,7 @@ then it will operate on the selected items.
 - `--no-skip` flag. It stops the plugin
   from skipping directories that contain only one subdirectory,
   even when `skip_single_subdirectory_on_leave` is set to `true`.
-  This allows you to set a key to navigate into directories
+  This allows you to set a key to navigate out of directories
   without skipping the directories that contain only one subdirectory.
 
 ### Rename (`rename`)
