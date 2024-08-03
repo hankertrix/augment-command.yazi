@@ -28,7 +28,7 @@ and the [fast-enter.yazi](https://github.com/ourongxing/fast-enter.yazi) plugin.
 
 ## Installation
 
-### Yazi v0.2.5 and before (manual installation)
+### Yazi v0.2.5 and below (manual installation)
 
 ```sh
 git clone https://github.com/hankertrix/augment-command.yazi ~/.config/yazi/plugins/augment-command.yazi
