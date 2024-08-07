@@ -13,14 +13,16 @@ local ItemGroup = {
 local ExtractBehaviour = {
     Overwrite = "overwrite",
     Rename = "rename",
+    RenameExisting = "rename_existing",
     Skip = "skip",
 }
 
 -- The enum for the flags for the archive extraction behaviour
 local ExtractBehaviourFlags = {
-    [ExtractBehaviour.Overwrite] = "-f",
-    [ExtractBehaviour.Rename] = "-r",
-    [ExtractBehaviour.Skip] = "-s",
+    [ExtractBehaviour.Overwrite] = "-aoa",
+    [ExtractBehaviour.Rename] = "-aou",
+    [ExtractBehaviour.RenameExisting] = "-aot",
+    [ExtractBehaviour.Skip] = "-aos",
 }
 
 -- The enum for the supported commands
@@ -55,12 +57,12 @@ local DEFAULT_CONFIG = {
 -- The default notification options for this plugin
 local DEFAULT_NOTIFICATION_OPTIONS = {
     title = "Augment Command Plugin",
-    timeout = 5.0
+    timeout = 5.0,
 }
 
 -- The default input options for this plugin
 local DEFAULT_INPUT_OPTIONS = {
-    position = { "top-center", y = 2, w = 50 }
+    position = { "top-center", y = 2, w = 50 },
 }
 
 -- The table of input options for the prompt
@@ -86,28 +88,30 @@ local ARCHIVE_MIME_TYPES = {
 local double_dash_pattern = "^%-%-"
 
 -- The pattern to get the parent directory of the current directory
-local get_parent_directory_pattern = "(.*)/.*"
+local get_parent_directory_pattern = "(.*)[/\\].*"
 
 -- The pattern to get if a file path is a directory
-local is_directory_pattern = "(.*)/$"
+local is_directory_pattern = "(.*)[/\\]$"
 
 -- The pattern to get the filename of a file
 local get_filename_pattern = "(.*)%.[^%.]+$"
-
 
 -- Function to merge tables.
 -- The tables given later in the argument list WILL OVERRIDE
 -- the tables given earlier in the argument list.
 local function merge_tables(...)
+    --
 
     -- Initialise a new table
     local new_table = {}
 
     -- Iterates over the tables given
-    for _, table in ipairs({...}) do
+    for _, table in ipairs({ ... }) do
+        --
 
         -- Iterate over all of the keys and values
         for key, value in pairs(table) do
+            --
 
             -- Set the key in the new table to the value given
             new_table[key] = value
@@ -118,12 +122,13 @@ local function merge_tables(...)
     return new_table
 end
 
-
 -- Function to check if a list contains a given value
 local function list_contains(list, value)
+    --
 
     -- Iterate over all of the items in the list
     for _, item in ipairs(list) do
+        --
 
         -- If the item is equal to the given value,
         -- then return true
@@ -134,20 +139,19 @@ local function list_contains(list, value)
     return false
 end
 
-
 -- Function to split a string into a list
 local function string_split(given_string, separator)
+    --
 
     -- If the separator isn't given, set it to the whitespace character
-    if separator == nil then
-        separator = "%s"
-    end
+    if separator == nil then separator = "%s" end
 
     -- Initialise the list of splitted strings
     local splitted_strings = {}
 
     -- Iterate over all of the strings found by pattern
     for string in string.gmatch(given_string, "([^" .. separator .. "]+)") do
+        --
 
         -- Add the string to the list of splitted strings
         table.insert(splitted_strings, string)
@@ -157,23 +161,26 @@ local function string_split(given_string, separator)
     return splitted_strings
 end
 
-
 -- Function to parse the arguments given.
 -- This function takes the arguments passed to the entry function
 local function parse_args(args)
+    --
 
     -- The table of arguments to pass to ya.manager_emit
     local parsed_arguments = {}
 
     -- Iterates over the arguments given
     for index, argument in ipairs(args) do
+        --
 
         -- If the index isn't 1,
         -- which means it is the arguments to the command given
         if index ~= 1 then
+            --
 
             -- If the argument doesn't start with a double dash
             if not argument:match(double_dash_pattern) then
+                --
 
                 -- Try to convert the argument to a number
                 local number_argument = tonumber(argument)
@@ -189,19 +196,18 @@ local function parse_args(args)
             end
 
             -- Otherwise, remove the double dash from the front of the argument
-            local cleaned_argument =
-                argument:gsub(double_dash_pattern, "")
+            local cleaned_argument = argument:gsub(double_dash_pattern, "")
 
             -- Replace all of the dashes with underscores
             cleaned_argument = cleaned_argument:gsub("%-", "_")
 
             -- Split the arguments at the = character
-            local arg_name, arg_value = table.unpack(
-                string_split(cleaned_argument, "=")
-            )
+            local arg_name, arg_value =
+                table.unpack(string_split(cleaned_argument, "="))
 
             -- If the argument value is nil
             if arg_value == nil then
+                --
 
                 -- Set the argument name to the cleaned argument
                 arg_name = cleaned_argument
@@ -211,6 +217,7 @@ local function parse_args(args)
 
             -- Otherwise
             else
+                --
 
                 -- Try to convert the argument value to a number
                 local number_arg_value = tonumber(arg_value)
@@ -232,35 +239,84 @@ local function parse_args(args)
     return parsed_arguments
 end
 
-
 -- Function to initialise the configuration
 local initialise_config = ya.sync(function(state, opts)
+    --
 
     -- Merge the default configuration with the given one
     -- and set it to the state.
     state.config = merge_tables(DEFAULT_CONFIG, opts)
 
+    -- Get the operating system family
+    local os_family = ya.target_family()
+
+    -- Set the shell variable prefix to the % symbol
+    -- if the target family is windows and $ otherwise
+    state.config.shell_variable_prefix = os_family == "windows" and "%" or "$"
+
     -- Return the configuration object for async functions
     return state.config
 end)
 
+-- The function to try if a shell command exists
+local function shell_command_exists(command, args)
+    --
+
+    -- Initialise the arguments if none are given
+    args = args or {}
+
+    -- Spawn the shell command and get the output
+    local output, err = Command(command)
+        :args(args)
+        :stdout(Command.PIPED)
+        :stderr(Command.PIPED)
+        :output()
+
+    -- Return true if there is an output
+    -- and false otherwise
+    return output and true or false
+end
+
+-- The function to initialise the plugin
+local function initialise_plugin(opts)
+    --
+
+    -- Initialise the 7z command
+    local seven_z_command = "7z"
+
+    -- If the 7zz command exists
+    if shell_command_exists("7zz") then
+        --
+
+        -- Set the 7z command to the 7zz command
+        seven_z_command = "7zz"
+    end
+
+    -- Initialise the configuration object
+    local config = initialise_config(
+        merge_tables({ seven_z_command = seven_z_command }, opts)
+    )
+
+    -- Return the configuration object
+    return config
+end
 
 -- Function to get the configuration from an async function
 local get_config = ya.sync(function(state)
+    --
 
     -- Returns the configuration object
     return state.config
 end)
-
 
 -- Function to get the current working directory
 local get_current_directory = ya.sync(function(_)
     return tostring(cx.active.current.cwd)
 end)
 
-
 -- Function to get the parent working directory
 local get_parent_directory = ya.sync(function(_)
+    --
 
     -- Get the parent directory
     local parent_directory = cx.active.parent
@@ -273,26 +329,27 @@ local get_parent_directory = ya.sync(function(_)
     return tostring(parent_directory.cwd)
 end)
 
-
 -- Function to get the hovered item path
 local get_hovered_item_path = ya.sync(function(_)
+    --
 
     -- Get the hovered item
     local hovered_item = cx.active.current.hovered
 
     -- If the hovered item exists
     if hovered_item then
-
         -- Return the path of the hovered item
         return tostring(cx.active.current.hovered.url)
 
     -- Otherwise, return nil
-    else return nil end
+    else
+        return nil
+    end
 end)
-
 
 -- Function to get if the hovered item is a directory
 local hovered_item_is_dir = ya.sync(function(_)
+    --
 
     -- Get the hovered item
     local hovered_item = cx.active.current.hovered
@@ -301,19 +358,17 @@ local hovered_item_is_dir = ya.sync(function(_)
     return hovered_item and hovered_item.cha.is_dir
 end)
 
-
 -- Function to get if the hovered item is an archive
 local hovered_item_is_archive = ya.sync(function(_)
+    --
 
     -- Get the hovered item
     local hovered_item = cx.active.current.hovered
 
     -- Return if the hovered item exists and is an archive
-    return hovered_item and list_contains(
-        ARCHIVE_MIME_TYPES, hovered_item:mime()
-    )
+    return hovered_item
+        and list_contains(ARCHIVE_MIME_TYPES, hovered_item:mime())
 end)
-
 
 -- Function to choose which group of items to operate on.
 -- It returns ItemGroup.Hovered for the hovered item,
@@ -321,6 +376,7 @@ end)
 -- and ItemGroup.Prompt to tell the calling function
 -- to prompt the user.
 local get_item_group_from_state = ya.sync(function(state)
+    --
 
     -- Get the hovered item
     local hovered_item = cx.active.current.hovered
@@ -330,21 +386,27 @@ local get_item_group_from_state = ya.sync(function(state)
 
     -- If there is no hovered item
     if not hovered_item then
+        --
 
         -- If there are no selected items, exit the function
-        if no_selected_items then return
+        if no_selected_items then
+            return
 
         -- Otherwise, if the configuration is set to have a hovered item,
         -- exit the function
-        elseif state.config.must_have_hovered_item then return
+        elseif state.config.must_have_hovered_item then
+            return
 
         -- Otherwise, return the enum for the selected items
-        else return ItemGroup.Selected end
+        else
+            return ItemGroup.Selected
+        end
 
     -- Otherwise, there is a hovered item
     -- and if there are no selected items,
     -- return the enum for the hovered item.
-    elseif no_selected_items then return ItemGroup.Hovered
+    elseif no_selected_items then
+        return ItemGroup.Hovered
 
     -- Otherwise if there are selected items and the user wants a prompt,
     -- then tells the calling function to prompt them
@@ -353,15 +415,18 @@ local get_item_group_from_state = ya.sync(function(state)
 
     -- Otherwise, if the hovered item is selected,
     -- then return the enum for the selected items
-    elseif hovered_item:is_selected() then return ItemGroup.Selected
+    elseif hovered_item:is_selected() then
+        return ItemGroup.Selected
 
     -- Otherwise, return the enum for the hovered item
-    else return ItemGroup.Hovered end
+    else
+        return ItemGroup.Hovered
+    end
 end)
-
 
 -- Function to prompt the user for their desired item group
 local function prompt_for_desired_item_group()
+    --
 
     -- Get the configuration
     local config = get_config()
@@ -373,48 +438,53 @@ local function prompt_for_desired_item_group()
     local input_options = INPUT_OPTIONS_TABLE[default_item_group]
 
     -- If the default item group is None, then set it to nil
-    if default_item_group == ItemGroup.None then
-        default_item_group = nil
-    end
+    if default_item_group == ItemGroup.None then default_item_group = nil end
 
     -- Prompt the user for their input
     local user_input, event = ya.input(merge_tables(DEFAULT_INPUT_OPTIONS, {
-        title = "Operate on hovered or selected items? " .. input_options
+        title = "Operate on hovered or selected items? " .. input_options,
     }))
 
     -- Lowercase the user's input
     user_input = user_input:lower()
 
     -- If the user did not confirm the input, exit the function
-    if event ~= 1 then return
+    if event ~= 1 then
+        return
 
     -- Otherwise, if the user's input starts with "h",
     -- return the item group representing the hovered item
-    elseif user_input:find("^h") then return ItemGroup.Hovered
+    elseif user_input:find("^h") then
+        return ItemGroup.Hovered
 
     -- Otherwise, if the user's input starts with "s",
     -- return the item group representing the selected items
-    elseif user_input:find("^s") then return ItemGroup.Selected
+    elseif user_input:find("^s") then
+        return ItemGroup.Selected
 
     -- Otherwise, return the default item group
-    else return default_item_group end
+    else
+        return default_item_group
+    end
 end
-
 
 -- Function to get the item group
 local function get_item_group()
+    --
 
     -- Get the item group from the state
     local item_group = get_item_group_from_state()
 
     -- If the item group isn't the prompt one,
     -- then return the item group immediately
-    if item_group ~= ItemGroup.Prompt then return item_group
+    if item_group ~= ItemGroup.Prompt then
+        return item_group
 
     -- Otherwise, prompt the user for the desired item group
-    else return prompt_for_desired_item_group() end
+    else
+        return prompt_for_desired_item_group()
+    end
 end
-
 
 -- The ls command to get the items in the directory
 local function ls_command(directory, ignore_hidden_items)
@@ -429,9 +499,9 @@ local function ls_command(directory, ignore_hidden_items)
         :output()
 end
 
-
 -- Function to skip child directories with only one directory
 local function skip_single_child_directories(args, config, initial_directory)
+    --
 
     -- If the user doesn't want to skip single subdirectories on enter,
     -- or one of the arguments passed is no skip,
@@ -445,6 +515,7 @@ local function skip_single_child_directories(args, config, initial_directory)
 
     -- Start an infinite loop
     while true do
+        --
 
         -- Run the ls command to get the items in the directory
         local output, _ = ls_command(directory, config.ignore_hidden_items)
@@ -477,9 +548,9 @@ local function skip_single_child_directories(args, config, initial_directory)
     ya.manager_emit("cd", { directory })
 end
 
-
 -- Function to handle the open command
 local function handle_open(args, config, command_table)
+    --
 
     -- Call the function to get the item group
     local item_group = get_item_group()
@@ -490,7 +561,6 @@ local function handle_open(args, config, command_table)
     -- If the item group is the selected items,
     -- then execute the command and exit the function
     if item_group == ItemGroup.Selected then
-
         -- Emit the command and exit the function
         return ya.manager_emit("open", args)
     end
@@ -501,6 +571,7 @@ local function handle_open(args, config, command_table)
 
     -- If the hovered item is a directory
     if hovered_item_is_dir() then
+        --
 
         -- If smart enter is wanted,
         -- calls the function to enter the directory
@@ -509,12 +580,20 @@ local function handle_open(args, config, command_table)
             return enter_command(args, config, command_table)
 
         -- Otherwise, just exit the function
-        else return end
+        else
+            return
+        end
     end
 
     -- Otherwise, if the hovered item is not an archive,
-    -- or entering archives isn't wanted
-    if not hovered_item_is_archive() or not config.enter_archives then
+    -- or entering archives isn't wanted,
+    -- or the interactive flag is passed
+    if
+        not hovered_item_is_archive()
+        or not config.enter_archives
+        or args.interactive
+    then
+        --
 
         -- Simply emit the open command,
         -- opening only the hovered item
@@ -532,24 +611,40 @@ local function handle_open(args, config, command_table)
     if not archive_path then return end
 
     -- Run the command to extract the archive
-    local output, err = Command("unar")
+    local extract_output, extract_err = Command(config.seven_z_command)
         :args({
-            "-d",
+
+            -- Extract the archive with the full paths,
+            -- which keeps the archive structure.
+            -- Using e to extract will move all the
+            -- files in the archive into the current directory
+            -- and ignore the archive folder structure.
+            "x",
+
+            -- Assume yes to all prompts
+            "-y",
+
+            -- Configure the extraction behaviour
             ExtractBehaviourFlags[config.extract_behaviour],
-            archive_path
+
+            -- The archive file to extract
+            archive_path,
+
+            -- Always create a containing directory to contain the archive files
+            "-o*",
         })
         :stdout(Command.PIPED)
         :stderr(Command.PIPED)
         :output()
 
     -- If the command isn't successful, notify the user
-    if not output then
+    if not extract_output then
         return ya.notify(merge_tables(DEFAULT_NOTIFICATION_OPTIONS, {
             content = "Failed to extract archive at: "
                 .. archive_path
                 .. "\nError code: "
-                .. tostring(err),
-            level = "error"
+                .. tostring(extract_err),
+            level = "error",
         }))
     end
 
@@ -564,15 +659,16 @@ local function handle_open(args, config, command_table)
     skip_single_child_directories(args, config, archive_filename)
 end
 
-
 -- Function to handle the enter command
 local function handle_enter(args, config, command_table)
+    --
 
     -- Get the function for the open command
     local open_command = command_table[Commands.Open]
 
     -- If the hovered item is not a directory
     if not hovered_item_is_dir() and config.smart_enter then
+        --
 
         -- If smart enter is wanted,
         -- call the function for the open command
@@ -581,7 +677,9 @@ local function handle_enter(args, config, command_table)
             return open_command(args, config, command_table)
 
         -- Otherwise, just exit the function
-        else return end
+        else
+            return
+        end
     end
 
     -- Otherwise, always emit the enter command,
@@ -592,9 +690,9 @@ local function handle_enter(args, config, command_table)
     skip_single_child_directories(args, config, get_current_directory())
 end
 
-
 -- Function to handle the leave command
 local function handle_leave(args, config)
+    --
 
     -- Always emit the leave command
     ya.manager_emit("leave", args)
@@ -611,6 +709,7 @@ local function handle_leave(args, config)
 
     -- Otherwise, start an infinite loop
     while true do
+        --
 
         -- Run the ls command to get the items in the directory
         local output, _ = ls_command(directory, config.ignore_hidden_items)
@@ -634,9 +733,9 @@ local function handle_leave(args, config)
     ya.manager_emit("cd", { directory })
 end
 
-
 -- Function to handle the a command
 local function handle_command(command, args)
+    --
 
     -- Call the function to get the item group
     local item_group = get_item_group()
@@ -646,23 +745,27 @@ local function handle_command(command, args)
 
     -- If the item group is the selected items
     if item_group == ItemGroup.Selected then
+        --
 
         -- Emit the command to operate on the selected items
         ya.manager_emit(command, args)
 
     -- If the item group is the hovered item
     elseif item_group == ItemGroup.Hovered then
+        --
 
         -- Emit the command with the hovered option
         ya.manager_emit(command, merge_tables(args, { hovered = true }))
 
     -- Otherwise, exit the function
-    else return end
+    else
+        return
+    end
 end
 
-
 -- Function to handle a shell command
-local function handle_shell_command(command, args)
+local function handle_shell_command(command, args, config)
+    --
 
     -- Call the function to get the item group
     local item_group = get_item_group()
@@ -672,10 +775,11 @@ local function handle_shell_command(command, args)
 
     -- If the item group is the selected items
     if item_group == ItemGroup.Selected then
+        --
 
         -- Merge the arguments for the shell command with additional ones
         args = merge_tables({
-            command .. " $@",
+            command .. " " .. config.shell_variable_prefix .. "@",
             confirm = true,
             block = true,
         }, args)
@@ -685,10 +789,11 @@ local function handle_shell_command(command, args)
 
     -- If the item group is the hovered item
     elseif item_group == ItemGroup.Hovered then
+        --
 
         -- Merge the arguments for the shell command with additional ones
         args = merge_tables({
-            command .. " $0",
+            command .. " " .. config.shell_variable_prefix .. "0",
             confirm = true,
             block = true,
         }, args)
@@ -697,15 +802,18 @@ local function handle_shell_command(command, args)
         ya.manager_emit("shell", args)
 
     -- Otherwise, exit the function
-    else return end
+    else
+        return
+    end
 end
-
 
 -- Function to handle the paste command
 local function handle_paste(args, config)
+    --
 
     -- If the hovered item is a directory and smart paste is wanted
     if hovered_item_is_dir() and (config.smart_paste or args.smart) then
+        --
 
         -- Enter the directory
         ya.manager_emit("enter", {})
@@ -722,9 +830,9 @@ local function handle_paste(args, config)
     end
 end
 
-
 -- Function to do the wraparound for the arrow command
 local wraparound_arrow = ya.sync(function(_, args)
+    --
 
     -- Get the current tab
     local current_tab = cx.active.current
@@ -746,15 +854,15 @@ local wraparound_arrow = ya.sync(function(_, args)
 
     -- Emit the arrow function with the new cursor index minus
     -- the current cursor index to determine how to move the cursor
-    ya.manager_emit("arrow", merge_tables(
-        args,
-        { new_cursor_index - current_tab.cursor }
-    ))
+    ya.manager_emit(
+        "arrow",
+        merge_tables(args, { new_cursor_index - current_tab.cursor })
+    )
 end)
-
 
 -- Function to handle the arrow command
 local function handle_arrow(args, config)
+    --
 
     -- If wraparound file navigation isn't wanted,
     -- then execute the arrow command
@@ -762,13 +870,15 @@ local function handle_arrow(args, config)
         ya.manager_emit("arrow", args)
 
     -- Otherwise, call the wraparound arrow function
-    else wraparound_arrow(args) end
+    else
+        wraparound_arrow(args)
+    end
 end
-
 
 -- Function to execute the parent arrow command
 local execute_parent_arrow_command = ya.sync(
     function(state, args, number_of_directories)
+        --
 
         -- Gets the parent directory
         local parent_directory = cx.active.parent
@@ -791,15 +901,16 @@ local execute_parent_arrow_command = ya.sync(
             and number_of_directories
             and number_of_directories ~= 0
         then
+            --
 
             -- Get the new cursor index by adding the step,
             -- and modding the whole thing by the number of
             -- directories given.
             new_cursor_index = (parent_directory.cursor + step)
                 % number_of_directories
-        else
 
-            -- Otherwise, get the new cursor index normally.
+        -- Otherwise, get the new cursor index normally.
+        else
             new_cursor_index = parent_directory.cursor + step
         end
 
@@ -814,6 +925,7 @@ local execute_parent_arrow_command = ya.sync(
 
         -- If the target directory exists and is a directory
         if target_directory and target_directory.cha.is_dir then
+            --
 
             -- Emit the command to change directory
             -- to the target directory
@@ -822,9 +934,9 @@ local execute_parent_arrow_command = ya.sync(
     end
 )
 
-
 -- Function to handle the parent arrow command
 local function handle_parent_arrow(args, config)
+    --
 
     -- If wraparound file navigation isn't wanted,
     -- then execute the parent arrow command and exit the function
@@ -839,10 +951,8 @@ local function handle_parent_arrow(args, config)
     if not parent_directory_path then return end
 
     -- Call the ls command to get the number of directories
-    local output, _ = ls_command(
-        parent_directory_path,
-        config.ignore_hidden_items
-    )
+    local output, _ =
+        ls_command(parent_directory_path, config.ignore_hidden_items)
 
     -- If there is no output, exit the function
     if not output then return end
@@ -855,25 +965,29 @@ local function handle_parent_arrow(args, config)
 
     -- Iterate over the directory items
     for _, item in ipairs(directory_items) do
+        --
 
         -- If the item is a directory
         if item:match(is_directory_pattern) then
+            --
 
             -- Increment the number of directories by 1
             number_of_directories = number_of_directories + 1
 
         -- Otherwise, break out of the loop,
         -- as the directories are grouped together
-        else break end
+        else
+            break
+        end
     end
 
     -- Call the function to execute the parent arrow command
     execute_parent_arrow_command(args, number_of_directories)
 end
 
-
 -- Function to handle the pager command
-local function handle_pager(args)
+local function handle_pager(args, config)
+    --
 
     -- Call the function to get the item group
     local item_group = get_item_group()
@@ -884,12 +998,11 @@ local function handle_pager(args)
     -- If the item group is the selected items,
     -- then execute the command and exit the function
     if item_group == ItemGroup.Selected then
-
         -- Combine the arguments with additional ones
         args = merge_tables({
-            "$PAGER $@",
+            "$PAGER " .. config.shell_variable_prefix .. "@",
             confirm = true,
-            block = true
+            block = true,
         }, args)
 
         -- Emit the command and exit the function
@@ -898,16 +1011,18 @@ local function handle_pager(args)
 
     -- Otherwise, the item group is the hovered item,
     -- and if the hovered item is a directory, exit the function
-    if hovered_item_is_dir() then return
+    if hovered_item_is_dir() then
+        return
 
     -- Otherwise
     else
+        --
 
         -- Combine the arguments with additional ones
         args = merge_tables({
-            "$PAGER $0",
+            "$PAGER " .. config.shell_variable_prefix .. "0",
             confirm = true,
-            block = true
+            block = true,
         }, args)
 
         -- Emit the command and exit the function
@@ -915,9 +1030,9 @@ local function handle_pager(args)
     end
 end
 
-
 -- Function to run the commands given
 local function run_command_func(command, args, config)
+    --
 
     -- The command table
     local command_table = {
@@ -934,7 +1049,7 @@ local function run_command_func(command, args, config)
         [Commands.Arrow] = handle_arrow,
         [Commands.ParentArrow] = handle_parent_arrow,
         [Commands.Editor] = function(_)
-            handle_shell_command("$EDITOR", args)
+            handle_shell_command("$EDITOR", args, config)
         end,
         [Commands.Pager] = handle_pager,
     }
@@ -944,12 +1059,10 @@ local function run_command_func(command, args, config)
 
     -- If the function isn't found, notify the user and exit the function
     if not command_func then
-        return ya.notify(
-            merge_tables(DEFAULT_NOTIFICATION_OPTIONS, {
-                content = "Unknown command: " .. command,
-                level = "error"
-            })
-        )
+        return ya.notify(merge_tables(DEFAULT_NOTIFICATION_OPTIONS, {
+            content = "Unknown command: " .. command,
+            level = "error",
+        }))
     end
 
     -- Parse the arguments and set it to the args variable
@@ -961,14 +1074,15 @@ end
 
 -- The setup function to setup the plugin
 local function setup(_, opts)
+    --
 
-    -- Initialise the configuration with the default configuration
-    initialise_config(opts)
+    -- Initialise the plugin
+    initialise_plugin(opts)
 end
-
 
 -- The function to be called to use the plugin
 local function entry(_, args)
+    --
 
     -- Gets the command passed to the plugin
     local command = args[1]
@@ -979,11 +1093,10 @@ local function entry(_, args)
     -- Gets the configuration object
     local config = get_config()
 
-    -- If the configuration hasn't been initialised,
-    -- then initialise the configuration
-    if not config then
-        config = initialise_config()
-    end
+    -- If the configuration hasn't been initialised yet,
+    -- then initialise the plugin with the default configuration,
+    -- as it hasn't been initialised either
+    if not config then config = initialise_plugin() end
 
     -- Call the function to handle the commands
     run_command_func(command, args, config)
