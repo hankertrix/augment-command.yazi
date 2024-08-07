@@ -46,7 +46,8 @@ local DEFAULT_CONFIG = {
     smart_enter = true,
     smart_paste = false,
     enter_archives = true,
-    extract_behaviour = ExtractBehaviour.Skip,
+    extract_behaviour = ExtractBehaviour.Rename,
+    extract_retries = 3,
     must_have_hovered_item = true,
     skip_single_subdirectory_on_enter = true,
     skip_single_subdirectory_on_leave = true,
@@ -281,20 +282,20 @@ end
 local function initialise_plugin(opts)
     --
 
-    -- Initialise the 7z command
-    local seven_z_command = "7z"
+    -- Initialise the extractor command
+    local extractor_command = "7z"
 
     -- If the 7zz command exists
     if shell_command_exists("7zz") then
         --
 
         -- Set the 7z command to the 7zz command
-        seven_z_command = "7zz"
+        extractor_command = "7zz"
     end
 
     -- Initialise the configuration object
     local config = initialise_config(
-        merge_tables({ seven_z_command = seven_z_command }, opts)
+        merge_tables({ extractor_command = extractor_command }, opts)
     )
 
     -- Return the configuration object
@@ -338,6 +339,8 @@ local get_hovered_item_path = ya.sync(function(_)
 
     -- If the hovered item exists
     if hovered_item then
+        --
+
         -- Return the path of the hovered item
         return tostring(cx.active.current.hovered.url)
 
@@ -548,6 +551,171 @@ local function skip_single_child_directories(args, config, initial_directory)
     ya.manager_emit("cd", { directory })
 end
 
+-- The function to check if an archive is password protected
+local function archive_is_encrypted(command_error_string)
+    return command_error_string:lower():find("wrong password", 1, true)
+end
+
+-- The extract command to extract an archive
+local function extract_command(archive_path, config, password, overwrite)
+    --
+
+    -- Initialise the password to an empty string if it's not given
+    password = password or ""
+
+    -- Initialise the overwrite flag to false if it's not given
+    overwrite = overwrite or false
+
+    -- Return the command to extract the archive
+    return Command(config.extractor_command)
+        :args({
+
+            -- Extract the archive with the full paths,
+            -- which keeps the archive structure.
+            -- Using e to extract will move all the
+            -- files in the archive into the current directory
+            -- and ignore the archive folder structure.
+            "x",
+
+            -- Assume yes to all prompts
+            "-y",
+
+            -- Configure the extraction behaviour.
+            -- It only overwrites if the overwrite flag is passed,
+            -- which is only used in the extract_archive function
+            -- to extract encrypted archives.
+            overwrite and ExtractBehaviourFlags[ExtractBehaviour.Overwrite]
+                or ExtractBehaviourFlags[config.extract_behaviour],
+
+            -- Pass the password to the command
+            "-p" .. password,
+
+            -- The archive file to extract
+            archive_path,
+
+            -- Always create a containing directory to contain the archive files
+            "-o*",
+        })
+        :stdout(Command.PIPED)
+        :stderr(Command.PIPED)
+        :output()
+end
+
+-- The function to extract an archive.
+-- This function returns a boolean to indicating
+-- whether the extraction of the archive was successful or not.
+local function extract_archive(archive_path, config)
+    --
+
+    -- Initialise the password variable to an empty string
+    local password = ""
+
+    -- Initialise the error message from the archive extractor
+    local error_message = ""
+
+    -- Initialise the overwrite flag to false
+    local overwrite = false
+
+    -- Initialise the number of tries
+    -- to the number of retries plus 1.
+    --
+    -- The plus 1 is because the first try doesn't count
+    -- as a retry, so we need to try it once more than
+    -- the number of retries given by the user.
+    local total_number_of_tries = config.extract_retries + 1
+
+    -- Iterate over the number of times to try the extraction
+    for tries = 0, total_number_of_tries do
+        --
+
+        -- Use the command to extract the archive
+        local output, err =
+            extract_command(archive_path, config, password, overwrite)
+
+        -- If there is no output
+        -- then return the output and the error
+        if not output then return false, err end
+
+        -- If the output was 0, which means the extraction was successful,
+        -- return true
+        if output.status.code == 0 then return true, err end
+
+        -- Set the error message to the standard error
+        -- from the archive extractor
+        error_message = output.stderr
+
+        -- If the command failed for some other reason other
+        -- than the archive being encrypted, then return false
+        -- and the error message
+        if
+            not (
+                output.status.code == 2 and archive_is_encrypted(output.stderr)
+            )
+        then
+            return false, error_message
+        end
+
+        -- If it is the last try, then return false
+        -- and the error message.
+        if tries == total_number_of_tries then
+            return false, error_message
+        end
+
+        -- Set the overwrite flag to true.
+        --
+        -- This overwrite flag is to force the archive extractor
+        -- to keep trying to extract the archive even when it
+        -- fails due to a wrong password, as it will stop extraction
+        -- in the other modes like skip will
+        -- return that it succeeded in extracting the
+        -- encrypted archive despite not actually doing so.
+        --
+        -- This will allow the loop to continue and hence allow
+        -- the plugin to continue prompting the user for the
+        -- correct password to open the archive as the archive extractor
+        -- will keep reporting that it failed to extract the
+        -- archive instead of reporting that it succeeded despite
+        -- not actually succeeding in extracting the archive.
+        --
+        -- This also stops the archive extractor from polluting
+        -- the extract directory unlike when using the rename and
+        -- rename existing modes.
+        overwrite = true
+
+        -- Initialise the prompt for the password
+        local password_prompt = "Wrong password, please enter another password:"
+
+        -- If this is the first time opening the archive,
+        -- which means the number of tries is 0,
+        -- then ask the user for the password
+        -- instead of giving the wrong password message.
+        if tries == 0 then
+            password_prompt = "Archive is encrypted, please enter the password:"
+        end
+
+        -- Ask the user for the password
+        local user_input, event = ya.input(merge_tables(DEFAULT_INPUT_OPTIONS, {
+            title = password_prompt,
+        }))
+
+        -- If the user has confirmed the input,
+        -- set the password to the user's input
+        if event == 1 then
+            password = user_input
+
+        -- Otherwise, exit the function
+        -- as the user has cancelled the prompt,
+        -- or an unknown error has occurred
+        else
+            return false, error_message
+        end
+    end
+
+    -- If all the tries have been exhausted,
+    -- then return false and the error message
+    return false, error_message
+end
+
 -- Function to handle the open command
 local function handle_open(args, config, command_table)
     --
@@ -610,40 +778,18 @@ local function handle_open(args, config, command_table)
     -- If the archive path somehow doesn't exist, then exit the function
     if not archive_path then return end
 
-    -- Run the command to extract the archive
-    local extract_output, extract_err = Command(config.seven_z_command)
-        :args({
+    -- Run the function to extract the archive
+    local extract_successful, err =
+        extract_archive(archive_path, config)
 
-            -- Extract the archive with the full paths,
-            -- which keeps the archive structure.
-            -- Using e to extract will move all the
-            -- files in the archive into the current directory
-            -- and ignore the archive folder structure.
-            "x",
-
-            -- Assume yes to all prompts
-            "-y",
-
-            -- Configure the extraction behaviour
-            ExtractBehaviourFlags[config.extract_behaviour],
-
-            -- The archive file to extract
-            archive_path,
-
-            -- Always create a containing directory to contain the archive files
-            "-o*",
-        })
-        :stdout(Command.PIPED)
-        :stderr(Command.PIPED)
-        :output()
-
-    -- If the command isn't successful, notify the user
-    if not extract_output then
+    -- If the extraction of the archive isn't successful,
+    -- notify the user and exit the function
+    if not extract_successful then
         return ya.notify(merge_tables(DEFAULT_NOTIFICATION_OPTIONS, {
             content = "Failed to extract archive at: "
                 .. archive_path
-                .. "\nError code: "
-                .. tostring(extract_err),
+                .. "\nError: "
+                .. tostring(err),
             level = "error",
         }))
     end
