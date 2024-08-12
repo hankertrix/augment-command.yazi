@@ -99,8 +99,8 @@ require("augment-command"):setup({
 ## What about the commands are augmented?
 
 All commands that can operate on multiple files and directories,
-like `open`, `rename` and `remove`,
-as well as the new commands `shell`, `editor` and `pager`,
+like `open`, `rename`, `remove` and `shell`,
+as well as the new commands `editor` and `pager`,
 now determine an item group to operate on.
 By default, the command will operate on the hovered item,
 unless the hovered item is also selected,
