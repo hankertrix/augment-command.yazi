@@ -100,7 +100,7 @@ require("augment-command"):setup({
 
 All commands that can operate on multiple files and directories,
 like `open`, `rename` and `remove`,
-as well as the new commands `editor` and `pager`,
+as well as the new commands `shell`, `editor` and `pager`,
 now determine an item group to operate on.
 By default, the command will operate on the hovered item,
 unless the hovered item is also selected,
@@ -251,6 +251,27 @@ on   = [ "J" ]
 run  = [ "leave", "arrow 1", "enter" ]
 desc = "Move down in the parent directory"
 ```
+
+### Shell (`shell`)
+
+- This command runs the shell command given. You should only
+  use this command if you need the plugin to determine a suitable
+  item group for the command to run on. Otherwise, you should just
+  use the default shell command provided by Yazi.
+- To use this command, the syntax is exactly the same as the default
+  shell command provided by Yazi. You just provide the command you want and
+  provide any Yazi shell variable, which is documented
+  [here](https://yazi-rs.github.io/docs/configuration/keymap/#manager.shell).
+  The plugin will automatically replace the shell variable you give
+  with the correct one for the item group before executing the command.
+- You will also need to escape the quotes when giving the command, like this:
+  ```toml
+  # ~/.config/yazi/keymap.toml
+  [[manager.prepend_keymap]]
+  on = [ "o" ]
+  run = 'plugin augment-command --args="shell \"$EDITOR $@\" --block --confirm"'
+  desc = "Open the editor"
+  ```
 
 ### Editor (`editor`)
 

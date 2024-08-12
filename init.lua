@@ -35,6 +35,7 @@ local Commands = {
     Paste = "paste",
     Arrow = "arrow",
     ParentArrow = "parent-arrow",
+    Shell = "shell",
     Editor = "editor",
     Pager = "pager",
 }
@@ -96,6 +97,9 @@ local is_directory_pattern = "(.*)[/\\]$"
 
 -- The pattern to get the filename of a file
 local get_filename_pattern = "(.*)%.[^%.]+$"
+
+-- The pattern to get the shell variables in a command
+local shell_variable_pattern = "[%$%%][%*@0]"
 
 -- Function to merge tables.
 -- The tables given later in the argument list WILL OVERRIDE
@@ -251,9 +255,17 @@ local initialise_config = ya.sync(function(state, opts)
     -- Get the operating system family
     local os_family = ya.target_family()
 
-    -- Set the shell variable prefix to the % symbol
-    -- if the target family is windows and $ otherwise
-    state.config.shell_variable_prefix = os_family == "windows" and "%" or "$"
+    -- Get whether the operating system is windows
+    local is_windows = os_family == "windows"
+
+    -- Initialise the shell variables
+    local shell_variables = {
+        hovered_items = is_windows and "%0" or "$0",
+        selected_items = is_windows and "%*" or "$@",
+    }
+
+    -- Set the shell variables in the config
+    state.config.shell_variables = shell_variables
 
     -- Return the configuration object for async functions
     return state.config
@@ -909,50 +921,6 @@ local function handle_command(command, args)
     end
 end
 
--- Function to handle a shell command
-local function handle_shell_command(command, args, config)
-    --
-
-    -- Call the function to get the item group
-    local item_group = get_item_group()
-
-    -- If no item group is returned, exit the function
-    if not item_group then return end
-
-    -- If the item group is the selected items
-    if item_group == ItemGroup.Selected then
-        --
-
-        -- Merge the arguments for the shell command with additional ones
-        args = merge_tables({
-            command .. " " .. config.shell_variable_prefix .. "@",
-            confirm = true,
-            block = true,
-        }, args)
-
-        -- Emit the command to operate the selected items
-        ya.manager_emit("shell", args)
-
-    -- If the item group is the hovered item
-    elseif item_group == ItemGroup.Hovered then
-        --
-
-        -- Merge the arguments for the shell command with additional ones
-        args = merge_tables({
-            command .. " " .. config.shell_variable_prefix .. "0",
-            confirm = true,
-            block = true,
-        }, args)
-
-        -- Emit the command to operate on the hovered item
-        ya.manager_emit("shell", args)
-
-    -- Otherwise, exit the function
-    else
-        return
-    end
-end
-
 -- Function to handle the paste command
 local function handle_paste(args, config)
     --
@@ -1131,8 +1099,57 @@ local function handle_parent_arrow(args, config)
     execute_parent_arrow_command(args, number_of_directories)
 end
 
--- Function to handle the pager command
-local function handle_pager(args, config)
+-- Function to handle a shell command
+local function handle_shell_command(args, config)
+    --
+
+    -- Get the first item of the arguments given
+    -- and set it to the command variable
+    local command = table.remove(args, 1)
+
+    -- If the command isn't a string, exit the function
+    if type(command) ~= "string" then return end
+
+    -- Call the function to get the item group
+    local item_group = get_item_group()
+
+    -- If no item group is returned, exit the function
+    if not item_group then return end
+
+    -- If the item group is the selected items
+    if item_group == ItemGroup.Selected then
+        --
+
+        -- Replace the shell variable in the command
+        -- with the shell variable for the selected items
+        command = command:gsub(
+            shell_variable_pattern,
+            config.shell_variables.selected_items
+        )
+
+    -- If the item group is the hovered item
+    elseif item_group == ItemGroup.Hovered then
+        --
+
+        -- Replace the shell variable in the command
+        -- with the shell variable for the hovered item
+        command = command:gsub(
+            shell_variable_pattern,
+            config.shell_variables.hovered_items
+        )
+
+    -- Otherwise, exit the function
+    else return end
+
+    -- Merge the command back into the arguments given
+    args = merge_tables({ command }, args)
+
+    -- Emit the command to operate on the hovered item
+    ya.manager_emit("shell", args)
+end
+
+-- Function to handle the editor command
+local function handle_editor(args, config)
     --
 
     -- Call the function to get the item group
@@ -1141,39 +1158,46 @@ local function handle_pager(args, config)
     -- If no item group is returned, exit the function
     if not item_group then return end
 
-    -- If the item group is the selected items,
-    -- then execute the command and exit the function
-    if item_group == ItemGroup.Selected then
-        -- Combine the arguments with additional ones
-        args = merge_tables({
-            "$PAGER " .. config.shell_variable_prefix .. "@",
-            confirm = true,
-            block = true,
-        }, args)
+    -- Get the editor environment variable
+    local editor = os.getenv("EDITOR")
 
-        -- Emit the command and exit the function
-        return ya.manager_emit("shell", args)
-    end
+    -- If the editor not set, exit the function
+    if not editor then return end
 
-    -- Otherwise, the item group is the hovered item,
-    -- and if the hovered item is a directory, exit the function
-    if hovered_item_is_dir() then
-        return
+    -- Call the handle shell command function
+    -- with the editor command
+    handle_shell_command(merge_tables({
+        editor .. " $@",
+        confirm = true,
+        block = true,
+    }, args), config)
+end
 
-    -- Otherwise
-    else
+-- Function to handle the pager command
+local function handle_pager(args, config)
+    --
+
+    -- Get the pager environment variable
+    local pager = os.getenv("PAGER")
+
+    -- If the pager is not set, exit the function
+    if not pager then return end
+
+    -- If the pager is the less command
+    if pager:find("^less") ~= nil then
         --
 
-        -- Combine the arguments with additional ones
-        args = merge_tables({
-            "$PAGER " .. config.shell_variable_prefix .. "0",
-            confirm = true,
-            block = true,
-        }, args)
-
-        -- Emit the command and exit the function
-        return ya.manager_emit("shell", args)
+        -- Remove the F flag from the command
+        pager = pager:gsub("%-F", ""):gsub("(%a*)F(%a*)", "%1%2")
     end
+
+    -- Call the handle shell command function
+    -- with the pager command
+    handle_shell_command(merge_tables({
+        pager .. " $@",
+        confirm = true,
+        block = true,
+    }, args), config)
 end
 
 -- Function to run the commands given
@@ -1194,9 +1218,8 @@ local function run_command_func(command, args, config)
         [Commands.Paste] = handle_paste,
         [Commands.Arrow] = handle_arrow,
         [Commands.ParentArrow] = handle_parent_arrow,
-        [Commands.Editor] = function(_)
-            handle_shell_command("$EDITOR", args, config)
-        end,
+        [Commands.Shell] = handle_shell_command,
+        [Commands.Editor] = handle_editor,
         [Commands.Pager] = handle_pager,
     }
 
