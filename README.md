@@ -213,13 +213,33 @@ then it will operate on the selected items.
   [here](https://yazi-rs.github.io/docs/configuration/keymap/#manager.shell).
   The plugin will automatically replace the shell variable you give
   with the correct one for the item group before executing the command.
-- You will also need to escape the quotes when giving the command, like this:
+- You will also need to escape the quotes when giving the shell command
+  if you use the same quotes to quote the given arguments to the plugin.
+  Essentially, if you pass the arguments to the plugin with double quotes,
+  i.e. `--args="shell"`, you will have to escape the double quotes with a
+  backslash character, like shown below:
   ```toml
   # ~/.config/yazi/keymap.toml
   [[manager.prepend_keymap]]
   on = [ "o" ]
   run = 'plugin augment-command --args="shell \"$EDITOR $@\" --block --confirm"'
   desc = "Open the editor"
+  ```
+- Alternatively, you can use the triple single quote `'''` delimiter
+  for the run string and avoid the escaping the shell command altogether,
+  like the two examples below:
+
+  ```toml
+  # ~/.config/yazi/keymap.toml
+  [[manager.prepend_keymap]]
+  on = [ "o" ]
+  run = '''plugin augment-command --args='shell "$EDITOR $@" --block --confirm''''
+  desc = "Open the editor"
+
+  [[manager.prepend_keymap]]
+  on = [ "i" ]
+  run = '''plugin augment-command --args="shell '$PAGER $@' --block --confirm"'''
+  desc = "Open the pager"
   ```
 
 ### Arrow (`arrow`)
