@@ -102,13 +102,23 @@ local get_filename_pattern = "(.*)%.[^%.]+$"
 local shell_variable_pattern = "[%$%%][%*@0]"
 
 -- Function to merge tables.
--- The tables given later in the argument list WILL OVERRIDE
+--
+-- The key-value pairs of the tables given later
+-- in the argument list WILL OVERRIDE
 -- the tables given earlier in the argument list.
+--
+-- The list items in the table will be added in order,
+-- with the items in the first table being added first,
+-- and the items in the second table being added second,
+-- and so on.
 local function merge_tables(...)
     --
 
     -- Initialise a new table
     local new_table = {}
+
+    -- Initialise the index variable
+    local index = 1
 
     -- Iterates over the tables given
     for _, table in ipairs({ ... }) do
@@ -118,8 +128,23 @@ local function merge_tables(...)
         for key, value in pairs(table) do
             --
 
-            -- Set the key in the new table to the value given
-            new_table[key] = value
+            -- If the key is a number, then add using the index
+            -- instead of the key.
+            -- This is to allow lists to be merged.
+            if type(key) == "number" then
+
+                -- Set the value mapped to the index
+                new_table[index] = value
+
+                -- Increment the index
+                index = index + 1
+
+            -- Otherwise, the key isn't a number
+            else
+
+                -- Set the key in the new table to the value given
+                new_table[key] = value
+            end
         end
     end
 
