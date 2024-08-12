@@ -213,8 +213,6 @@ then it will operate on the selected items.
   [here](https://yazi-rs.github.io/docs/configuration/keymap/#manager.shell).
   The plugin will automatically replace the shell variable you give
   with the correct one for the item group before executing the command.
-  Like the other commands, all arguments that are supported by Yazi's default
-  shell command are also supported.
 - You will also need to escape the quotes when giving the command, like this:
   ```toml
   # ~/.config/yazi/keymap.toml
