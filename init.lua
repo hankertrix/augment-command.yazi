@@ -33,9 +33,9 @@ local Commands = {
     Rename = "rename",
     Remove = "remove",
     Paste = "paste",
+    Shell = "shell",
     Arrow = "arrow",
     ParentArrow = "parent-arrow",
-    Shell = "shell",
     Editor = "editor",
     Pager = "pager",
 }
@@ -916,7 +916,7 @@ local function handle_leave(args, config)
     ya.manager_emit("cd", { directory })
 end
 
--- Function to handle the a command
+-- Function to handle a command
 local function handle_command(command, args)
     --
 
@@ -967,6 +967,55 @@ local function handle_paste(args, config)
     else
         ya.manager_emit("paste", args)
     end
+end
+
+-- Function to handle a shell command
+local function handle_shell(args, config)
+    --
+
+    -- Get the first item of the arguments given
+    -- and set it to the command variable
+    local command = table.remove(args, 1)
+
+    -- If the command isn't a string, exit the function
+    if type(command) ~= "string" then return end
+
+    -- Call the function to get the item group
+    local item_group = get_item_group()
+
+    -- If no item group is returned, exit the function
+    if not item_group then return end
+
+    -- If the item group is the selected items
+    if item_group == ItemGroup.Selected then
+        --
+
+        -- Replace the shell variable in the command
+        -- with the shell variable for the selected items
+        command = command:gsub(
+            shell_variable_pattern,
+            config.shell_variables.selected_items
+        )
+
+    -- If the item group is the hovered item
+    elseif item_group == ItemGroup.Hovered then
+        --
+
+        -- Replace the shell variable in the command
+        -- with the shell variable for the hovered item
+        command = command:gsub(
+            shell_variable_pattern,
+            config.shell_variables.hovered_items
+        )
+
+    -- Otherwise, exit the function
+    else return end
+
+    -- Merge the command back into the arguments given
+    args = merge_tables({ command }, args)
+
+    -- Emit the command to operate on the hovered item
+    ya.manager_emit("shell", args)
 end
 
 -- Function to do the wraparound for the arrow command
@@ -1124,55 +1173,6 @@ local function handle_parent_arrow(args, config)
     execute_parent_arrow_command(args, number_of_directories)
 end
 
--- Function to handle a shell command
-local function handle_shell_command(args, config)
-    --
-
-    -- Get the first item of the arguments given
-    -- and set it to the command variable
-    local command = table.remove(args, 1)
-
-    -- If the command isn't a string, exit the function
-    if type(command) ~= "string" then return end
-
-    -- Call the function to get the item group
-    local item_group = get_item_group()
-
-    -- If no item group is returned, exit the function
-    if not item_group then return end
-
-    -- If the item group is the selected items
-    if item_group == ItemGroup.Selected then
-        --
-
-        -- Replace the shell variable in the command
-        -- with the shell variable for the selected items
-        command = command:gsub(
-            shell_variable_pattern,
-            config.shell_variables.selected_items
-        )
-
-    -- If the item group is the hovered item
-    elseif item_group == ItemGroup.Hovered then
-        --
-
-        -- Replace the shell variable in the command
-        -- with the shell variable for the hovered item
-        command = command:gsub(
-            shell_variable_pattern,
-            config.shell_variables.hovered_items
-        )
-
-    -- Otherwise, exit the function
-    else return end
-
-    -- Merge the command back into the arguments given
-    args = merge_tables({ command }, args)
-
-    -- Emit the command to operate on the hovered item
-    ya.manager_emit("shell", args)
-end
-
 -- Function to handle the editor command
 local function handle_editor(args, config)
     --
@@ -1189,9 +1189,9 @@ local function handle_editor(args, config)
     -- If the editor not set, exit the function
     if not editor then return end
 
-    -- Call the handle shell command function
+    -- Call the handle shell function
     -- with the editor command
-    handle_shell_command(merge_tables({
+    handle_shell(merge_tables({
         editor .. " $@",
         confirm = true,
         block = true,
@@ -1216,9 +1216,9 @@ local function handle_pager(args, config)
         pager = pager:gsub("%-F", ""):gsub("(%a*)F(%a*)", "%1%2")
     end
 
-    -- Call the handle shell command function
+    -- Call the handle shell function
     -- with the pager command
-    handle_shell_command(merge_tables({
+    handle_shell(merge_tables({
         pager .. " $@",
         confirm = true,
         block = true,
@@ -1241,9 +1241,9 @@ local function run_command_func(command, args, config)
             handle_command("remove", args)
         end,
         [Commands.Paste] = handle_paste,
+        [Commands.Shell] = handle_shell,
         [Commands.Arrow] = handle_arrow,
         [Commands.ParentArrow] = handle_parent_arrow,
-        [Commands.Shell] = handle_shell_command,
         [Commands.Editor] = handle_editor,
         [Commands.Pager] = handle_pager,
     }

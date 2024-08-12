@@ -201,6 +201,29 @@ then it will operate on the selected items.
   This allows you to set a key to use smart paste
   instead of using smart paste for every paste command.
 
+### Shell (`shell`)
+
+- This command runs the shell command given. You should only
+  use this command if you need the plugin to determine a suitable
+  item group for the command to operate on. Otherwise, you should just
+  use the default shell command provided by Yazi.
+- To use this command, the syntax is exactly the same as the default
+  shell command provided by Yazi. You just provide the command you want and
+  provide any Yazi shell variable, which is documented
+  [here](https://yazi-rs.github.io/docs/configuration/keymap/#manager.shell).
+  The plugin will automatically replace the shell variable you give
+  with the correct one for the item group before executing the command.
+  Like the other commands, all arguments that are supported by Yazi's default
+  shell command are also supported.
+- You will also need to escape the quotes when giving the command, like this:
+  ```toml
+  # ~/.config/yazi/keymap.toml
+  [[manager.prepend_keymap]]
+  on = [ "o" ]
+  run = 'plugin augment-command --args="shell \"$EDITOR $@\" --block --confirm"'
+  desc = "Open the editor"
+  ```
+
 ### Arrow (`arrow`)
 
 - When `wraparound_file_navigation` is set to `true`,
@@ -251,27 +274,6 @@ on   = [ "J" ]
 run  = [ "leave", "arrow 1", "enter" ]
 desc = "Move down in the parent directory"
 ```
-
-### Shell (`shell`)
-
-- This command runs the shell command given. You should only
-  use this command if you need the plugin to determine a suitable
-  item group for the command to run on. Otherwise, you should just
-  use the default shell command provided by Yazi.
-- To use this command, the syntax is exactly the same as the default
-  shell command provided by Yazi. You just provide the command you want and
-  provide any Yazi shell variable, which is documented
-  [here](https://yazi-rs.github.io/docs/configuration/keymap/#manager.shell).
-  The plugin will automatically replace the shell variable you give
-  with the correct one for the item group before executing the command.
-- You will also need to escape the quotes when giving the command, like this:
-  ```toml
-  # ~/.config/yazi/keymap.toml
-  [[manager.prepend_keymap]]
-  on = [ "o" ]
-  run = 'plugin augment-command --args="shell \"$EDITOR $@\" --block --confirm"'
-  desc = "Open the editor"
-  ```
 
 ### Editor (`editor`)
 
