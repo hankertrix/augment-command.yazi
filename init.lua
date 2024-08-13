@@ -101,6 +101,9 @@ local get_filename_pattern = "(.*)%.[^%.]+$"
 -- The pattern to get the shell variables in a command
 local shell_variable_pattern = "[%$%%][%*@0]"
 
+-- The pattern to match the bat command with the pager option passed
+local bat_command_with_pager_pattern = "%f[%a]bat%f[%A].*%-%-pager%s+"
+
 -- Function to merge tables.
 --
 -- The key-value pairs of the tables given later
@@ -1037,17 +1040,69 @@ local function fix_command_containing_less(command)
     return fixed_command
 end
 
+-- Function to fix the bat default pager command
+local function fix_bat_default_pager_command(command)
+    --
+
+    -- Get the modified command and the replacement count
+    -- when replacing the less command when it is quoted
+    local modified_command, replacement_count =
+        command:gsub(
+            "("
+            .. bat_command_with_pager_pattern
+            .. "['\"]+%s*"
+            .. ")"
+            .. "less"
+            .. "(%s*['\"]+)",
+            "%1" .. "less -RX" .. "%2"
+        )
+
+    -- If the replacement count is not 0,
+    -- then return the modified command
+    if replacement_count ~= 0 then return modified_command end
+
+    -- Otherwise, get the modified command and the replacement count
+    -- when replacing the less command when it is unquoted
+    modified_command, replacement_count =
+        command:gsub(
+            "("
+            .. bat_command_with_pager_pattern
+            .. ")"
+            .. "less",
+            "%1" .. '"less -RX"'
+        )
+
+    -- If the replacement count is not 0,
+    -- then return the modified command
+    if replacement_count ~= 0 then return modified_command end
+
+    -- Otherwise, return the given command
+    return command
+end
+
 -- Function to fix the commands given to work properly with Yazi
 local function fix_command(command)
     --
 
-    -- If the given command doesn't include the less command
-    -- just return the given command
-    if command:find("%f[%a]less%f[%A]") == nil then return command end
+    -- If the given command includes the less command
+    if command:find("%f[%a]less%f[%A]") ~= nil then
+        --
 
-    -- Otherwise, the command is a command containing
-    -- the less command, so fix it and return the result
-    return fix_command_containing_less(command)
+        -- Fix the command containing less
+        command = fix_command_containing_less(command)
+    end
+
+    -- If the given command contains the bat command with the pager
+    -- option passed
+    if command:find(bat_command_with_pager_pattern) ~= nil then
+        --
+
+        -- Calls the command to fix the bat command with the default pager
+        command = fix_bat_default_pager_command(command)
+    end
+
+    -- Return the modified command
+    return command
 end
 
 -- Function to handle a shell command
