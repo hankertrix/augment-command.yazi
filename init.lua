@@ -1006,7 +1006,7 @@ end
 -- Function to fix a command containing less.
 -- All this function does is remove
 -- the F flag from a command containing less.
-local function fix_command_containing_less(command)
+local function fix_shell_command_containing_less(command)
 
     -- Remove the F flag from the given command
     local fixed_command = remove_f_flag_from_less_command(command)
@@ -1041,8 +1041,11 @@ local function fix_command_containing_less(command)
 end
 
 -- Function to fix the bat default pager command
-local function fix_bat_default_pager_command(command)
+local function fix_bat_default_pager_shell_command(command)
     --
+
+    -- Initialise the default pager command for bat without the F flag
+    local bat_default_pager_command_without_f_flag = "less -RX"
 
     -- Get the modified command and the replacement count
     -- when replacing the less command when it is quoted
@@ -1054,7 +1057,7 @@ local function fix_bat_default_pager_command(command)
             .. ")"
             .. "less"
             .. "(%s*['\"]+)",
-            "%1" .. "less -RX" .. "%2"
+            "%1" .. bat_default_pager_command_without_f_flag .. "%2"
         )
 
     -- If the replacement count is not 0,
@@ -1069,7 +1072,7 @@ local function fix_bat_default_pager_command(command)
             .. bat_command_with_pager_pattern
             .. ")"
             .. "less",
-            "%1" .. '"less -RX"'
+            '%1"' .. bat_default_pager_command_without_f_flag .. '"'
         )
 
     -- If the replacement count is not 0,
@@ -1080,8 +1083,8 @@ local function fix_bat_default_pager_command(command)
     return command
 end
 
--- Function to fix the commands given to work properly with Yazi
-local function fix_command(command)
+-- Function to fix the shell commands given to work properly with Yazi
+local function fix_shell_command(command)
     --
 
     -- If the given command includes the less command
@@ -1089,7 +1092,7 @@ local function fix_command(command)
         --
 
         -- Fix the command containing less
-        command = fix_command_containing_less(command)
+        command = fix_shell_command_containing_less(command)
     end
 
     -- If the given command contains the bat command with the pager
@@ -1098,7 +1101,7 @@ local function fix_command(command)
         --
 
         -- Calls the command to fix the bat command with the default pager
-        command = fix_bat_default_pager_command(command)
+        command = fix_bat_default_pager_shell_command(command)
     end
 
     -- Return the modified command
@@ -1117,7 +1120,7 @@ local function handle_shell(args, config)
     if type(command) ~= "string" then return end
 
     -- Fix the given command
-    command = fix_command(command)
+    command = fix_shell_command(command)
 
     -- Call the function to get the item group
     local item_group = get_item_group()
