@@ -970,7 +970,7 @@ local function handle_paste(args, config)
 end
 
 -- Function to remove the F flag from the less command
-local function remove_f_flag_from_less_command(less_command)
+local function remove_f_flag_from_less_command(command)
 
     -- Initialise the variable to store if the F flag is found
     local f_flag_found = false
@@ -979,75 +979,74 @@ local function remove_f_flag_from_less_command(less_command)
     local replacement_count = 0
 
     -- Remove the F flag when it is passed at the start
-    -- of the flags given to the command
-    less_command, replacement_count = less_command:gsub("^%-F", "")
+    -- of the flags given to the less command
+    command, replacement_count = command:gsub("(%f[%a]less%f[%A].*)%-F", "%1")
 
     -- If the replacement count is not 0,
     -- set the f_flag_found variable to true
     if replacement_count ~= 0 then f_flag_found = true end
 
     -- Remove the F flag when it is passed in the middle
-    -- of the flags given to the command
-    less_command, replacement_count = less_command:gsub("(%a*)F(%a*)", "%1%2")
+    -- or end of the flags given to the less command command
+    command, replacement_count = command:gsub(
+        "(%f[%a]less%f[%A].*%-)(%a*)F(%a*)", "%1%2%3"
+    )
 
     -- If the replacement count is not 0,
     -- set the f_flag_found variable to true
     if replacement_count ~= 0 then f_flag_found = true end
 
     -- Return the less command and whether or not the F flag was found
-    return less_command, f_flag_found
+    return command, f_flag_found
 end
 
--- Function to fix the less command.
+-- Function to fix a command containing less.
 -- All this function does is remove
--- the F flag from the less command.
-local function fix_less_command(less_command)
+-- the F flag from the command containing less.
+local function fix_command_containing_less(command)
 
-    -- Remove the F flag from the command
-    less_command = remove_f_flag_from_less_command(less_command)
+    -- Remove the F flag from the given command
+    local fixed_command = remove_f_flag_from_less_command(command)
 
     -- Get the LESS environment variable
     local less_environment_variable = os.getenv("LESS")
 
     -- If the LESS environment variable is not set,
-    -- then return the less command
-    if not less_environment_variable then return less_command end
+    -- then return the given command
+    if not less_environment_variable then return fixed_command end
 
     -- Otherwise, remove the F flag from the LESS environment variable
     -- and check if the F flag was found
-    local modified_less_environment_variable, f_flag_found =
-        remove_f_flag_from_less_command(less_environment_variable)
+    local less_command_with_modified_env_variables, f_flag_found =
+        remove_f_flag_from_less_command("less " .. less_environment_variable)
 
-    -- If the F flag isn't found, then return the less command
-    if not f_flag_found then return less_command end
+    -- If the F flag isn't found, then return the given command
+    if not f_flag_found then return fixed_command end
 
-    -- Remove the less string from the less command
-    local less_arguments = less_command:gsub("^less%s*", "")
+    -- Add the less environment variable flags to the less command
+    fixed_command = fixed_command:gsub(
+        "%f[%a]less%f[%A]",
+        less_command_with_modified_env_variables
+    )
 
-    -- Unset the LESS environment variable and rebuild
-    -- the less command with the remaining arguments
-    -- in the LESS environment variable
-    -- as well as the arguments given in the less command
-    less_command = "unset LESS; less "
-        .. modified_less_environment_variable
-        .. " "
-        .. less_arguments
+    -- Unset the LESS environment variable in front of the command
+    fixed_command = "unset LESS; " .. fixed_command
 
-    -- Return the less command
-    return less_command
+    -- Return the fixed command
+    return fixed_command
 end
 
 -- Function to fix the commands given to work properly with Yazi
 local function fix_command(command)
     --
 
-    -- If the command isn't the less command,
-    -- just return the command
-    if command:find("^less") ~= nil then return command end
+    -- If the given command doesn't include the less command
+    -- just return the given command
+    if command:find("%f[%a]less%f[%A]") == nil then return command end
 
     -- Otherwise, the command is the less command
     -- so fix the less command, and return it
-    return fix_less_command(command)
+    return fix_command_containing_less(command)
 end
 
 -- Function to handle a shell command
