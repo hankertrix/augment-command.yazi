@@ -996,13 +996,13 @@ local function remove_f_flag_from_less_command(command)
     -- set the f_flag_found variable to true
     if replacement_count ~= 0 then f_flag_found = true end
 
-    -- Return the less command and whether or not the F flag was found
+    -- Return the command and whether or not the F flag was found
     return command, f_flag_found
 end
 
 -- Function to fix a command containing less.
 -- All this function does is remove
--- the F flag from the command containing less.
+-- the F flag from a command containing less.
 local function fix_command_containing_less(command)
 
     -- Remove the F flag from the given command
@@ -1012,7 +1012,7 @@ local function fix_command_containing_less(command)
     local less_environment_variable = os.getenv("LESS")
 
     -- If the LESS environment variable is not set,
-    -- then return the given command
+    -- then return the given command with the F flag removed
     if not less_environment_variable then return fixed_command end
 
     -- Otherwise, remove the F flag from the LESS environment variable
@@ -1020,7 +1020,8 @@ local function fix_command_containing_less(command)
     local less_command_with_modified_env_variables, f_flag_found =
         remove_f_flag_from_less_command("less " .. less_environment_variable)
 
-    -- If the F flag isn't found, then return the given command
+    -- If the F flag isn't found,
+    -- then return the given command with the F flag removed
     if not f_flag_found then return fixed_command end
 
     -- Add the less environment variable flags to the less command
@@ -1029,7 +1030,7 @@ local function fix_command_containing_less(command)
         less_command_with_modified_env_variables
     )
 
-    -- Unset the LESS environment variable in front of the command
+    -- Unset the LESS environment variable before calling the command
     fixed_command = "unset LESS; " .. fixed_command
 
     -- Return the fixed command
@@ -1044,8 +1045,8 @@ local function fix_command(command)
     -- just return the given command
     if command:find("%f[%a]less%f[%A]") == nil then return command end
 
-    -- Otherwise, the command is the less command
-    -- so fix the less command, and return it
+    -- Otherwise, the command is a command containing
+    -- the less command, so fix it and return the result
     return fix_command_containing_less(command)
 end
 
