@@ -203,8 +203,9 @@ then it will operate on the selected items.
 
 ### Shell (`shell`)
 
-- This command runs the shell command given. You should only
-  use this command if you need the plugin to determine a suitable
+- This command runs the shell command given with the augment stated in
+  [this section above](#what-about-the-commands-are-augmented). You should
+  only use this command if you need the plugin to determine a suitable
   item group for the command to operate on. Otherwise, you should just
   use the default shell command provided by Yazi.
 - To use this command, the syntax is exactly the same as the default
@@ -215,7 +216,7 @@ then it will operate on the selected items.
   with the correct one for the item group before executing the command.
 - You will also need to escape the quotes when giving the shell command
   if you use the same quotes to quote the given arguments to the plugin.
-  Essentially, if you pass the arguments to the plugin with double quotes,
+  For example, if you pass the arguments to the plugin with double quotes,
   i.e. `--args="shell"`, you will have to escape the double quotes with a
   backslash character, like shown below:
   ```toml
