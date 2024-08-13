@@ -916,8 +916,8 @@ local function handle_leave(args, config)
     ya.manager_emit("cd", { directory })
 end
 
--- Function to handle a command
-local function handle_command(command, args)
+-- Function to handle a Yazi command
+local function handle_yazi_command(command, args)
     --
 
     -- Call the function to get the item group
@@ -969,6 +969,87 @@ local function handle_paste(args, config)
     end
 end
 
+-- Function to remove the F flag from the less command
+local function remove_f_flag_from_less_command(less_command)
+
+    -- Initialise the variable to store if the F flag is found
+    local f_flag_found = false
+
+    -- Initialise the variable to store the replacement count
+    local replacement_count = 0
+
+    -- Remove the F flag when it is passed at the start
+    -- of the flags given to the command
+    less_command, replacement_count = less_command:gsub("^%-F", "")
+
+    -- If the replacement count is not 0,
+    -- set the f_flag_found variable to true
+    if replacement_count ~= 0 then f_flag_found = true end
+
+    -- Remove the F flag when it is passed in the middle
+    -- of the flags given to the command
+    less_command, replacement_count = less_command:gsub("(%a*)F(%a*)", "%1%2")
+
+    -- If the replacement count is not 0,
+    -- set the f_flag_found variable to true
+    if replacement_count ~= 0 then f_flag_found = true end
+
+    -- Return the less command and whether or not the F flag was found
+    return less_command, f_flag_found
+end
+
+-- Function to fix the less command.
+-- All this function does is remove
+-- the F flag from the less command.
+local function fix_less_command(less_command)
+
+    -- Remove the F flag from the command
+    less_command = remove_f_flag_from_less_command(less_command)
+
+    -- Get the LESS environment variable
+    local less_environment_variable = os.getenv("LESS")
+
+    -- If the LESS environment variable is not set,
+    -- then return the less command
+    if not less_environment_variable then return less_command end
+
+    -- Otherwise, remove the F flag from the LESS environment variable
+    -- and check if the F flag was found
+    local modified_less_environment_variable, f_flag_found =
+        remove_f_flag_from_less_command(less_environment_variable)
+
+    -- If the F flag isn't found, then return the less command
+    if not f_flag_found then return less_command end
+
+    -- Remove the less string from the less command
+    local less_arguments = less_command:gsub("^less%s*", "")
+
+    -- Unset the LESS environment variable and rebuild
+    -- the less command with the remaining arguments
+    -- in the LESS environment variable
+    -- as well as the arguments given in the less command
+    less_command = "unset LESS; less "
+        .. modified_less_environment_variable
+        .. " "
+        .. less_arguments
+
+    -- Return the less command
+    return less_command
+end
+
+-- Function to fix the commands given to work properly with Yazi
+local function fix_command(command)
+    --
+
+    -- If the command isn't the less command,
+    -- just return the command
+    if command:find("^less") ~= nil then return command end
+
+    -- Otherwise, the command is the less command
+    -- so fix the less command, and return it
+    return fix_less_command(command)
+end
+
 -- Function to handle a shell command
 local function handle_shell(args, config)
     --
@@ -979,6 +1060,9 @@ local function handle_shell(args, config)
 
     -- If the command isn't a string, exit the function
     if type(command) ~= "string" then return end
+
+    -- Fix the given command
+    command = fix_command(command)
 
     -- Call the function to get the item group
     local item_group = get_item_group()
@@ -1235,10 +1319,10 @@ local function run_command_func(command, args, config)
         [Commands.Enter] = handle_enter,
         [Commands.Leave] = handle_leave,
         [Commands.Rename] = function(_)
-            handle_command("rename", args)
+            handle_yazi_command("rename", args)
         end,
         [Commands.Remove] = function(_)
-            handle_command("remove", args)
+            handle_yazi_command("remove", args)
         end,
         [Commands.Paste] = handle_paste,
         [Commands.Shell] = handle_shell,
