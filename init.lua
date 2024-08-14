@@ -300,22 +300,23 @@ local initialise_config = ya.sync(function(state, opts)
 end)
 
 -- The function to try if a shell command exists
-local function shell_command_exists(command, args)
+local function shell_command_exists(shell_command)
     --
 
-    -- Initialise the arguments if none are given
-    args = args or {}
+    -- Get whether the shell command is successfully executed
+    local successfully_executed = os.execute(shell_command)
 
-    -- Spawn the shell command and get the output
-    local output, err = Command(command)
-        :args(args)
-        :stdout(Command.PIPED)
-        :stderr(Command.PIPED)
-        :output()
-
-    -- Return true if there is an output
-    -- and false otherwise
-    return output and true or false
+    -- Return if the result of the os.execute
+    -- command is not nil.
+    --
+    -- This check is because the first result of
+    -- os.execute function returns nil
+    -- if the command fails instead of false
+    -- and we need to return a boolean instead of nil.
+    --
+    -- The os.execute function return true if the
+    -- the shell command is successfully executed.
+    return successfully_executed ~= nil
 end
 
 -- The function to initialise the plugin
