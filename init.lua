@@ -135,6 +135,7 @@ local function merge_tables(...)
             -- instead of the key.
             -- This is to allow lists to be merged.
             if type(key) == "number" then
+                --
 
                 -- Set the value mapped to the index
                 new_table[index] = value
@@ -144,6 +145,7 @@ local function merge_tables(...)
 
             -- Otherwise, the key isn't a number
             else
+                --
 
                 -- Set the key in the new table to the value given
                 new_table[key] = value
@@ -715,9 +717,7 @@ local function extract_archive(archive_path, config)
 
         -- If it is the last try, then return false
         -- and the error message.
-        if tries == total_number_of_tries then
-            return false, error_message
-        end
+        if tries == total_number_of_tries then return false, error_message end
 
         -- Set the overwrite flag to true.
         --
@@ -787,6 +787,8 @@ local function handle_open(args, config, command_table)
     -- If the item group is the selected items,
     -- then execute the command and exit the function
     if item_group == ItemGroup.Selected then
+        --
+
         -- Emit the command and exit the function
         return ya.manager_emit("open", args)
     end
@@ -837,8 +839,7 @@ local function handle_open(args, config, command_table)
     if not archive_path then return end
 
     -- Run the function to extract the archive
-    local extract_successful, err =
-        extract_archive(archive_path, config)
+    local extract_successful, err = extract_archive(archive_path, config)
 
     -- If the extraction of the archive isn't successful,
     -- notify the user and exit the function
@@ -992,6 +993,7 @@ end
 
 -- Function to remove the F flag from the less command
 local function remove_f_flag_from_less_command(command)
+    --
 
     -- Initialise the variable to store if the F flag is found
     local f_flag_found = false
@@ -1009,9 +1011,8 @@ local function remove_f_flag_from_less_command(command)
 
     -- Remove the F flag when it is passed in the middle
     -- or end of the flags given to the less command command
-    command, replacement_count = command:gsub(
-        "(%f[%a]less%f[%A].*%-)(%a*)F(%a*)", "%1%2%3"
-    )
+    command, replacement_count =
+        command:gsub("(%f[%a]less%f[%A].*%-)(%a*)F(%a*)", "%1%2%3")
 
     -- If the replacement count is not 0,
     -- set the f_flag_found variable to true
@@ -1025,6 +1026,7 @@ end
 -- All this function does is remove
 -- the F flag from a command containing less.
 local function fix_shell_command_containing_less(command)
+    --
 
     -- Remove the F flag from the given command
     local fixed_command = remove_f_flag_from_less_command(command)
@@ -1067,16 +1069,15 @@ local function fix_bat_default_pager_shell_command(command)
 
     -- Get the modified command and the replacement count
     -- when replacing the less command when it is quoted
-    local modified_command, replacement_count =
-        command:gsub(
-            "("
+    local modified_command, replacement_count = command:gsub(
+        "("
             .. bat_command_with_pager_pattern
             .. "['\"]+%s*"
             .. ")"
             .. "less"
             .. "(%s*['\"]+)",
-            "%1" .. bat_default_pager_command_without_f_flag .. "%2"
-        )
+        "%1" .. bat_default_pager_command_without_f_flag .. "%2"
+    )
 
     -- If the replacement count is not 0,
     -- then return the modified command
@@ -1084,14 +1085,10 @@ local function fix_bat_default_pager_shell_command(command)
 
     -- Otherwise, get the modified command and the replacement count
     -- when replacing the less command when it is unquoted
-    modified_command, replacement_count =
-        command:gsub(
-            "("
-            .. bat_command_with_pager_pattern
-            .. ")"
-            .. "less",
-            '%1"' .. bat_default_pager_command_without_f_flag .. '"'
-        )
+    modified_command, replacement_count = command:gsub(
+        "(" .. bat_command_with_pager_pattern .. ")" .. "less",
+        '%1"' .. bat_default_pager_command_without_f_flag .. '"'
+    )
 
     -- If the replacement count is not 0,
     -- then return the modified command
@@ -1169,7 +1166,9 @@ local function handle_shell(args, config)
         )
 
     -- Otherwise, exit the function
-    else return end
+    else
+        return
+    end
 
     -- Merge the command back into the arguments given
     args = merge_tables({ command }, args)
@@ -1351,11 +1350,14 @@ local function handle_editor(args, config)
 
     -- Call the handle shell function
     -- with the editor command
-    handle_shell(merge_tables({
-        editor .. " $@",
-        confirm = true,
-        block = true,
-    }, args), config)
+    handle_shell(
+        merge_tables({
+            editor .. " $@",
+            confirm = true,
+            block = true,
+        }, args),
+        config
+    )
 end
 
 -- Function to handle the pager command
@@ -1378,11 +1380,14 @@ local function handle_pager(args, config)
 
     -- Call the handle shell function
     -- with the pager command
-    handle_shell(merge_tables({
-        pager .. " $@",
-        confirm = true,
-        block = true,
-    }, args), config)
+    handle_shell(
+        merge_tables({
+            pager .. " $@",
+            confirm = true,
+            block = true,
+        }, args),
+        config
+    )
 end
 
 -- Function to run the commands given
