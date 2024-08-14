@@ -304,7 +304,24 @@ local function shell_command_exists(shell_command)
     --
 
     -- Get whether the shell command is successfully executed
-    local successfully_executed = os.execute(shell_command)
+    --
+    -- "1> /dev/null" redirects the standard output
+    -- of the shell command to /dev/null, which accepts
+    -- and discards all input and produces no output.
+    --
+    -- "2> &1" redirects the standard error to the file
+    -- descriptor of the standard output, which is the
+    -- /dev/null file, which accepts and discards
+    -- all input and produces no output.
+    --
+    -- The full thing, "1> /dev/null 2> &1" just makes sure
+    -- the shell command doesn't produce any output when executed.
+    --
+    -- https://stackoverflow.com/questions/10508843/what-is-dev-null-21
+    -- https://stackoverflow.com/questions/818255/what-does-21-mean
+    -- https://www.gnu.org/software/bash/manual/html_node/Redirections.html
+    local successfully_executed =
+        os.execute(shell_command .. " 1> /dev/null 2> &1")
 
     -- Return if the result of the os.execute
     -- command is not nil.
