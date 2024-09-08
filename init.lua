@@ -310,17 +310,8 @@ local function shell_command_exists(shell_command)
     local successfully_executed =
         os.execute(shell_command .. " 1> /dev/null 2>&1")
 
-    -- Return if the result of the os.execute
-    -- command is not nil.
-    --
-    -- This check is because the first result of
-    -- os.execute function returns nil
-    -- if the command fails instead of false
-    -- and we need to return a boolean instead of nil.
-    --
-    -- The os.execute function return true if the
-    -- the shell command is successfully executed.
-    return successfully_executed ~= nil
+    -- Return the result of the os.execute command
+    return successfully_executed
 end
 
 -- The function to initialise the plugin
