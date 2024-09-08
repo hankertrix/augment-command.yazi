@@ -712,7 +712,7 @@ local function extract_archive(archive_path, config)
         if not output then return false, err end
 
         -- If the output was 0, which means the extraction was successful,
-        -- return true
+        -- return true and the empty error
         if output.status.code == 0 then return true, err end
 
         -- Set the error message to the standard error
@@ -739,7 +739,7 @@ local function extract_archive(archive_path, config)
         -- This overwrite flag is to force the archive extractor
         -- to keep trying to extract the archive even when it
         -- fails due to a wrong password, as it will stop extraction
-        -- in the other modes like skip will
+        -- in the other modes. For example, the skip mode will
         -- return that it succeeded in extracting the
         -- encrypted archive despite not actually doing so.
         --
