@@ -282,21 +282,6 @@ local initialise_config = ya.sync(function(state, opts)
     -- and set it to the state.
     state.config = merge_tables(DEFAULT_CONFIG, opts)
 
-    -- Get the operating system family
-    local os_family = ya.target_family()
-
-    -- Get whether the operating system is windows
-    local is_windows = os_family == "windows"
-
-    -- Initialise the shell variables
-    local shell_variables = {
-        hovered_items = is_windows and "%0" or "$0",
-        selected_items = is_windows and "%*" or "$@",
-    }
-
-    -- Set the shell variables in the config
-    state.config.shell_variables = shell_variables
-
     -- Return the configuration object for async functions
     return state.config
 end)
@@ -390,8 +375,8 @@ local get_parent_directory = ya.sync(function(_)
     return tostring(parent_directory.cwd)
 end)
 
--- Function to get the hovered item path
-local get_hovered_item_path = ya.sync(function(_)
+-- Function to get the path of the hovered item
+local get_path_of_hovered_item = ya.sync(function(_, quote)
     --
 
     -- Get the hovered item
@@ -401,8 +386,15 @@ local get_hovered_item_path = ya.sync(function(_)
     if hovered_item then
         --
 
+        -- Convert the url of the hovered item to a string
+        local hovered_item_path = tostring(cx.active.current.hovered.url)
+
+        -- If the quote flag is passed,
+        -- then quote the path of the hovered item
+        if quote then hovered_item_path = ya.quote(hovered_item_path) end
+
         -- Return the path of the hovered item
-        return tostring(cx.active.current.hovered.url)
+        return hovered_item_path
 
     -- Otherwise, return nil
     else
@@ -431,6 +423,38 @@ local hovered_item_is_archive = ya.sync(function(_)
     -- Return if the hovered item exists and is an archive
     return hovered_item
         and list_contains(ARCHIVE_MIME_TYPES, hovered_item:mime())
+end)
+
+-- Function to get the paths of the selected items
+local get_paths_of_selected_items = ya.sync(function(_, quote)
+    --
+
+    -- Get the selected items
+    local selected_items = cx.active.selected
+
+    -- If there are no selected items, exit the function
+    if #selected_items == 0 then return end
+
+    -- Initialise the list of paths of the selected items
+    local paths_of_selected_items = {}
+
+    -- Iterate over the selected items
+    for _, item in pairs(selected_items) do
+        --
+
+        -- Convert the url of the item to a string
+        local item_path = tostring(item)
+
+        -- If the quote flag is passed,
+        -- then quote the path of the item
+        if quote then item_path = ya.quote(item_path) end
+
+        -- Add the path of the item to the list of paths
+        table.insert(paths_of_selected_items, item_path)
+    end
+
+    -- Return the list of paths of the selected items
+    return paths_of_selected_items
 end)
 
 -- Function to choose which group of items to operate on.
@@ -833,7 +857,7 @@ local function handle_open(args, config, command_table)
     -- Otherwise, the hovered item is an archive
     -- and entering archives is wanted,
     -- so get the path of the hovered item
-    local archive_path = get_hovered_item_path()
+    local archive_path = get_path_of_hovered_item()
 
     -- If the archive path somehow doesn't exist, then exit the function
     if not archive_path then return end
@@ -1148,10 +1172,10 @@ local function handle_shell(args, config)
         --
 
         -- Replace the shell variable in the command
-        -- with the shell variable for the selected items
+        -- with the quoted paths of the selected items
         command = command:gsub(
             shell_variable_pattern,
-            config.shell_variables.selected_items
+            table.concat(get_paths_of_selected_items(true), " ")
         )
 
     -- If the item group is the hovered item
@@ -1159,10 +1183,10 @@ local function handle_shell(args, config)
         --
 
         -- Replace the shell variable in the command
-        -- with the shell variable for the hovered item
+        -- with the quoted path of the hovered item
         command = command:gsub(
             shell_variable_pattern,
-            config.shell_variables.hovered_items
+            get_path_of_hovered_item(true)
         )
 
     -- Otherwise, exit the function
