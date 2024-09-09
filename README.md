@@ -182,6 +182,9 @@ then it will operate on the selected items.
   into a hovered directory without entering it.
   If the hovered item is not a directory,
   the command pastes in the current directory instead.
+  Otherwise, when `smart_paste` is set to `false`,
+  the `paste` command will behave like the default
+  `paste` command.
 - `--smart` flag to enable pasting in a hovered directory
   without entering the directory.
   This flag will cause the `paste` command to paste items
