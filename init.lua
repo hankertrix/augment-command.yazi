@@ -359,8 +359,8 @@ local get_parent_directory = ya.sync(function(_)
     local parent_directory = cx.active.parent
 
     -- If the parent directory doesn't exist,
-    -- return nil
-    if not parent_directory then return nil end
+    -- exit the function
+    if not parent_directory then return end
 
     -- Otherwise, return the path of the parent directory
     return tostring(parent_directory.cwd)
@@ -387,9 +387,9 @@ local get_path_of_hovered_item = ya.sync(function(_, quote)
         -- Return the path of the hovered item
         return hovered_item_path
 
-    -- Otherwise, return nil
+    -- Otherwise, exit the function
     else
-        return nil
+        return
     end
 end)
 
@@ -1139,7 +1139,7 @@ local function fix_shell_command(command)
 end
 
 -- Function to handle a shell command
-local function handle_shell(args, config)
+local function handle_shell(args, _, _, exit_if_directory)
     --
 
     -- Get the first item of the arguments given
@@ -1172,6 +1172,11 @@ local function handle_shell(args, config)
     -- If the item group is the hovered item
     elseif item_group == ItemGroup.Hovered then
         --
+
+        -- If the exit if directory flag is passed,
+        -- and the hovered item is a directory,
+        -- then exit the function
+        if exit_if_directory and hovered_item_is_dir() then return end
 
         -- Replace the shell variable in the command
         -- with the quoted path of the hovered item
@@ -1376,7 +1381,7 @@ local function handle_editor(args, config)
 end
 
 -- Function to handle the pager command
-local function handle_pager(args, config)
+local function handle_pager(args, config, command_table)
     --
 
     -- Get the pager environment variable
@@ -1401,7 +1406,9 @@ local function handle_pager(args, config)
             confirm = true,
             block = true,
         }, args),
-        config
+        config,
+        command_table,
+        true
     )
 end
 
