@@ -167,23 +167,11 @@ then it will operate on the selected items.
 
 ### Rename (`rename`)
 
-- This command requires you to update to Yazi `0.3.0` as
-  [this commit](https://github.com/sxyazi/yazi/commit/9961251248c74202d8310085102d5809c279757c)
-  adds the necessary `--hovered` flag.
-- If you use Yazi `0.2.5` and below, the command
-  just behaves like the provided `rename` command
-  and the prompts don't do anything.
 - The `rename` command is augmented as stated in
   [this section above](#what-about-the-commands-are-augmented).
 
 ### Remove (`remove`)
 
-- This command requires you to update to Yazi `0.3.0` as
-  [this commit](https://github.com/sxyazi/yazi/commit/9961251248c74202d8310085102d5809c279757c)
-  adds the necessary `--hovered` flag.
-- If you use Yazi `0.2.5` and below, the command
-  just behaves like the provided `rename` command
-  and the prompts don't do anything.
 - The `remove` command is augmented as stated in
   [this section above](#what-about-the-commands-are-augmented).
 
@@ -213,7 +201,7 @@ then it will operate on the selected items.
   provide any Yazi shell variable, which is documented
   [here](https://yazi-rs.github.io/docs/configuration/keymap/#manager.shell).
   The plugin will automatically replace the shell variable you give
-  with the correct one for the item group before executing the command.
+  with the file paths for the item group before executing the command.
 - You will also need to escape the quotes when giving the shell command
   if you use the same quotes to quote the given arguments to the plugin.
   For example, if you pass the arguments to the plugin with double quotes,
@@ -296,11 +284,15 @@ desc = "Move down in the parent directory"
 
 ### Editor (`editor`)
 
-- This command opens the default editor set by the `$EDITOR` environment variable.
+- The `editor` command opens the default editor set by the `$EDITOR` environment variable.
+- The command is also augmented as stated in
+  [this section above](#what-about-the-commands-are-augmented).
 
 ### Pager (`pager`)
 
-- This command opens the default pager set by the `$PAGER` environment variable.
+- The `pager` command opens the default pager set by the `$PAGER` environment variable.
+- The command is also augmented as stated in
+  [this section above](#what-about-the-commands-are-augmented).
 
 ## Usage
 
