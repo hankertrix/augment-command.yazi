@@ -160,7 +160,8 @@ then it will operate on the selected items.
   This can be turned off by setting
   `skip_single_subdirectory_on_enter` to `false` in the configuration.
   This feature requires the
-  [GNU `ls`](https://www.gnu.org/software/coreutils/manual/html_node/ls-invocation.html#ls-invocation) command.
+  [GNU `ls`](https://www.gnu.org/software/coreutils/manual/html_node/ls-invocation.html#ls-invocation)
+  command.
 - `--no-skip` flag. It stops the plugin from skipping directories
   that contain only one subdirectory when entering directories,
   even when `skip_single_subdirectory_on_enter` is set to `true`.
@@ -175,7 +176,8 @@ then it will operate on the selected items.
   setting `skip_single_subdirectory_on_leave` to `false`
   in the configuration.
   This feature requires the
-  [GNU `ls`](https://www.gnu.org/software/coreutils/manual/html_node/ls-invocation.html#ls-invocation) command.
+  [GNU `ls`](https://www.gnu.org/software/coreutils/manual/html_node/ls-invocation.html#ls-invocation)
+  command.
 - `--no-skip` flag. It stops the plugin
   from skipping directories that contain only one subdirectory,
   even when `skip_single_subdirectory_on_leave` is set to `true`.
