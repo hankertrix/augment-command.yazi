@@ -329,10 +329,42 @@ local function initialise_plugin(opts)
         extractor_command = "7zz"
     end
 
+    -- Set the ls command string to ls
+    local ls_command_string = "ls"
+
+    -- If the target OS is macOS
+    if ya.target_os() == "macos" then
+        --
+
+        -- Run the ls command with the version flag
+        local program_handler = io.popen("ls --version", "r")
+
+        -- If the program handler is not nil
+        if program_handler then
+            --
+
+            -- Get the version of the ls command
+            local ls_version = program_handler:read("*a")
+
+            -- If the version of ls is not GNU,
+            -- and the gls command exists
+            if not ls_version:find("GNU") and shell_command_exists("gls") then
+                --
+
+                -- Set the ls command string to gls
+                ls_command_string = "gls"
+            end
+
+            -- Close the program handler
+            program_handler:close()
+        end
+    end
+
     -- Initialise the configuration object
-    local config = initialise_config(
-        merge_tables({ extractor_command = extractor_command }, opts)
-    )
+    local config = initialise_config(merge_tables({
+        extractor_command = extractor_command,
+        ls_command_string = ls_command_string,
+    }, opts))
 
     -- Return the configuration object
     return config
@@ -565,11 +597,11 @@ local function get_item_group()
 end
 
 -- The ls command to get the items in the directory
-local function ls_command(directory, ignore_hidden_items)
-    return Command("ls")
+local function ls_command(config, directory)
+    return Command(config.ls_command_string)
         :args({
             directory,
-            ignore_hidden_items and "-1p" or "-1pA",
+            config.ignore_hidden_items and "-1p" or "-1pA",
             "--group-directories-first",
         })
         :stdout(Command.PIPED)
@@ -596,7 +628,7 @@ local function skip_single_child_directories(args, config, initial_directory)
         --
 
         -- Run the ls command to get the items in the directory
-        local output, _ = ls_command(directory, config.ignore_hidden_items)
+        local output, _ = ls_command(config, directory)
 
         -- If there is no output, then break out of the loop
         if not output then break end
@@ -932,7 +964,7 @@ local function handle_leave(args, config)
         --
 
         -- Run the ls command to get the items in the directory
-        local output, _ = ls_command(directory, config.ignore_hidden_items)
+        local output, _ = ls_command(config, directory)
 
         -- If there is no output, then break out of the loop
         if not output then break end
@@ -1180,10 +1212,8 @@ local function handle_shell(args, _, _, exit_if_directory)
 
         -- Replace the shell variable in the command
         -- with the quoted path of the hovered item
-        command = command:gsub(
-            shell_variable_pattern,
-            get_path_of_hovered_item(true)
-        )
+        command =
+            command:gsub(shell_variable_pattern, get_path_of_hovered_item(true))
 
     -- Otherwise, exit the function
     else
@@ -1318,8 +1348,7 @@ local function handle_parent_arrow(args, config)
     if not parent_directory_path then return end
 
     -- Call the ls command to get the number of directories
-    local output, _ =
-        ls_command(parent_directory_path, config.ignore_hidden_items)
+    local output, _ = ls_command(config, parent_directory_path)
 
     -- If there is no output, exit the function
     if not output then return end
