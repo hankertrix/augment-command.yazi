@@ -251,7 +251,7 @@ then it will operate on the selected items.
 
 - This command behaves like the `arrow` command,
   but in the parent directory.
-  It allows you to navigate the parent directory
+  It allows you to navigate in the parent directory
   without leaving the current directory.
 - When `wraparound_file_navigation` is set to `true`,
   this command will also wrap around from the bottom to the top or
