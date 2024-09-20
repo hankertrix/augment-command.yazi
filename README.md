@@ -199,9 +199,9 @@ then it will operate on the selected items.
   [this section above](#what-about-the-commands-are-augmented). You should
   only use this command if you need the plugin to determine a suitable
   item group for the command to operate on. Otherwise, you should just
-  use the default shell command provided by Yazi.
+  use the default `shell` command provided by Yazi.
 - To use this command, the syntax is exactly the same as the default
-  shell command provided by Yazi. You just provide the command you want and
+  `shell` command provided by Yazi. You just provide the command you want and
   provide any Yazi shell variable, which is documented
   [here](https://yazi-rs.github.io/docs/configuration/keymap/#manager.shell).
   The plugin will automatically replace the shell variable you give
