@@ -1187,6 +1187,33 @@ local function handle_shell(args, _, _, exit_if_directory)
     if item_group == ItemGroup.Selected then
         --
 
+        -- If the exit if directory flag is passed
+        if exit_if_directory then
+            --
+
+            -- Initialise the number of files
+            local number_of_files = 0
+
+            -- Iterate over all of the selected items
+            for _, item in pairs(get_paths_of_selected_items()) do
+                --
+
+                -- Get the cha object of the item
+                local item_cha = fs.cha(Url(item), false)
+
+                -- If the item isn't a directory
+                if not item_cha.is_dir then
+                    --
+
+                    -- Increment the number of files
+                    number_of_files = number_of_files + 1
+                end
+            end
+
+            -- If the number of files is 0, then exit the function
+            if number_of_files == 0 then return end
+        end
+
         -- Replace the shell variable in the command
         -- with the quoted paths of the selected items
         command = command:gsub(
