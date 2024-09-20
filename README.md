@@ -57,7 +57,8 @@ ya pack -u
 | `wraparound_file_navigation`        | `true` or `false`                                  | `false`   | Wrap around from the bottom to the top or from the top to the bottom when using the `arrow` or `parent-arrow` command to navigate.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | `sort_directories_first`            | `true` or `false`                                  | `true`    | This option tells the plugin if you have sorted directories first in your [`yazi.toml` file](https://yazi-rs.github.io/docs/configuration/yazi#manager.sort_dir_first), located at `~/.config/yazi/yazi.toml`. If you have set [`sort_dir_first`](https://yazi-rs.github.io/docs/configuration/yazi#manager.sort_dir_first) to `true` in your [`yazi.toml` file](https://yazi-rs.github.io/docs/configuration/yazi#manager.sort_dir_first), set this option to `true` as well. If you have set [`sort_dir_first`](https://yazi-rs.github.io/docs/configuration/yazi#manager.sort_dir_first) to `false` instead, set this option to `false` as well. This option only affects the `parent-arrow` command with `wraparound_file_navigation` set to `true`. If the [`sort_dir_first`](https://yazi-rs.github.io/docs/configuration/yazi#manager.sort_dir_first) setting doesn't match the plugin's `sort_directories_first` setting, i.e. Yazi's `sort_dir_first` is `true` but the plugin's `sort_directories_first` is `false`, or Yazi's `sort_dir_first` is `false` but the plugin's `sort_directories_first` is `true`, the wraparound functionality of the `parent-arrow` command will not work properly and may act erratically. The default value of `sort_directories_first` follows Yazi's [`sort_dir_first`](https://yazi-rs.github.io/docs/configuration/yazi#manager.sort_dir_first) default value, which is `true`. |
 
-To configure this plugin, add the code below to your `~/.config/yazi/init.lua` file:
+If you would like to use the default configuration, which is shown below,
+you don't need to do anything.
 
 ```lua
 -- ~/.config/yazi/init.lua
@@ -80,9 +81,10 @@ require("augment-command"):setup({
 })
 ```
 
-Note that you don't have to do this if you want to use the default configuration.
-You also can leave out configuration options that you would like to be left as default,
-for example:
+However, if you would like to configure the plugin, you can add
+your desired configuration options to your `~/.config/yazi/init.lua` file.
+You can leave out configuration options that you would like to be left as default.
+An example configuration is shown below:
 
 ```lua
 -- ~/.config/yazi/init.lua
@@ -238,6 +240,22 @@ then it will operate on the selected items.
   desc = "Open the pager"
   ```
 
+- `--exit-if-directory` flag to stop the shell command given
+  from executing if the item group consists only of directories.
+  For example, if the item group is the hovered item, then
+  the shell command will not be executed if the hovered item
+  is a directory. If the item group is the selected items group,
+  then the shell command will not be executed if **all**
+  the selected items are directories. This behaviour comes
+  from it being used in the `pager` command.
+  The `pager` command is essentially:
+  ```toml
+  [[manager.prepend_keymap]]
+  on = [ "i" ]
+  run = '''plugin augment-command --args="shell '$PAGER $@' --block --confirm --exit-if-directory"'''
+  desc = "Open the pager"
+  ```
+
 ### Arrow (`arrow`)
 
 - When `wraparound_file_navigation` is set to `true`,
@@ -336,6 +354,13 @@ then it will operate on the selected items.
 - The `pager` command opens the default pager set by the `$PAGER` environment variable.
 - The command is also augmented as stated in
   [this section above](#what-about-the-commands-are-augmented).
+- The `pager` command will also skip opening directories, as the pager
+  cannot open directories and will error out.
+  Hence, the command will not do anything when the hovered item
+  is a directory, or if **all** the selected items are directories.
+  This makes the pager command less annoying as it will not
+  try to open a directory and then immediately fail with an error,
+  causing a flash and Yazi to send a notification.
 
 ## Usage
 

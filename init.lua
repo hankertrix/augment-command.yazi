@@ -1183,6 +1183,15 @@ local function handle_shell(args, _, _, exit_if_directory)
     -- If no item group is returned, exit the function
     if not item_group then return end
 
+    -- If the exit if directory flag is not given,
+    -- and the arguments contain the
+    -- exit if directory flag
+    if not exit_if_directory and args.exit_if_directory then
+
+        -- Set the exit if directory flag to true
+        exit_if_directory = true
+    end
+
     -- If the item group is the selected items
     if item_group == ItemGroup.Selected then
         --
