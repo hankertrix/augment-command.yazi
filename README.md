@@ -23,7 +23,7 @@ and the [fast-enter.yazi](https://github.com/ourongxing/fast-enter.yazi) plugin.
 
 - [Yazi](https://github.com/sxyazi/yazi) v0.3.0+
 - [`7z` or `7zz` command](https://github.com/p7zip-project/p7zip)
-- [GNU `ls`](https://www.gnu.org/software/coreutils/manual/html_node/ls-invocation.html#ls-invocation)
+- [`find` command](https://www.gnu.org/software/findutils/manual/html_mono/find.html#Overview)
 - Linux or macOS
 
 ## Installation
@@ -38,22 +38,6 @@ ya pack -i
 # Update plugin
 ya pack -u
 ```
-
-### macOS
-
-For macOS users, in addition to installing the plugin,
-you need to install GNU core utilities using Homebrew
-by using the command below:
-
-```sh
-homebrew install coreutils
-```
-
-Without GNU core utilities, the `skip_single_subdirectory_on_enter`
-and `skip_single_subdirectory_on_leave` options will not work due
-to this plugin depending on
-[GNU `ls`](https://www.gnu.org/software/coreutils/manual/html_node/ls-invocation.html#ls-invocation)
-instead of the default `ls` command provided by macOS.
 
 ## Configuration
 
@@ -148,8 +132,7 @@ then it will operate on the selected items.
   This feature requires
   [the `7z` or `7zz` command](https://github.com/p7zip-project/p7zip)
   to be present as well as the
-  [GNU `ls`](https://www.gnu.org/software/coreutils/manual/html_node/ls-invocation.html#ls-invocation)
-  command.
+  [`find`](https://www.gnu.org/software/findutils/manual/html_mono/find.html#Overview) command.
 
 ### Enter (`enter`)
 
@@ -160,8 +143,7 @@ then it will operate on the selected items.
   This can be turned off by setting
   `skip_single_subdirectory_on_enter` to `false` in the configuration.
   This feature requires the
-  [GNU `ls`](https://www.gnu.org/software/coreutils/manual/html_node/ls-invocation.html#ls-invocation)
-  command.
+  [`find`](https://www.gnu.org/software/findutils/manual/html_mono/find.html#Overview) command.
 - `--no-skip` flag. It stops the plugin from skipping directories
   that contain only one subdirectory when entering directories,
   even when `skip_single_subdirectory_on_enter` is set to `true`.
@@ -176,8 +158,7 @@ then it will operate on the selected items.
   setting `skip_single_subdirectory_on_leave` to `false`
   in the configuration.
   This feature requires the
-  [GNU `ls`](https://www.gnu.org/software/coreutils/manual/html_node/ls-invocation.html#ls-invocation)
-  command.
+  [`find`](https://www.gnu.org/software/findutils/manual/html_mono/find.html#Overview) command.
 - `--no-skip` flag. It stops the plugin
   from skipping directories that contain only one subdirectory,
   even when `skip_single_subdirectory_on_leave` is set to `true`.
@@ -272,7 +253,7 @@ then it will operate on the selected items.
   this command will also wrap around from the bottom to the top or
   from top to the bottom when navigating in the parent directory.
   For this feature to work, you will need the
-  [GNU `ls`](https://www.gnu.org/software/coreutils/manual/html_node/ls-invocation.html#ls-invocation)
+  [`find`](https://www.gnu.org/software/findutils/manual/html_mono/find.html#Overview)
   command. You will also need to have your directories
   sorted first for this feature to work,
   i.e. in your `~/.config/yazi/yazi.toml` file:

@@ -89,11 +89,11 @@ local ARCHIVE_MIME_TYPES = {
 -- The pattern to get the double dash from the front of the argument
 local double_dash_pattern = "^%-%-"
 
+-- The pattern to get the file permissions of a directory item
+local get_file_permissions_pattern = "%f[%a][drwx%-]+%f[%A]"
+
 -- The pattern to get the parent directory of the current directory
 local get_parent_directory_pattern = "(.*)[/\\].*"
-
--- The pattern to get if a file path is a directory
-local is_directory_pattern = "(.*)[/\\]$"
 
 -- The pattern to get the filename of a file
 local get_filename_pattern = "(.*)%.[^%.]+$"
@@ -329,41 +329,9 @@ local function initialise_plugin(opts)
         extractor_command = "7zz"
     end
 
-    -- Set the ls command string to ls
-    local ls_command_string = "ls"
-
-    -- If the target OS is macOS
-    if ya.target_os() == "macos" then
-        --
-
-        -- Run the ls command with the version flag
-        local program_handler = io.popen("ls --version", "r")
-
-        -- If the program handler is not nil
-        if program_handler then
-            --
-
-            -- Get the version of the ls command
-            local ls_version = program_handler:read("*a")
-
-            -- If the version of ls is not GNU,
-            -- and the gls command exists
-            if not ls_version:find("GNU") and shell_command_exists("gls") then
-                --
-
-                -- Set the ls command string to gls
-                ls_command_string = "gls"
-            end
-
-            -- Close the program handler
-            program_handler:close()
-        end
-    end
-
     -- Initialise the configuration object
     local config = initialise_config(merge_tables({
         extractor_command = extractor_command,
-        ls_command_string = ls_command_string,
     }, opts))
 
     -- Return the configuration object
@@ -596,14 +564,64 @@ local function get_item_group()
     end
 end
 
--- The ls command to get the items in the directory
-local function ls_command(config, directory)
-    return Command(config.ls_command_string)
-        :args({
-            directory,
-            config.ignore_hidden_items and "-1p" or "-1pA",
-            "--group-directories-first",
+-- The command to get all the items in the given directory
+local function get_directory_items(
+    directory,
+    ignore_hidden_items,
+    directories_only
+)
+    --
+
+    -- Initialise the arguments to the find command
+    local arguments = {
+
+        -- The given directory
+        directory,
+
+        -- Set the maximum depth to 1
+        "-maxdepth",
+        "1",
+    }
+
+    -- If the directories only flag is passed,
+    -- then add the argument to only get directories
+    if directories_only then
+        arguments = merge_tables(arguments, {
+            "-type",
+            "d",
         })
+    end
+
+    -- If the ignore hidden items flag is passed,
+    -- then add the argument to ignore hidden items
+    if ignore_hidden_items then
+        arguments = merge_tables(arguments, {
+            "-not",
+            "-name",
+            ".*",
+        })
+    end
+
+    -- Add arguments for the format of the output string
+    arguments = merge_tables(arguments, {
+
+        -- Show the items in the directory in a format
+        -- similar to the ls command.
+        --
+        -- This should be safe to parse as the output,
+        -- as the find command with this flag seems
+        -- to be consistent across different implementations.
+        "-ls",
+
+        -- Separate the entries with a null character.
+        -- This option will also print the file path
+        -- after the output of the "-ls" flag.
+        "-print0",
+    })
+
+    -- Return the output of the find command
+    return Command("find")
+        :args(arguments)
         :stdout(Command.PIPED)
         :stderr(Command.PIPED)
         :output()
@@ -627,31 +645,44 @@ local function skip_single_child_directories(args, config, initial_directory)
     while true do
         --
 
-        -- Run the ls command to get the items in the directory
-        local output, _ = ls_command(config, directory)
+        -- Get all the items in the current directory
+        local output, _ =
+            get_directory_items(directory, config.ignore_hidden_items)
 
         -- If there is no output, then break out of the loop
         if not output then break end
 
         -- Get the list of items in the directory
-        local directory_items = string_split(output.stdout, "\n")
+        local directory_items = string_split(output.stdout, "\0")
 
-        -- If the number of directory items is not 1,
-        -- then break out of the loop
-        if #directory_items ~= 1 then break end
+        -- If the number of directory items minus 1 is not 1,
+        -- then break out of the loop.
+        --
+        -- The reason for subtracting 1 is to remove
+        -- the given directory, which will always
+        -- be displayed as the first item.
+        if #directory_items - 1 ~= 1 then break end
 
-        -- Otherwise, get the item in the directory
-        local directory_item = table.unpack(directory_items)
+        -- Otherwise, get the second item in the list of directory items,
+        -- as the first item is the directory itself
+        local directory_item_info = directory_items[2]
 
-        -- Match the directory item against the pattern to
-        -- check if it is a directory
-        directory_item = directory_item:match(is_directory_pattern)
+        -- Get the file permissions of the directory item
+        local file_permissions =
+            directory_item_info:match(get_file_permissions_pattern)
 
-        -- If the directory item isn't a directory, break the loop
-        if directory_item == nil then break end
+        -- If the file permissions doesn't start with a d,
+        -- which means the directory item is a file,
+        -- break out of the loop
+        if not file_permissions:find("^d") then break end
 
-        -- Otherwise, set the directory to the inner directory
-        directory = directory .. "/" .. directory_item
+        -- Otherwise, the directory item is a directory,
+        -- so split the directory item at the new line character
+        local _, directory_item_path =
+            table.unpack(string_split(directory_item_info, "\n"))
+
+        -- Set the directory to the inner directory
+        directory = directory_item_path
     end
 
     -- Emit the change directory command to change to the directory variable
@@ -959,22 +990,27 @@ local function handle_leave(args, config)
     -- Otherwise, initialise the directory to the current directory
     local directory = get_current_directory()
 
-    -- Otherwise, start an infinite loop
+    -- Start an infinite loop
     while true do
         --
 
-        -- Run the ls command to get the items in the directory
-        local output, _ = ls_command(config, directory)
+        -- Get all the items in the current directory
+        local output, _ =
+            get_directory_items(directory, config.ignore_hidden_items)
 
         -- If there is no output, then break out of the loop
         if not output then break end
 
         -- Get the list of items in the directory
-        local directory_items = string_split(output.stdout, "\n")
+        local directory_items = string_split(output.stdout, "\0")
 
-        -- If the number of directory items is not 1,
-        -- then break out of the loop
-        if #directory_items ~= 1 then break end
+        -- If the number of directory items minus 1 is not 1,
+        -- then break out of the loop.
+        --
+        -- The reason for subtracting 1 is to remove
+        -- the given directory, which will always
+        -- be displayed as the first item.
+        if #directory_items - 1 ~= 1 then break end
 
         -- Otherwise, set the new directory
         -- to the parent of the current directory
@@ -1347,35 +1383,23 @@ local function handle_parent_arrow(args, config)
     -- If there is no parent directory, exit the function
     if not parent_directory_path then return end
 
-    -- Call the ls command to get the number of directories
-    local output, _ = ls_command(config, parent_directory_path)
+    -- Get the directories in the parent directory
+    local output, _ = get_directory_items(
+        parent_directory_path,
+        config.ignore_hidden_items,
+        true
+    )
 
     -- If there is no output, exit the function
     if not output then return end
 
-    -- Get the item in the parent directory
-    local directory_items = string_split(output.stdout, "\n")
+    -- Get the directories in the parent directory
+    local directories = string_split(output.stdout, "\0")
 
-    -- Initialise the number of directories
-    local number_of_directories = 0
-
-    -- Iterate over the directory items
-    for _, item in ipairs(directory_items) do
-        --
-
-        -- If the item is a directory
-        if item:match(is_directory_pattern) then
-            --
-
-            -- Increment the number of directories by 1
-            number_of_directories = number_of_directories + 1
-
-        -- Otherwise, break out of the loop,
-        -- as the directories are grouped together
-        else
-            break
-        end
-    end
+    -- Get the number of directories in the parent directory.
+    -- The reason for subtracting 1 is to remove
+    -- the parent directory itself from the result.
+    local number_of_directories = #directories - 1
 
     -- Call the function to execute the parent arrow command
     execute_parent_arrow_command(args, number_of_directories)
