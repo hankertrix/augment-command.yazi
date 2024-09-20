@@ -131,8 +131,9 @@ then it will operate on the selected items.
   This can be disabled by setting `enter_archives` to `false` in the configuration.
   This feature requires
   [the `7z` or `7zz` command](https://github.com/p7zip-project/p7zip)
-  to be present as well as the
-  [`find`](https://www.gnu.org/software/findutils/manual/html_mono/find.html#Overview) command.
+  to be present to extract the archives, as well as the
+  [`find`](https://www.gnu.org/software/findutils/manual/html_mono/find.html#Overview)
+  command for skipping directories that contain only one subdirectory.
 
 ### Enter (`enter`)
 
