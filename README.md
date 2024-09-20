@@ -250,6 +250,7 @@ then it will operate on the selected items.
   from it being used in the `pager` command.
   The `pager` command is essentially:
   ```toml
+  # ~/.config/yazi/keymap.toml
   [[manager.prepend_keymap]]
   on = [ "i" ]
   run = '''plugin augment-command --args="shell '$PAGER $@' --block --confirm --exit-if-directory"'''
