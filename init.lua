@@ -54,6 +54,7 @@ local DEFAULT_CONFIG = {
     skip_single_subdirectory_on_leave = true,
     ignore_hidden_items = false,
     wraparound_file_navigation = false,
+    sort_directories_first = true,
 }
 
 -- The default notification options for this plugin
@@ -88,9 +89,6 @@ local ARCHIVE_MIME_TYPES = {
 
 -- The pattern to get the double dash from the front of the argument
 local double_dash_pattern = "^%-%-"
-
--- The pattern to get the file permissions of a directory item
-local get_file_permissions_pattern = "%f[%a][drwx%-]+%f[%A]"
 
 -- The pattern to get the parent directory of the current directory
 local get_parent_directory_pattern = "(.*)[/\\].*"
@@ -351,21 +349,6 @@ local get_current_directory = ya.sync(function(_)
     return tostring(cx.active.current.cwd)
 end)
 
--- Function to get the parent working directory
-local get_parent_directory = ya.sync(function(_)
-    --
-
-    -- Get the parent directory
-    local parent_directory = cx.active.parent
-
-    -- If the parent directory doesn't exist,
-    -- exit the function
-    if not parent_directory then return end
-
-    -- Otherwise, return the path of the parent directory
-    return tostring(parent_directory.cwd)
-end)
-
 -- Function to get the path of the hovered item
 local get_path_of_hovered_item = ya.sync(function(_, quote)
     --
@@ -373,24 +356,18 @@ local get_path_of_hovered_item = ya.sync(function(_, quote)
     -- Get the hovered item
     local hovered_item = cx.active.current.hovered
 
-    -- If the hovered item exists
-    if hovered_item then
-        --
+    -- If there is no hovered item, exit the function
+    if not hovered_item then return end
 
-        -- Convert the url of the hovered item to a string
-        local hovered_item_path = tostring(cx.active.current.hovered.url)
+    -- Convert the url of the hovered item to a string
+    local hovered_item_path = tostring(cx.active.current.hovered.url)
 
-        -- If the quote flag is passed,
-        -- then quote the path of the hovered item
-        if quote then hovered_item_path = ya.quote(hovered_item_path) end
+    -- If the quote flag is passed,
+    -- then quote the path of the hovered item
+    if quote then hovered_item_path = ya.quote(hovered_item_path) end
 
-        -- Return the path of the hovered item
-        return hovered_item_path
-
-    -- Otherwise, exit the function
-    else
-        return
-    end
+    -- Return the path of the hovered item
+    return hovered_item_path
 end)
 
 -- Function to get if the hovered item is a directory
@@ -602,22 +579,8 @@ local function get_directory_items(
         })
     end
 
-    -- Add arguments for the format of the output string
-    arguments = merge_tables(arguments, {
-
-        -- Show the items in the directory in a format
-        -- similar to the ls command.
-        --
-        -- This should be safe to parse as the output,
-        -- as the find command with this flag seems
-        -- to be consistent across different implementations.
-        "-ls",
-
-        -- Separate the entries with a null character.
-        -- This option will also print the file path
-        -- after the output of the "-ls" flag.
-        "-print0",
-    })
+    -- Add the argument to separate the entries with a null character
+    table.insert(arguments, "-print0")
 
     -- Return the output of the find command
     return Command("find")
@@ -665,24 +628,18 @@ local function skip_single_child_directories(args, config, initial_directory)
 
         -- Otherwise, get the second item in the list of directory items,
         -- as the first item is the directory itself
-        local directory_item_info = directory_items[2]
+        local _, directory_item = table.unpack(directory_items)
 
-        -- Get the file permissions of the directory item
-        local file_permissions =
-            directory_item_info:match(get_file_permissions_pattern)
+        -- Get the cha object of the directory item
+        -- and don't follow symbolic links
+        local directory_item_cha = fs.cha(Url(directory_item), false)
 
-        -- If the file permissions doesn't start with a d,
-        -- which means the directory item is a file,
-        -- break out of the loop
-        if not file_permissions:find("^d") then break end
+        -- If the directory item is not a directory,
+        -- break the loop
+        if not directory_item_cha.is_dir then break end
 
-        -- Otherwise, the directory item is a directory,
-        -- so split the directory item at the new line character
-        local _, directory_item_path =
-            table.unpack(string_split(directory_item_info, "\n"))
-
-        -- Set the directory to the inner directory
-        directory = directory_item_path
+        -- Otherwise, set the directory to the inner directory
+        directory = directory_item
     end
 
     -- Emit the change directory command to change to the directory variable
@@ -1308,101 +1265,148 @@ local function handle_arrow(args, config)
     end
 end
 
--- Function to execute the parent arrow command
-local execute_parent_arrow_command = ya.sync(
-    function(state, args, number_of_directories)
-        --
-
-        -- Gets the parent directory
-        local parent_directory = cx.active.parent
-
-        -- If the parent directory doesn't exist,
-        -- then exit the function
-        if not parent_directory then return end
-
-        -- Get the step from the arguments given
-        local step = table.remove(args, 1)
-
-        -- Initialise the new cursor index
-        -- to the current parent cursor index
-        local new_cursor_index = parent_directory.cursor
-
-        -- Otherwise, if wraparound file navigation is wanted
-        -- and the number of directories is given and isn't 0
-        if
-            state.config.wraparound_file_navigation
-            and number_of_directories
-            and number_of_directories ~= 0
-        then
-            --
-
-            -- Get the new cursor index by adding the step,
-            -- and modding the whole thing by the number of
-            -- directories given.
-            new_cursor_index = (parent_directory.cursor + step)
-                % number_of_directories
-
-        -- Otherwise, get the new cursor index normally.
-        else
-            new_cursor_index = parent_directory.cursor + step
-        end
-
-        -- Increment the cursor index by 1.
-        -- The cursor index needs to be increased by 1
-        -- as the cursor index is 0-based, while Lua
-        -- tables are 1-based.
-        new_cursor_index = new_cursor_index + 1
-
-        -- Get the target directory
-        local target_directory = parent_directory.files[new_cursor_index]
-
-        -- If the target directory exists and is a directory
-        if target_directory and target_directory.cha.is_dir then
-            --
-
-            -- Emit the command to change directory
-            -- to the target directory
-            ya.manager_emit("cd", { target_directory.url })
-        end
-    end
-)
-
--- Function to handle the parent arrow command
-local function handle_parent_arrow(args, config)
+-- Function to get the number of directories in the
+-- parent directory
+local get_directories_in_parent_directory = ya.sync(function(_)
     --
 
-    -- If wraparound file navigation isn't wanted,
-    -- then execute the parent arrow command and exit the function
-    if not config.wraparound_file_navigation then
-        return execute_parent_arrow_command(args)
+    -- Initialise the list of directories
+    local directories = {}
+
+    -- Get the parent directory
+    local parent_directory = cx.active.parent
+
+    -- If the parent directory doesn't exist,
+    -- return the empty list of directories
+    if not parent_directory then return directories end
+
+    -- Otherwise, iterate over the items in the parent directory
+    for _, item in ipairs(parent_directory.files) do
+        --
+
+        -- If the item is a directory, add the item path
+        -- to the list of directories
+        if item.cha.is_dir then table.insert(directories, tostring(item)) end
     end
 
-    -- Otherwise, get the path of the parent directory
-    local parent_directory_path = get_parent_directory()
+    -- Return the list of directories
+    return directories
+end)
 
-    -- If there is no parent directory, exit the function
-    if not parent_directory_path then return end
+-- Function to execute the parent arrow command
+local execute_parent_arrow_command = ya.sync(function(state, args)
+    --
 
-    -- Get the directories in the parent directory
-    local output, _ = get_directory_items(
-        parent_directory_path,
-        config.ignore_hidden_items,
-        true
-    )
+    -- Gets the parent directory
+    local parent_directory = cx.active.parent
 
-    -- If there is no output, exit the function
-    if not output then return end
+    -- If the parent directory doesn't exist,
+    -- then exit the function
+    if not parent_directory then return end
 
-    -- Get the directories in the parent directory
-    local directories = string_split(output.stdout, "\0")
+    -- Get the offset from the arguments given
+    local offset = table.remove(args, 1)
 
-    -- Get the number of directories in the parent directory.
-    -- The reason for subtracting 1 is to remove
-    -- the parent directory itself from the result.
-    local number_of_directories = #directories - 1
+    -- If the offset is not a number, then exit the function
+    if type(offset) ~= "number" then return end
+
+    -- Get the number of items in the parent directory
+    local number_of_items = #parent_directory.files
+
+    -- Initialise the new cursor index
+    -- to the current cursor index
+    local new_cursor_index = parent_directory.cursor
+
+    -- If wraparound file navigation is wanted
+    if state.config.wraparound_file_navigation then
+        --
+
+        -- Get the directories in the parent directory
+        local directories = get_directories_in_parent_directory()
+
+        -- Get the number of directories in the parent directory
+        local number_of_directories = #directories
+
+        -- If the number of directories is 0, then exit the function
+        if number_of_directories == 0 then return end
+
+        -- If the user sorts their directories first
+        if state.config.sort_directories_first then
+            --
+
+            -- Get the new cursor index by adding the offset,
+            -- and modding the whole thing by the number of directories
+            new_cursor_index = (parent_directory.cursor + offset)
+                % number_of_directories
+
+        -- Otherwise, if the user doesn't sort their directories first
+        else
+            --
+
+            -- Get the new cursor index by adding the offset,
+            -- and modding the whole thing by the number of
+            -- items in the parent directory
+            new_cursor_index = (parent_directory.cursor + offset)
+                % number_of_items
+        end
+
+    -- Otherwise, get the new cursor index normally
+    -- by adding the offset to the cursor index
+    else
+        new_cursor_index = parent_directory.cursor + offset
+    end
+
+    -- Increment the cursor index by 1.
+    -- The cursor index needs to be increased by 1
+    -- as the cursor index is 0-based, while Lua
+    -- tables are 1-based.
+    new_cursor_index = new_cursor_index + 1
+
+    -- Get the starting index of the loop
+    local start_index = new_cursor_index
+
+    -- Get the ending index of the loop.
+    --
+    -- If the offset given is negative, set the end index to 1,
+    -- as the loop will iterate backwards.
+    -- Otherwise, if the step given is positive,
+    -- set the end index to the number of items in the
+    -- parent directory.
+    local end_index = offset < 0 and 1 or number_of_items
+
+    -- Get the step for the loop.
+    --
+    -- If the offset given is negative, set the step to -1,
+    -- as the loop will iterate backwards.
+    -- Otherwise, if the step given is positive, set
+    -- the step to 1 to iterate forwards.
+    local step = offset < 0 and -1 or 1
+
+    -- Iterate over the parent directory items
+    for i = start_index, end_index, step do
+        --
+
+        -- Get the directory item
+        local directory_item = parent_directory.files[i]
+
+        -- If the directory item exists and is a directory
+        if directory_item and directory_item.cha.is_dir then
+            --
+
+            -- Emit the command to change directory to
+            -- the directory item and exit the function
+            return ya.manager_emit("cd", { directory_item.url })
+        end
+    end
+end)
+
+-- Function to handle the parent arrow command
+local function handle_parent_arrow(args)
+    --
 
     -- Call the function to execute the parent arrow command
-    execute_parent_arrow_command(args, number_of_directories)
+    -- with the arguments given
+    execute_parent_arrow_command(args)
 end
 
 -- Function to handle the editor command
