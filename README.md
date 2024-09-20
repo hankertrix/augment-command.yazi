@@ -262,7 +262,7 @@ then it will operate on the selected items.
   the plugin's `sort_directories_first` option,
   i.e. if you have set the
   [`sort_dir_first`](https://yazi-rs.github.io/docs/configuration/yazi#manager.sort_dir_first)
-  to `true` in your `~/.config/yazi/yazi.toml` file:
+  to `true` in your `~/.config/yazi/yazi.toml` file, like so:
 
   ```toml
   # ~/.config/yazi/yazi.toml
