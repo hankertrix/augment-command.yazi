@@ -125,7 +125,7 @@ then it will operate on the selected items.
 ### Open (`open`)
 
 - When `smart_enter` is set to `true`,
-  calls the `enter` command when the hovered item is a directory.
+  it calls the `enter` command when the hovered item is a directory.
 - `--no-skip` flag, which only applies
   when `smart_enter` is used as it is passed to the `enter` command.
   More details about this flag can be found at the documentation
@@ -143,7 +143,7 @@ then it will operate on the selected items.
 ### Enter (`enter`)
 
 - When `smart_enter` is set to `true`,
-  calls the `open` command when the hovered item is a file.
+  it calls the `open` command when the hovered item is a file.
 - Automatically skips directories that
   contain only one subdirectory when entering directories.
   This can be turned off by setting
