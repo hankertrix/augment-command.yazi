@@ -541,8 +541,8 @@ local function get_item_group()
     end
 end
 
--- The command to get all the items in the given directory
-local function get_directory_items(
+-- The function to get all the items in the given directory for Unix systems
+local function get_directory_items_unix(
     directory,
     ignore_hidden_items,
     directories_only
@@ -582,12 +582,145 @@ local function get_directory_items(
     -- Add the argument to separate the entries with a null character
     table.insert(arguments, "-print0")
 
-    -- Return the output of the find command
-    return Command("find")
+    -- Initialise the list of directory items
+    local directory_items = {}
+
+    -- Get the output of the find command
+    local output, _ = Command("find")
         :args(arguments)
         :stdout(Command.PIPED)
         :stderr(Command.PIPED)
         :output()
+
+    -- If there is no output, return the empty list of directory items
+    if not output then return directory_items end
+
+    -- Otherwise, initialise the index variable
+    local index = 1
+
+    -- Iterate over the output split by the null character
+    for item in string.gmatch(output.stdout, "([^\0]+)") do
+        --
+
+        -- Check if the index isn't 1,
+        -- as the first item in the output
+        -- will be the directory itself,
+        -- and we don't want to add it to
+        -- the list of directory items
+        if index ~= 1 then
+            --
+
+            -- Add the item to the list of splitted strings
+            table.insert(directory_items, item)
+        end
+
+        -- Increment the index
+        index = index + 1
+    end
+
+    -- Return the list of directory items
+    return directory_items
+end
+
+-- The function to get all the items in the given directory for Windows systems
+local function get_directory_items_windows(
+    directory,
+    ignore_hidden_items,
+    directories_only
+)
+    --
+
+    -- Initialise the attribute flag for the dir command.
+    --
+    -- By default, the attribute flag is /a,
+    -- which displays all files, including hidden and system files.
+    local attribute_flag = "/a"
+
+    -- If the directories only flag is passed
+    if directories_only then
+        --
+
+        -- Add the "d" flag to the attribute flag
+        attribute_flag = attribute_flag .. "d"
+    end
+
+    -- If the ignore hidden items flag is passed
+    if ignore_hidden_items then
+        --
+
+        -- Add the "-h" flag to the attribute flag
+        attribute_flag = attribute_flag .. "-h"
+    end
+
+    -- Initialise the arguments to the dir command
+    local arguments = {
+
+        -- The given directory
+        directory,
+
+        -- Display a bare list of directories and files
+        "/b",
+
+        -- The attribute flag to determine
+        -- what directories and files to return
+        -- in the output
+        attribute_flag,
+    }
+
+    -- Initialise the list of directory items
+    local directory_items = {}
+
+    -- Call the dir command and get the output
+    local output, _ = Command("dir")
+        :args(arguments)
+        :stdout(Command.PIPED)
+        :stderr(Command.PIPED)
+        :output()
+
+    -- If there is no output, then return the empty list of directory items
+    if not output then return directory_items end
+
+    -- Otherwise, iterate over the output split at the new line character
+    for item in string.gmatch(output.stdout, "([^\n]+)") do
+        --
+
+        -- Add the path of the given directory
+        -- to the front of the item
+        local directory_item_path = directory .. "\\" .. item
+
+        -- Add the path of the directory item
+        -- to the list of directory items
+        table.insert(directory_items, directory_item_path)
+    end
+
+    -- Return the list of directory items
+    return directory_items
+end
+
+-- The function to get all the items in the given directory
+local function get_directory_items(
+    directory,
+    ignore_hidden_items,
+    directories_only
+)
+    --
+
+    -- If the operating system is Windows
+    -- call the Windows function to get the directory items
+    if ya.target_family() == "windows" then
+        return get_directory_items_windows(
+            directory,
+            ignore_hidden_items,
+            directories_only
+        )
+    end
+
+    -- Otherwise, call the Unix function to get the directory items
+    return get_directory_items_unix(
+        directory,
+        ignore_hidden_items,
+        directories_only
+    )
 end
 
 -- Function to skip child directories with only one directory
@@ -609,26 +742,15 @@ local function skip_single_child_directories(args, config, initial_directory)
         --
 
         -- Get all the items in the current directory
-        local output, _ =
+        local directory_items =
             get_directory_items(directory, config.ignore_hidden_items)
 
-        -- If there is no output, then break out of the loop
-        if not output then break end
-
-        -- Get the list of items in the directory
-        local directory_items = string_split(output.stdout, "\0")
-
-        -- If the number of directory items minus 1 is not 1,
+        -- If the number of directory items is not 1,
         -- then break out of the loop.
-        --
-        -- The reason for subtracting 1 is to remove
-        -- the given directory, which will always
-        -- be displayed as the first item.
-        if #directory_items - 1 ~= 1 then break end
+        if #directory_items ~= 1 then break end
 
-        -- Otherwise, get the second item in the list of directory items,
-        -- as the first item is the directory itself
-        local _, directory_item = table.unpack(directory_items)
+        -- Otherwise, get the directory item
+        local directory_item = table.unpack(directory_items)
 
         -- Get the cha object of the directory item
         -- and don't follow symbolic links
@@ -952,26 +1074,22 @@ local function handle_leave(args, config)
         --
 
         -- Get all the items in the current directory
-        local output, _ =
+        local directory_items =
             get_directory_items(directory, config.ignore_hidden_items)
 
-        -- If there is no output, then break out of the loop
-        if not output then break end
-
-        -- Get the list of items in the directory
-        local directory_items = string_split(output.stdout, "\0")
-
-        -- If the number of directory items minus 1 is not 1,
+        -- If the number of directory items is not 1,
         -- then break out of the loop.
-        --
-        -- The reason for subtracting 1 is to remove
-        -- the given directory, which will always
-        -- be displayed as the first item.
-        if #directory_items - 1 ~= 1 then break end
+        if #directory_items ~= 1 then break end
 
-        -- Otherwise, set the new directory
-        -- to the parent of the current directory
-        directory = directory:match(get_parent_directory_pattern)
+        -- Get the parent directory of the current directory
+        local parent_directory = directory:match(get_parent_directory_pattern)
+
+        -- If the parent directory is nil,
+        -- break the loop
+        if not parent_directory then break end
+
+        -- Otherwise, set the new directory to the parent directory
+        directory = parent_directory
     end
 
     -- Emit the change directory command to change to the directory variable
@@ -1187,6 +1305,7 @@ local function handle_shell(args, _, _, exit_if_directory)
     -- and the arguments contain the
     -- exit if directory flag
     if not exit_if_directory and args.exit_if_directory then
+        --
 
         -- Set the exit if directory flag to true
         exit_if_directory = true
@@ -1301,32 +1420,38 @@ local function handle_arrow(args, config)
     end
 end
 
--- Function to get the number of directories in the
--- parent directory
-local get_directories_in_parent_directory = ya.sync(function(_)
+-- Function to get the directory items in the parent directory
+local get_parent_directory_items = ya.sync(function(_, directories_only)
     --
 
-    -- Initialise the list of directories
-    local directories = {}
+    -- Initialise the list of directory items
+    local directory_items = {}
 
     -- Get the parent directory
     local parent_directory = cx.active.parent
 
     -- If the parent directory doesn't exist,
-    -- return the empty list of directories
-    if not parent_directory then return directories end
+    -- return the empty list of directory items
+    if not parent_directory then return directory_items end
 
     -- Otherwise, iterate over the items in the parent directory
     for _, item in ipairs(parent_directory.files) do
         --
 
-        -- If the item is a directory, add the item path
-        -- to the list of directories
-        if item.cha.is_dir then table.insert(directories, tostring(item)) end
+        -- If the directories only flag is passed,
+        -- and the item is not a directory,
+        -- then skip the item
+        if directories_only and not item.cha.is_dir then goto continue end
+
+        -- Otherwise, add the item to the list of directory items
+        table.insert(directory_items, item)
+
+        -- The continue label to skip the item
+        ::continue::
     end
 
-    -- Return the list of directories
-    return directories
+    -- Return the list of directory items
+    return directory_items
 end)
 
 -- Function to execute the parent arrow command
@@ -1357,18 +1482,18 @@ local execute_parent_arrow_command = ya.sync(function(state, args)
     if state.config.wraparound_file_navigation then
         --
 
-        -- Get the directories in the parent directory
-        local directories = get_directories_in_parent_directory()
-
-        -- Get the number of directories in the parent directory
-        local number_of_directories = #directories
-
-        -- If the number of directories is 0, then exit the function
-        if number_of_directories == 0 then return end
-
         -- If the user sorts their directories first
         if state.config.sort_directories_first then
             --
+
+            -- Get the directories in the parent directory
+            local directories = get_parent_directory_items(true)
+
+            -- Get the number of directories in the parent directory
+            local number_of_directories = #directories
+
+            -- If the number of directories is 0, then exit the function
+            if number_of_directories == 0 then return end
 
             -- Get the new cursor index by adding the offset,
             -- and modding the whole thing by the number of directories
