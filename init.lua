@@ -288,6 +288,16 @@ end)
 local function shell_command_exists(shell_command)
     --
 
+    -- Initialise the null output
+    local null_output = "/dev/null"
+
+    -- If the OS is Windows
+    if ya.target_family() == "windows" then
+
+        -- Set the null output to the NUL device
+        null_output = "NUL"
+    end
+
     -- Get whether the shell command is successfully executed
     --
     -- "1> /dev/null" redirects the standard output
@@ -296,17 +306,20 @@ local function shell_command_exists(shell_command)
     --
     -- "2>&1" redirects the standard error to the file
     -- descriptor of the standard output, which is the
-    -- /dev/null file, which accepts and discards
+    -- /dev/null file or the NUL device on Windows,
+    -- which accepts and discards
     -- all input and produces no output.
     --
     -- The full thing, "1> /dev/null 2>&1" just makes sure
     -- the shell command doesn't produce any output when executed.
     --
+    -- The equivalent command on Windows is "1> NUL 2>&1".
+    --
     -- https://stackoverflow.com/questions/10508843/what-is-dev-null-21
     -- https://stackoverflow.com/questions/818255/what-does-21-mean
     -- https://www.gnu.org/software/bash/manual/html_node/Redirections.html
     local successfully_executed =
-        os.execute(shell_command .. " 1> /dev/null 2>&1")
+        os.execute(shell_command .. " 1> " .. null_output .. " 2>&1")
 
     -- Return the result of the os.execute command
     return successfully_executed
