@@ -22,6 +22,7 @@ and the [fast-enter.yazi](https://github.com/ourongxing/fast-enter.yazi) plugin.
 
 - [Yazi](https://github.com/sxyazi/yazi) v0.3.0+
 - [`7z` or `7zz` command](https://github.com/p7zip-project/p7zip)
+- [`file` command](https://www.darwinsys.com/file/)
 
 ## Installation
 
@@ -141,6 +142,21 @@ then it will operate on the selected items.
   This feature requires the
   [`7z` or `7zz` command](https://github.com/p7zip-project/p7zip)
   to be present to extract the archives.
+- If the archive file contains only a single file,
+  the command will automatically extract it to the
+  current directory instead of creating a folder
+  for the contents of the archive.
+  If this extracted file is also an archive file,
+  the command will automatically
+  extract its contents before deleting it.
+  This feature requires the
+  [`file` command](https://www.darwinsys.com/file/)
+  to detect the mime type of the extracted file,
+  and check whether it is an archive file or not.
+  This makes extracting binaries from
+  compressed tarballs much easier, as there's no need
+  to press a key twice to decompress and extract
+  the compressed tarballs.
 
 ### Enter (`enter`)
 
