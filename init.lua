@@ -541,162 +541,6 @@ local function get_item_group()
     end
 end
 
--- The function to get all the items in the given directory for Unix systems
-local function get_directory_items_unix(
-    directory,
-    ignore_hidden_items,
-    directories_only
-)
-    --
-
-    -- Initialise the arguments to the find command
-    local arguments = {
-
-        -- The given directory
-        directory,
-
-        -- Set the maximum depth to 1
-        "-maxdepth",
-        "1",
-    }
-
-    -- If the directories only flag is passed,
-    -- then add the argument to only get directories
-    if directories_only then
-        arguments = merge_tables(arguments, {
-            "-type",
-            "d",
-        })
-    end
-
-    -- If the ignore hidden items flag is passed,
-    -- then add the argument to ignore hidden items
-    if ignore_hidden_items then
-        arguments = merge_tables(arguments, {
-            "-not",
-            "-name",
-            ".*",
-        })
-    end
-
-    -- Add the argument to separate the entries with a null character
-    table.insert(arguments, "-print0")
-
-    -- Initialise the list of directory items
-    local directory_items = {}
-
-    -- Get the output of the find command
-    local output, _ = Command("find")
-        :args(arguments)
-        :stdout(Command.PIPED)
-        :stderr(Command.PIPED)
-        :output()
-
-    -- If there is no output, return the empty list of directory items
-    if not output then return directory_items end
-
-    -- Otherwise, initialise the index variable
-    local index = 1
-
-    -- Iterate over the output split by the null character
-    for item in string.gmatch(output.stdout, "([^\0]+)") do
-        --
-
-        -- Check if the index isn't 1,
-        -- as the first item in the output
-        -- will be the directory itself,
-        -- and we don't want to add it to
-        -- the list of directory items
-        if index ~= 1 then
-            --
-
-            -- Add the item to the list of splitted strings
-            table.insert(directory_items, item)
-        end
-
-        -- Increment the index
-        index = index + 1
-    end
-
-    -- Return the list of directory items
-    return directory_items
-end
-
--- The function to get all the items in the given directory for Windows systems
-local function get_directory_items_windows(
-    directory,
-    ignore_hidden_items,
-    directories_only
-)
-    --
-
-    -- Initialise the attribute flag for the dir command.
-    --
-    -- By default, the attribute flag is /a,
-    -- which displays all files, including hidden and system files.
-    local attribute_flag = "/a"
-
-    -- If the directories only flag is passed
-    if directories_only then
-        --
-
-        -- Add the "d" flag to the attribute flag
-        attribute_flag = attribute_flag .. "d"
-    end
-
-    -- If the ignore hidden items flag is passed
-    if ignore_hidden_items then
-        --
-
-        -- Add the "-h" flag to the attribute flag
-        attribute_flag = attribute_flag .. "-h"
-    end
-
-    -- Initialise the arguments to the dir command
-    local arguments = {
-
-        -- The given directory
-        directory,
-
-        -- Display a bare list of directories and files
-        "/b",
-
-        -- The attribute flag to determine
-        -- what directories and files to return
-        -- in the output
-        attribute_flag,
-    }
-
-    -- Initialise the list of directory items
-    local directory_items = {}
-
-    -- Call the dir command and get the output
-    local output, _ = Command("dir")
-        :args(arguments)
-        :stdout(Command.PIPED)
-        :stderr(Command.PIPED)
-        :output()
-
-    -- If there is no output, then return the empty list of directory items
-    if not output then return directory_items end
-
-    -- Otherwise, iterate over the output split at the new line character
-    for item in string.gmatch(output.stdout, "([^\n]+)") do
-        --
-
-        -- Add the path of the given directory
-        -- to the front of the item
-        local directory_item_path = directory .. "\\" .. item
-
-        -- Add the path of the directory item
-        -- to the list of directory items
-        table.insert(directory_items, directory_item_path)
-    end
-
-    -- Return the list of directory items
-    return directory_items
-end
-
 -- The function to get all the items in the given directory
 local function get_directory_items(
     directory,
@@ -705,22 +549,38 @@ local function get_directory_items(
 )
     --
 
-    -- If the operating system is Windows
-    -- call the Windows function to get the directory items
-    if ya.target_family() == "windows" then
-        return get_directory_items_windows(
-            directory,
-            ignore_hidden_items,
-            directories_only
-        )
+    -- Initialise the list of directory items
+    local directory_items = {}
+
+    -- Read the contents of the directory
+    local directory_contents, _ = fs.read_dir(Url(directory), {})
+
+    -- If there are no directory contents,
+    -- then return the empty list of directory items
+    if not directory_contents then return directory_items end
+
+    -- Iterate over the directory contents
+    for _, item in ipairs(directory_contents) do
+
+        -- If the ignore hidden items flag is passed
+        -- and the item is a hidden item,
+        -- then continue the loop
+        if ignore_hidden_items and item.cha.is_hidden then goto continue end
+
+        -- If the directories only flag is passed
+        -- and the item is not a directory,
+        -- then continue the loop
+        if directories_only and not item.cha.is_dir then goto continue end
+
+        -- Otherwise, add the item path to the list of directory items
+        table.insert(directory_items, tostring(item.url))
+
+        -- The continue label to continue the loop
+        ::continue::
     end
 
-    -- Otherwise, call the Unix function to get the directory items
-    return get_directory_items_unix(
-        directory,
-        ignore_hidden_items,
-        directories_only
-    )
+    -- Return the list of directory items
+    return directory_items
 end
 
 -- Function to skip child directories with only one directory
