@@ -22,10 +22,6 @@ and the [fast-enter.yazi](https://github.com/ourongxing/fast-enter.yazi) plugin.
 
 - [Yazi](https://github.com/sxyazi/yazi) v0.3.0+
 - [`7z` or `7zz` command](https://github.com/p7zip-project/p7zip)
-- [`find` command](https://www.gnu.org/software/findutils/manual/html_mono/find.html#Overview)
-  on Linux and macOS
-- [`dir` command](https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/dir)
-  on Windows
 
 ## Installation
 
@@ -144,11 +140,7 @@ then it will operate on the selected items.
   This can be disabled by setting `enter_archives` to `false` in the configuration.
   This feature requires the
   [`7z` or `7zz` command](https://github.com/p7zip-project/p7zip)
-  to be present to extract the archives, as well as the
-  [`find`](https://www.gnu.org/software/findutils/manual/html_mono/find.html#Overview)
-  command on Linux and macOS, and the
-  [`dir`](https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/dir)
-  command on Windows for skipping directories that contain only one subdirectory.
+  to be present to extract the archives.
 
 ### Enter (`enter`)
 
@@ -158,11 +150,6 @@ then it will operate on the selected items.
   contain only one subdirectory when entering directories.
   This can be turned off by setting
   `skip_single_subdirectory_on_enter` to `false` in the configuration.
-  This feature requires the
-  [`find`](https://www.gnu.org/software/findutils/manual/html_mono/find.html#Overview)
-  command on Linux and macOS, and the
-  [`dir`](https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/dir)
-  command on Windows.
 - `--no-skip` flag. It stops the plugin from skipping directories
   that contain only one subdirectory when entering directories,
   even when `skip_single_subdirectory_on_enter` is set to `true`.
@@ -176,11 +163,6 @@ then it will operate on the selected items.
   This can be turned off by
   setting `skip_single_subdirectory_on_leave` to `false`
   in the configuration.
-  This feature requires the
-  [`find`](https://www.gnu.org/software/findutils/manual/html_mono/find.html#Overview)
-  command on Linux and macOS, and the
-  [`dir`](https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/dir)
-  command on Windows.
 - `--no-skip` flag. It stops the plugin
   from skipping directories that contain only one subdirectory,
   even when `skip_single_subdirectory_on_leave` is set to `true`.
