@@ -152,7 +152,7 @@ then it will operate on the selected items.
   This feature requires the
   [`file` command](https://www.darwinsys.com/file/)
   to detect the mime type of the extracted file,
-  and check whether it is an archive file or not.
+  and to check whether it is an archive file or not.
   This makes extracting binaries from
   compressed tarballs much easier, as there's no need
   to press a key twice to decompress and extract
