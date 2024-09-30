@@ -1743,7 +1743,7 @@ local function handle_leave(args, config)
 end
 
 -- Function to handle a Yazi command
----@param command string
+---@param command string A Yazi command
 ---@param args Arguments
 ---@return nil
 local function handle_yazi_command(command, args)
@@ -1918,7 +1918,7 @@ local function fix_bat_default_pager_shell_command(command)
 end
 
 -- Function to fix the shell commands given to work properly with Yazi
----@param command string
+---@param command string A shell command
 ---@return string command The fixed shell command
 local function fix_shell_command(command)
     --
