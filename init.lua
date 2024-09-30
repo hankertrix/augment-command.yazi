@@ -1778,6 +1778,7 @@ end
 -- Function to handle the paste command
 ---@param args Arguments
 ---@param config Configuration
+---@return nil
 local function handle_paste(args, config)
     --
 
@@ -1794,15 +1795,18 @@ local function handle_paste(args, config)
         -- Leave the directory
         ya.manager_emit("leave", {})
 
-    -- Otherwise, just paste the items inside the current directory
-    else
-        ya.manager_emit("paste", args)
+        -- Exit the function
+        return
     end
+
+    -- Otherwise, just paste the items inside the current directory
+    ya.manager_emit("paste", args)
 end
 
 -- Function to remove the F flag from the less command
 ---@param command string
----@return string, boolean
+---@return string command The command with the F flag removed
+---@return boolean f_flag_found Whether the F flag was found
 local function remove_f_flag_from_less_command(command)
     --
 
@@ -1837,7 +1841,7 @@ end
 -- All this function does is remove
 -- the F flag from a command containing less.
 ---@param command string
----@return string
+---@return string command The fixed shell command
 local function fix_shell_command_containing_less(command)
     --
 
@@ -1875,7 +1879,7 @@ end
 
 -- Function to fix the bat default pager command
 ---@param command string
----@return string
+---@return string command The fixed bat command
 local function fix_bat_default_pager_shell_command(command)
     --
 
@@ -1915,7 +1919,7 @@ end
 
 -- Function to fix the shell commands given to work properly with Yazi
 ---@param command string
----@return string
+---@return string command The fixed shell command
 local function fix_shell_command(command)
     --
 
