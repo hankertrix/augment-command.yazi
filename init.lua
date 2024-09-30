@@ -790,20 +790,15 @@ end
 -- The initial password is the password given to the extractor command
 -- and the test encryption is to test the archive password without
 -- actually executing the given extractor command.
---
--- The function returns 4 values:
--- 1. A boolean indicating whether the extraction was successful.
--- 2. The error message from the archive extractor.
--- 3. The output.stdout from the Command:output() function.
--- 4. The correct password to the archive.
----@param extractor_command function(
----password: string, configuration: Configuration
----): CommandOutput, integer
+---@param extractor_command function
 ---@param config Configuration
 ---@param initial_password string|nil
 ---@param test_encryption boolean|nil
 ---@param archive_path string|nil
----@return boolean, string|nil, string|nil, string|nil
+---@return boolean successful Whether the extraction was successful
+---@return string|nil error_message An error message for unsuccessful extracts
+---@return string|nil stdout The standard output of the extractor command
+---@return string|nil correct_password The correct password to the archive
 local function retry_extractor(
     extractor_command,
     config,
@@ -1014,16 +1009,13 @@ local function list_archive_items_command(
 end
 
 -- The function to get the items in the archive.
---
--- This function returns a list of archive items,
--- the list of directories in the archive,
--- as well as the correct password to the archive.
--- If the password is not correct, then the correct password
--- will be nil.
----@param archive_path string
----@param config Configuration
----@param files_only boolean|nil
----@return string[], string[], string|nil, string|nil
+---@param archive_path string The path to the archive file
+---@param config Configuration The configuration object
+---@param files_only boolean|nil Whether to only get the files in the archive
+---@return string[] archive_items The list of archive items
+---@return string[] directories The list of directories in the archive
+---@return string|nil error_message The error message for an incorrect password
+---@return string|nil correct_password The correct password to the archive
 local function get_archive_items(archive_path, config, files_only)
     --
 
