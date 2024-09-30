@@ -1205,7 +1205,7 @@ local function get_mime_type(file_path)
     if not output then return "" end
 
     -- Otherwise, get the mime type from the standard output
-    local mime_type = output.stdout
+    local mime_type = string_trim(output.stdout)
 
     -- Return the mime type
     return mime_type
