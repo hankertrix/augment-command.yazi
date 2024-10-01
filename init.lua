@@ -113,17 +113,21 @@ local INPUT_OPTIONS_TABLE = {
 local ARCHIVE_MIME_TYPES = {
     "application/zip",
     "application/gzip",
-    "application/x-tar",
-    "application/x-bzip",
-    "application/x-bzip2",
-    "application/x-7z-compressed",
-    "application/x-rar",
-    "application/x-xz",
+    "application/tar",
+    "application/bzip",
+    "application/bzip2",
+    "application/7z-compressed",
+    "application/rar",
+    "application/xz",
 }
 
 -- The pattern to get the double dash from the front of the argument
 ---@type string
 local double_dash_pattern = "^%-%-"
+
+-- The pattern to get the mime type without the "x-" prefix
+---@type string
+local get_mime_type_without_x_prefix_pattern = "^(%a-)/x%-([%-%d%a]-)$"
 
 -- The pattern to get the information from an archive item
 ---@type string
@@ -418,6 +422,25 @@ local function initialise_plugin(opts)
     return config
 end
 
+-- Function to check if a given mime type is an archive
+---@param mime_type string The mime type of the file
+---@return boolean is_archive Whether the mime type is an archive
+local function is_archive_mime_type(mime_type)
+    --
+
+    -- Trim the whitespace from the mime type
+    mime_type = string_trim(mime_type)
+
+    -- Remove the "x-" prefix from the mime type
+    mime_type = mime_type:gsub(get_mime_type_without_x_prefix_pattern, "%1/%2")
+
+    -- Get if the mime type is an archive
+    local is_archive = list_contains(ARCHIVE_MIME_TYPES, mime_type)
+
+    -- Return if the mime type is an archive
+    return is_archive
+end
+
 -- Function to get the configuration from an async function
 ---@param state any
 ---@return Configuration
@@ -483,7 +506,7 @@ local hovered_item_is_archive = ya.sync(function(_)
 
     -- Return if the hovered item exists and is an archive
     return hovered_item
-        and list_contains(ARCHIVE_MIME_TYPES, hovered_item:mime())
+        and is_archive_mime_type(hovered_item:mime())
 end)
 
 -- Function to get the paths of the selected items
@@ -1238,7 +1261,7 @@ local function is_archive_file(file_path)
     local mime_type = get_mime_type(file_path)
 
     -- Set the is archive variable
-    is_archive = list_contains(ARCHIVE_MIME_TYPES, mime_type)
+    is_archive = is_archive_mime_type(mime_type)
 
     -- Return the is archive variable
     return is_archive
