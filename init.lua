@@ -423,10 +423,13 @@ local function initialise_plugin(opts)
 end
 
 -- Function to check if a given mime type is an archive
----@param mime_type string The mime type of the file
+---@param mime_type string|nil The mime type of the file
 ---@return boolean is_archive Whether the mime type is an archive
 local function is_archive_mime_type(mime_type)
     --
+
+    -- If the mime type is nil, return false
+    if not mime_type then return false end
 
     -- Trim the whitespace from the mime type
     mime_type = string_trim(mime_type)
