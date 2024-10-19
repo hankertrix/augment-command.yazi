@@ -51,6 +51,16 @@ local Commands = {
     Pager = "pager",
 }
 
+-- The extract behaviour flags
+-- https://documentation.help/7-Zip/overwrite.htm
+---@enum ExtractBehaviour
+local ExtractBehaviour = {
+    Overwrite = "-aoa",
+    Skip = "-aos",
+    Rename = "-aou",
+    RenameExisting = "-aot",
+}
+
 -- The default configuration for the plugin
 ---@class (exact) Configuration
 ---@field prompt boolean
@@ -508,8 +518,7 @@ local hovered_item_is_archive = ya.sync(function(_)
     local hovered_item = cx.active.current.hovered
 
     -- Return if the hovered item exists and is an archive
-    return hovered_item
-        and is_archive_mime_type(hovered_item:mime())
+    return hovered_item and is_archive_mime_type(hovered_item:mime())
 end)
 
 -- Function to get the paths of the selected items
@@ -816,11 +825,11 @@ end
 -- The initial password is the password given to the extractor command
 -- and the test encryption is to test the archive password without
 -- actually executing the given extractor command.
----@param extractor_command function
----@param config Configuration
----@param initial_password string|nil
----@param test_encryption boolean|nil
----@param archive_path string|nil
+---@param extractor_command function A function that extracts the archive
+---@param config Configuration The configuration object
+---@param initial_password string|nil The initial password to try
+---@param test_encryption boolean|nil Whether to test the encryption or not
+---@param archive_path string|nil The path to the archive file
 ---@return boolean successful Whether the extraction was successful
 ---@return string|nil error_message An error message for unsuccessful extracts
 ---@return string|nil stdout The standard output of the extractor command
@@ -1034,19 +1043,15 @@ local function list_archive_items_command(
         :output()
 end
 
--- The function to get the items in the archive.
+-- The function to get if the archive
+-- file has more than one file in it.
 ---@param archive_path string The path to the archive file
 ---@param config Configuration The configuration object
----@param files_only boolean|nil Whether to only get the files in the archive
----@return string[] archive_items The list of archive items
----@return string[] directories The list of directories in the archive
+---@return boolean|nil has_one_file Whether the archive file has one file in it
 ---@return string|nil error_message The error message for an incorrect password
 ---@return string|nil correct_password The correct password to the archive
-local function get_archive_items(archive_path, config, files_only)
+local function archive_only_has_one_file(archive_path, config)
     --
-
-    -- Initialise the files only flag to false if it's not given
-    files_only = files_only or false
 
     -- The function to list the items in the archive
     local function list_items_in_archive(password, configuration, _)
@@ -1058,9 +1063,9 @@ local function get_archive_items(archive_path, config, files_only)
         )
     end
 
-    -- Initialise the list of archive items
+    -- Initialise the list of files in the archive
     ---@type string[]
-    local archive_items = {}
+    local files = {}
 
     -- Initialise the list of directories
     ---@type string[]
@@ -1073,12 +1078,9 @@ local function get_archive_items(archive_path, config, files_only)
 
     -- If the extractor command was not successful,
     -- or the output was nil,
-    -- then return the empty list of archive items,
-    -- the empty list of directories in the archive,
-    -- the error message, and nil as the correct password
-    if not successful or not output then
-        return archive_items, directories, error_message, nil
-    end
+    -- then return nil the error message,
+    -- and nil as the correct password
+    if not successful or not output then return nil, error_message, nil end
 
     -- Otherwise, split the output at the newline character
     local output_lines = string_split(output, "\n")
@@ -1104,20 +1106,34 @@ local function get_archive_items(archive_path, config, files_only)
             -- Add the directory to the list of directories
             table.insert(directories, file_path)
 
-            -- Continue the loop if only files are wanted
-            if files_only then goto continue end
+            -- Continue the loop
+            goto continue
         end
 
         -- Otherwise, add the file path to the list of archive items
-        table.insert(archive_items, file_path)
+        table.insert(files, file_path)
 
         -- The continue label to continue the loop
         ::continue::
+
+        -- If there is more than 1 file in the archive
+        -- then break out of the loop
+        if #files > 1 then break end
     end
 
-    -- Return the list of archive items, the list of directories,
-    -- nil for the error message and the correct password
-    return archive_items, directories, nil, password
+    -- If there are no files in the archive,
+    -- return nil, an error saying that there's
+    -- no files in the archive, and the password
+    if #files == 0 then return nil, "No files in the archive!", password end
+
+    -- If there is only one file in the archive and no directories,
+    -- then return true, the error message, and the password
+    if #files == 1 and #directories == 0 then
+        return true, error_message, password
+    end
+
+    -- Otherwise, return false, the error message and the password
+    return false, error_message, password
 end
 
 -- Function to get a temporary name.
@@ -1151,18 +1167,20 @@ local function get_temporary_directory_url(file_path)
 end
 
 -- The extract command to extract an archive
----@param archive_path string
----@param destination_directory_path string
----@param config Configuration
----@param password string|nil
----@param extract_files_only boolean|nil
+---@param archive_path string The path to the archive
+---@param destination_directory_path string The destination folder
+---@param config Configuration The configuration object
+---@param password string|nil The password to the archive
+---@param extract_files_only boolean|nil Extract the files only or not
+---@param extract_behaviour ExtractBehaviour|nil The extraction behaviour
 ---@return CommandOutput, integer
 local function extract_command(
     archive_path,
     destination_directory_path,
     config,
     password,
-    extract_files_only
+    extract_files_only,
+    extract_behaviour
 )
     --
 
@@ -1171,6 +1189,9 @@ local function extract_command(
 
     -- Initialise the extract files only flag to false if it's not given
     extract_files_only = extract_files_only or false
+
+    -- Initialise the extract behaviour to rename if it's not given
+    extract_behaviour = extract_behaviour or ExtractBehaviour.Rename
 
     -- Initialise the extraction mode to use.
     -- By default, it extracts the archive with
@@ -1197,8 +1218,8 @@ local function extract_command(
         -- Assume yes to all prompts
         "-y",
 
-        -- Configure the extraction behaviour to rename
-        "-aou",
+        -- Configure the extraction behaviour
+        extract_behaviour,
 
         -- Pass the password to the command
         "-p" .. password,
@@ -1461,8 +1482,8 @@ local function extract_archive(archive_path, config)
     local error_message = nil
 
     -- Get the list of archive items, the error message and the password
-    local archive_items, archive_directories, archive_error, correct_password =
-        get_archive_items(archive_path, config, true)
+    local has_only_one_file, archive_error, correct_password =
+        archive_only_has_one_file(archive_path, config)
 
     -- Initialise the extracted items path to nil
     local extracted_items_path = nil
@@ -1470,14 +1491,13 @@ local function extract_archive(archive_path, config)
     -- If there are no files in the archive,
     -- then return the successful variable,
     -- the error message, and the extracted items path
-    if #archive_items == 0 then
+    if has_only_one_file == nil then
         return successful, archive_error, extracted_items_path
     end
 
-    -- Otherwise, if the number of archive items is 1,
-    -- and the number of directories in the archive is 0,
+    -- Otherwise, the archive only has one file,
     -- then set the files only flag to true
-    if #archive_items == 1 and #archive_directories == 0 then
+    if has_only_one_file then
         extract_files_only = true
     end
 
@@ -1509,6 +1529,26 @@ local function extract_archive(archive_path, config)
         return successful, "Archive file name is empty", extracted_items_path
     end
 
+    -- Initialise the extract behaviour to rename
+    local extract_behaviour = ExtractBehaviour.Rename
+
+    -- Initialise the test archive boolean to true
+    local test_archive = true
+
+    -- Get the size of the archive
+    local archive_size = fs.cha(archive_url).length
+
+    -- If the size of the archive is greater than 50 MiB
+    if archive_size > 50 * 1024 * 1024 then
+        --
+
+        -- Set the extract behaviour to overwrite
+        extract_behaviour = ExtractBehaviour.Overwrite
+
+        -- Set the test archive boolean to false
+        test_archive = false
+    end
+
     -- Create the extractor command
     local function extractor_command(password, configuration)
         return extract_command(
@@ -1516,7 +1556,8 @@ local function extract_archive(archive_path, config)
             tostring(temporary_directory_url),
             configuration,
             password,
-            extract_files_only
+            extract_files_only,
+            extract_behaviour
         )
     end
 
@@ -1525,7 +1566,7 @@ local function extract_archive(archive_path, config)
         extractor_command,
         config,
         correct_password,
-        true,
+        test_archive,
         archive_path
     )
 
@@ -1916,11 +1957,11 @@ local function fix_bat_default_pager_shell_command(command)
     -- when replacing the less command when it is quoted
     local modified_command, replacement_count = command:gsub(
         "("
-            .. bat_command_with_pager_pattern
-            .. "['\"]+%s*"
-            .. ")"
-            .. "less"
-            .. "(%s*['\"]+)",
+        .. bat_command_with_pager_pattern
+        .. "['\"]+%s*"
+        .. ")"
+        .. "less"
+        .. "(%s*['\"]+)",
         "%1" .. bat_default_pager_command_without_f_flag .. "%2"
     )
 
