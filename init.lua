@@ -1536,7 +1536,7 @@ local function extract_archive(archive_path, config)
     local test_archive = true
 
     -- Get the size of the archive
-    local archive_size = fs.cha(archive_url).length
+    local archive_size = fs.cha(archive_url).len
 
     -- If the size of the archive is greater than 50 MiB
     if archive_size > 50 * 1024 * 1024 then
