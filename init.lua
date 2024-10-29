@@ -1529,26 +1529,6 @@ local function extract_archive(archive_path, config)
         return successful, "Archive file name is empty", extracted_items_path
     end
 
-    -- Initialise the extract behaviour to rename
-    local extract_behaviour = ExtractBehaviour.Rename
-
-    -- Initialise the test archive boolean to true
-    local test_archive = true
-
-    -- Get the size of the archive
-    local archive_size = fs.cha(archive_url).length
-
-    -- If the size of the archive is greater than 50 MiB
-    if archive_size > 50 * 1024 * 1024 then
-        --
-
-        -- Set the extract behaviour to overwrite
-        extract_behaviour = ExtractBehaviour.Overwrite
-
-        -- Set the test archive boolean to false
-        test_archive = false
-    end
-
     -- Create the extractor command
     local function extractor_command(password, configuration)
         return extract_command(
@@ -1557,7 +1537,7 @@ local function extract_archive(archive_path, config)
             configuration,
             password,
             extract_files_only,
-            extract_behaviour
+            ExtractBehaviour.Overwrite
         )
     end
 
@@ -1566,7 +1546,7 @@ local function extract_archive(archive_path, config)
         extractor_command,
         config,
         correct_password,
-        test_archive,
+        false,
         archive_path
     )
 
