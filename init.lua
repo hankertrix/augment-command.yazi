@@ -787,33 +787,6 @@ local function archive_is_encrypted(command_error_string)
     end
 end
 
--- The function to test the password on the archive
--- without actually extracting the archive
----@param archive_path string
----@param config Configuration
----@param password string
----@return CommandOutput, integer
-local function test_archive_password(archive_path, config, password)
-    --
-
-    -- Return the command to test the password on the archive
-    return Command(config.extractor_command)
-        :args({
-
-            -- Test the archive
-            "t",
-
-            -- Pass the password to the command
-            "-p" .. password,
-
-            -- The archive file to test
-            archive_path,
-        })
-        :stdout(Command.PIPED)
-        :stderr(Command.PIPED)
-        :output()
-end
-
 -- The function to handle retrying the extractor command
 --
 -- The extractor command is a function that takes
@@ -828,7 +801,6 @@ end
 ---@param extractor_command function A function that extracts the archive
 ---@param config Configuration The configuration object
 ---@param initial_password string|nil The initial password to try
----@param test_encryption boolean|nil Whether to test the encryption or not
 ---@param archive_path string|nil The path to the archive file
 ---@return boolean successful Whether the extraction was successful
 ---@return string|nil error_message An error message for unsuccessful extracts
@@ -838,7 +810,6 @@ local function retry_extractor(
     extractor_command,
     config,
     initial_password,
-    test_encryption,
     archive_path
 )
     --
@@ -847,18 +818,9 @@ local function retry_extractor(
     -- or an empty string if it's not given
     local password = initial_password or ""
 
-    -- Initialise the test encryption flag to false if it is not given
-    test_encryption = test_encryption or false
-
     -- Initialise the archive path to the given archive path
     -- or an empty string if it's not given
     archive_path = archive_path or ""
-
-    -- If the archive path is empty,
-    -- set the test encryption flag to false
-    if string.len(string_trim(archive_path)) < 1 then
-        test_encryption = false
-    end
 
     -- Initialise the error message from the archive extractor
     local error_message = ""
@@ -871,36 +833,13 @@ local function retry_extractor(
     for tries = 0, total_number_of_tries do
         --
 
-        -- Initialise the output and error to nil
-        local output, err = nil, nil
-
-        -- If the test encryption flag is true
-        if test_encryption then
-            --
-
-            -- Call the function to test the encryption of the archive
-            output, err = test_archive_password(archive_path, config, password)
-
-        -- Otherwise, execute the extractor command
-        else
-            --
-
-            -- Execute the extractor command
-            output, err = extractor_command(password, config)
-        end
+        -- Execute the extractor command
+        local output, err = extractor_command(password, config)
 
         -- If there is no output
         -- then return false, the error code as a string,
         -- nil for the output, and nil for the password
         if not output then return false, tostring(err), nil, nil end
-
-        -- If the test encryption flag is true and the output status code is 0
-        if test_encryption and output.status.code == 0 then
-            --
-
-            -- Actually execute the extractor command
-            output, err = extractor_command(password, config)
-        end
 
         -- If the output was 0, which means the extractor command was successful
         if output.status.code == 0 then
@@ -1546,7 +1485,6 @@ local function extract_archive(archive_path, config)
         extractor_command,
         config,
         correct_password,
-        false,
         archive_path
     )
 
