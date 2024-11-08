@@ -344,10 +344,13 @@ local function parse_args(args)
 end
 
 -- Function to merge the given configuration table with the default one
----@param config Configuration The configuration table to merge
+---@param config Configuration|nil The configuration table to merge
 ---@return Configuration merged_config The merged configuration table
 local function merge_configuration(config)
     --
+
+    -- If the configuration isn't given, then use the default one
+    if config == nil then return DEFAULT_CONFIG end
 
     -- Initialise the list of invalid configuration options
     local invalid_configuration_options = {}
@@ -402,7 +405,7 @@ end
 
 -- Function to initialise the configuration
 ---@param state any
----@param user_config Configuration
+---@param user_config Configuration|nil
 ---@param additional_data any
 ---@return Configuration
 local initialise_config = ya.sync(function(state, user_config, additional_data)
