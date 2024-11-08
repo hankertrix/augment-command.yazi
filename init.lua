@@ -343,16 +343,77 @@ local function parse_args(args)
     return parsed_arguments
 end
 
--- Function to initialise the configuration
----@param state any
----@param opts Configuration
----@return Configuration
-local initialise_config = ya.sync(function(state, opts)
+-- Function to merge the given configuration table with the default one
+---@param config Configuration The configuration table to merge
+---@return Configuration merged_config The merged configuration table
+local function merge_configuration(config)
     --
 
-    -- Merge the default configuration with the given one
+    -- Initialise the list of invalid configuration options
+    local invalid_configuration_options = {}
+
+    -- Initialise the merged configuration
+    local merged_config = {}
+
+    -- Iterate over the default configuration table
+    for key, value in pairs(DEFAULT_CONFIG) do
+        --
+
+        -- Add the default configuration to the merged configuration
+        merged_config[key] = value
+    end
+
+    -- Iterate over the given configuration table
+    for key, value in pairs(config) do
+        --
+
+        -- If the key is not in the merged configuration
+        if merged_config[key] == nil then
+            --
+
+            -- Add the key to the list of invalid configuration options
+            table.insert(invalid_configuration_options, key)
+
+            -- Continue the loop
+            goto continue
+        end
+
+        -- Otherwise, overwrite the value in the merged configuration
+        merged_config[key] = value
+
+        -- The label to continue the loop
+        ::continue::
+    end
+
+    -- If there are no invalid configuration options,
+    -- then return the merged configuration
+    if #invalid_configuration_options <= 0 then return merged_config end
+
+    -- Otherwise, notify the user of the invalid configuration options
+    ya.notify(merge_tables(DEFAULT_NOTIFICATION_OPTIONS, {
+        content = "Invalid configuration options: "
+            .. table.concat(invalid_configuration_options, ", "),
+        level = "warn",
+    }))
+
+    -- Return the merged configuration
+    return merged_config
+end
+
+-- Function to initialise the configuration
+---@param state any
+---@param user_config Configuration
+---@param additional_data any
+---@return Configuration
+local initialise_config = ya.sync(function(state, user_config, additional_data)
+    --
+
+    -- Merge the default configuration with the user given one,
+    -- as well as the additional data given,
     -- and set it to the state.
-    state.config = merge_tables(DEFAULT_CONFIG, opts)
+    state.config = merge_tables(
+        merge_configuration(user_config), additional_data
+    )
 
     -- Return the configuration object for async functions
     return state.config
@@ -424,9 +485,9 @@ local function initialise_plugin(opts)
     end
 
     -- Initialise the configuration object
-    local config = initialise_config(merge_tables({
+    local config = initialise_config(opts, {
         extractor_command = extractor_command,
-    }, opts))
+    }, opts)
 
     -- Return the configuration object
     return config
