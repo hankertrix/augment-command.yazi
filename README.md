@@ -472,5 +472,5 @@ you can take a look at
 
 ## Licence
 
-This plugin is licenced under the GNU GPL v3 licence.
+This plugin is licenced under the GNU AGPL v3 licence.
 You can view the full licence in the `LICENSE` file.
