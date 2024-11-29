@@ -1787,11 +1787,10 @@ local function handle_open(args, config, command_table)
         -- and exit the function
         if config.smart_enter then
             return enter_command(args, config, command_table)
+        end
 
         -- Otherwise, just exit the function
-        else
-            return
-        end
+        return
     end
 
     -- Otherwise, if the hovered item is not an archive,
@@ -1882,11 +1881,10 @@ local function handle_enter(args, config, command_table)
         -- and exit the function
         if config.smart_enter then
             return open_command(args, config, command_table)
+        end
 
         -- Otherwise, just exit the function
-        else
-            return
-        end
+        return
     end
 
     -- Otherwise, always emit the enter command,
