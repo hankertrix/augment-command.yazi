@@ -1,3 +1,4 @@
+# augment-command.yazi
 
 A [Yazi](https://github.com/sxyazi/yazi)
 plugin that enhances Yazi's default commands.
