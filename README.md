@@ -154,8 +154,9 @@ then it will operate on the selected items.
   compressed tarballs much easier, as there's no need
   to press a key twice to decompress and extract
   the compressed tarballs.
-  You can disable this by setting `extract_archives_recursively`
-  to `false` in the configuration.
+  You can disable this feature by setting
+  `extract_archives_recursively` to `false`
+  in the configuration.
 
 ### Enter (`enter`)
 
