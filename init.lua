@@ -55,7 +55,7 @@ local Commands = {
     TabCreate = "tab_create",
     TabSwitch = "tab_switch",
     Arrow = "arrow",
-    ParentArrow = "parent-arrow",
+    ParentArrow = "parent_arrow",
     Editor = "editor",
     Pager = "pager",
 }
