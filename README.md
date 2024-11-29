@@ -44,7 +44,9 @@ ya pack -u
 | `prompt`                            | `true` or `false`                     | `false`   | Create a prompt to choose between hovered and selected items when both exist. If this option is disabled, selected items will only be operated on when the hovered item is selected, otherwise the hovered item will be the default item that is operated on.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | `default_item_group_for_prompt`     | `hovered`, `selected` or `none`       | `hovered` | The default item group to operate on when the prompt is submitted without any value. This only takes effect if `prompt` is set to `true`, otherwise this option doesn't do anything. `hovered` means the hovered item is operated on, `selected` means the selected items are operated on, and `none` just cancels the operation.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | `smart_enter`                       | `true` or `false`                     | `true`    | Use one command to open files or enter a directory. With this option set, the `enter` and `open` commands will both call the `enter` command when a directory is hovered and call the `open` command when a regular file is hovered.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
-| `smart_paste`                       | `true` or `false`                     | `false`   | Paste items into a directory without entering it. The behaviour is exactly the same as the [smart-paste tip on Yazi's documentation](https://yazi-rs.github.io/docs/tips#smart-paste). Setting this option to `false` will use the default `paste` behaviour. You can also enable smart pasting by passing the `--smart` flag to the paste command.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `smart_paste`                       | `true` or `false`                     | `false`   | Paste items into a directory without entering it. The behaviour is exactly the same as the [smart paste tip on Yazi's documentation](https://yazi-rs.github.io/docs/tips#smart-paste). Setting this option to `false` will use the default `paste` behaviour. You can also enable this behaviour by passing the `--smart` flag to the `paste` command.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| `smart_tab_create`                  | `true` or `false`                     | `false`   | Create tabs in the directory that is being hovered instead of the current directory. The behaviour is exactly the same as the [smart tab tip on Yazi's documentation](https://yazi-rs.github.io/docs/tips#smart-tab). Setting this option to `false` will use the default `tab_create` behaviour, which means you need to pass the `--current` flag to the command. You can also enable this behaviour by passing the `--smart` flag to the `tab_create` command.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `smart_tab_switch`                  | `true` or `false`                     | `false`   | If the tab that is being switched to does not exist yet, setting this option to `true` will create all the tabs in between the current number of open tabs, and the tab that is being switched to. The behaviour is exactly the same as this [tip](https://github.com/sxyazi/yazi/issues/918#issuecomment-2058157773). Setting this option to `false` will use the default `tab_switch` behaviour. You can also enable this behaviour by passing the `--smart` flag to the `tab_switch` command.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | `enter_archives`                    | `true` or `false`                     | `true`    | Automatically extract and enter archive files. This option requires the [7z or 7zz command](https://github.com/p7zip-project/p7zip) to be present.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | `extract_retries`                   | An integer, like `1`, `3`, `10`, etc. | `3`       | This option determines how many times the plugin will retry opening an encrypted or password-protected archive when a wrong password is given. This value plus 1 is the total number of times the plugin will try opening an encrypted or password-protected archive.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 | `extract_archives_recursively`      | `true` or `false`                     | `true`    | This option determines whether the plugin will extract all archives inside an archive file recursively. If this option is set to `false`, archive files inside an archive will not be extracted, and you will have to manually extract them yourself.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
@@ -71,6 +73,8 @@ require("augment-command"):setup({
     default_item_group_for_prompt = "hovered",
     smart_enter = true,
     smart_paste = false,
+    smart_tab_create = false,
+    smart_tab_switch = false,
     enter_archives = true,
     extract_retries = 3,
     extract_archives_recursively = true,
@@ -195,23 +199,6 @@ then it will operate on the selected items.
 - The `remove` command is augmented as stated in
   [this section above](#what-about-the-commands-are-augmented).
 
-### Paste (`paste`)
-
-- When `smart_paste` is set to `true`,
-  the `paste` command will paste items
-  into a hovered directory without entering it.
-  If the hovered item is not a directory,
-  the command pastes in the current directory instead.
-  Otherwise, when `smart_paste` is set to `false`,
-  the `paste` command will behave like the default
-  `paste` command.
-- `--smart` flag to enable pasting in a hovered directory
-  without entering the directory.
-  This flag will cause the `paste` command to paste items
-  into a hovered directory even when `smart_paste` is set to `false`.
-  This allows you to set a key to use smart paste
-  instead of using smart paste for every paste command.
-
 ### Shell (`shell`)
 
 - This command runs the shell command given with the augment stated in
@@ -279,6 +266,80 @@ then it will operate on the selected items.
   run = '''plugin augment-command --args="shell '$PAGER $@' --block --confirm --exit-if-directory"'''
   desc = "Open the pager"
   ```
+
+### Paste (`paste`)
+
+- When `smart_paste` is set to `true`,
+  the `paste` command will paste items
+  into the hovered directory without entering it.
+  If the hovered item is not a directory,
+  the command pastes in the current directory instead.
+  Otherwise, when `smart_paste` is set to `false`,
+  the `paste` command will behave like the default
+  `paste` command.
+- `--smart` flag to enable pasting in the hovered directory
+  without entering the directory.
+  This flag will cause the `paste` command to paste items
+  into the hovered directory even when `smart_paste` is set to `false`.
+  This allows you to set a key to use this behaviour
+  with the `paste` command instead of using it for
+  every `paste` command.
+
+### Tab create (`tab_create`)
+
+- When `smart_tab_create` is set to `true`,
+  the `tab_create` command will create a tab
+  in the hovered directory instead of the
+  current directory like the default key binds.
+  If the hovered item is not a directory,
+  then the command just creates a new tab in
+  the current directory instead.
+  Otherwise, when `smart_tab_create` is set to
+  `false`, the `tab_create` command will behave
+  like the default key bind to create a tab,
+  which is `tab_create --current`.
+- `--smart` flag to enable creating a tab
+  in the hovered directory.
+  This flag will cause the `tab_create` command
+  to create a tab in the hovered directory even
+  when `smart_tab_create` is set to `false`.
+  This allows you to set a specific key to use this
+  behaviour with the `tab_create` command instead
+  of using it for every `tab_create` command.
+
+### Tab switch (`tab_switch`)
+
+- When `smart_tab_switch` is set to `true`,
+  the `tab_switch` command will ensure that
+  the tab that is being switched to exist.
+  It does this by automatically creating
+  all the tabs required for the desired
+  tab to exist.
+  For example, if you are switching to
+  tab 5 (`tab_switch 4`), and you only have
+  two tabs currently open (tabs 1 and 2),
+  the plugin will create tabs 3, 4 and 5
+  and then switch to tab 5.
+  The tabs are created using the current
+  directory. The `smart_tab_create`
+  configuration option does not affect
+  the behaviour of this command.
+  Otherwise, when `smart_tab_switch` is
+  set to `false`, the `tab_switch` command
+  will behave like the default `tab_switch`
+  command, and simply switch to the tab
+  if it exists, and do nothing if it doesn't
+  exist.
+- `--smart` flag to automatically create
+  the required tabs for the desired tab
+  to exist.
+  This flag will cause the `tab_switch`
+  command to automatically create the
+  required tabs even when `smart_tab_switch`
+  is set to `false`.
+  This allows you to set a specific key to use this
+  behaviour with the `tab_switch` command instead
+  of using it for every `tab_switch` command.
 
 ### Arrow (`arrow`)
 
