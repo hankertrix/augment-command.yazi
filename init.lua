@@ -26,6 +26,13 @@
 ---@field ends_with function(url: Url|string): boolean
 ---@field strip_prefix function(url: Url|string): boolean
 
+-- The type for the extraction results
+---@class (exact) ExtractionResult
+---@field archive_path string
+---@field successful boolean
+---@field extracted_items_path string|nil
+---@field error_message string|nil
+
 -- The enum for which group of items to operate on
 ---@enum ItemGroup
 local ItemGroup = {
@@ -69,6 +76,7 @@ local ExtractBehaviour = {
 ---@field smart_paste boolean
 ---@field enter_archives boolean
 ---@field extract_retries number
+---@field extract_archives_recursively boolean
 ---@field must_have_hovered_item boolean
 ---@field skip_single_subdirectory_on_enter boolean
 ---@field skip_single_subdirectory_on_leave boolean
@@ -83,6 +91,7 @@ local DEFAULT_CONFIG = {
     smart_paste = false,
     enter_archives = true,
     extract_retries = 3,
+    extract_archives_recursively = true,
     must_have_hovered_item = true,
     skip_single_subdirectory_on_enter = true,
     skip_single_subdirectory_on_leave = true,
@@ -127,8 +136,22 @@ local ARCHIVE_MIME_TYPES = {
     "application/bzip",
     "application/bzip2",
     "application/7z-compressed",
+    "application/rar-compressed",
     "application/rar",
     "application/xz",
+}
+
+-- The list of archive file extensions
+---@type string[]
+local ARCHIVE_FILE_EXTENSIONS = {
+    "zip",
+    "tar",
+    "boz",
+    "bz",
+    "bz2",
+    "7z",
+    "rar",
+    "xz",
 }
 
 -- The pattern to get the double dash from the front of the argument
@@ -142,6 +165,10 @@ local get_mime_type_without_x_prefix_pattern = "^(%a-)/x%-([%-%d%a]-)$"
 -- The pattern to get the information from an archive item
 ---@type string
 local archive_item_info_pattern = "%s+([%.%a]+)%s+(%d+)%s+(%d+)%s+(.+)$"
+
+-- The pattern to get the file extension
+---@type string
+local file_extension_pattern = "%.([%a]+)$"
 
 -- The pattern to get the shell variables in a command
 ---@type string
@@ -414,9 +441,8 @@ local initialise_config = ya.sync(function(state, user_config, additional_data)
     -- Merge the default configuration with the user given one,
     -- as well as the additional data given,
     -- and set it to the state.
-    state.config = merge_tables(
-        merge_configuration(user_config), additional_data
-    )
+    state.config =
+        merge_tables(merge_configuration(user_config), additional_data)
 
     -- Return the configuration object for async functions
     return state.config
@@ -515,6 +541,29 @@ local function is_archive_mime_type(mime_type)
     local is_archive = list_contains(ARCHIVE_MIME_TYPES, mime_type)
 
     -- Return if the mime type is an archive
+    return is_archive
+end
+
+-- Function to check if a given file extension
+-- is an archive file extension
+---@param file_extension string|nil The file extension of the file
+---@return boolean is_archive Whether the file extension is an archive
+local function is_archive_file_extension(file_extension)
+    --
+
+    -- If the file extension is nil, return false
+    if not file_extension then return false end
+
+    -- Make the file extension lower case
+    file_extension = file_extension:lower()
+
+    -- Trim the whitespace from the file extension
+    file_extension = string_trim(file_extension)
+
+    -- Get if the file extension is an archive
+    local is_archive = list_contains(ARCHIVE_FILE_EXTENSIONS, file_extension)
+
+    -- Return if the file extension is an archive file extension
     return is_archive
 end
 
@@ -893,6 +942,14 @@ local function retry_extractor(
     -- to the number of retries plus 1
     local total_number_of_tries = config.extract_retries + 1
 
+    -- Initialise the initial password prompt
+    local initial_password_prompt =
+    "Archive is encrypted, please enter the password:"
+
+    -- Initialise the wrong password prompt
+    local wrong_password_prompt =
+    "Wrong password, please enter another password:"
+
     -- Iterate over the number of times to try the extraction
     for tries = 0, total_number_of_tries do
         --
@@ -947,20 +1004,10 @@ local function retry_extractor(
             return false, error_message, output.stdout, nil
         end
 
-        -- Initialise the prompt for the password
-        local password_prompt = "Wrong password, please enter another password:"
-
-        -- If this is the first time opening the archive,
-        -- which means the number of tries is 0,
-        -- then ask the user for the password
-        -- instead of giving the wrong password message.
-        if tries == 0 then
-            password_prompt = "Archive is encrypted, please enter the password:"
-        end
-
         -- Ask the user for the password
         local user_input, event = ya.input(merge_tables(DEFAULT_INPUT_OPTIONS, {
-            title = password_prompt,
+            title = tries == 0 and initial_password_prompt
+                or wrong_password_prompt,
         }))
 
         -- If the user has confirmed the input,
@@ -1050,10 +1097,11 @@ end
 -- file has more than one file in it.
 ---@param archive_path string The path to the archive file
 ---@param config Configuration The configuration object
----@return boolean|nil has_one_file Whether the archive file has one file in it
+---@return table<string> files The list of files in the archive
+---@return table<string> directories The list of directories in the archive
 ---@return string|nil error_message The error message for an incorrect password
 ---@return string|nil correct_password The correct password to the archive
-local function archive_only_has_one_file(archive_path, config)
+local function get_archive_items(archive_path, config)
     --
 
     -- The function to list the items in the archive
@@ -1083,7 +1131,9 @@ local function archive_only_has_one_file(archive_path, config)
     -- or the output was nil,
     -- then return nil the error message,
     -- and nil as the correct password
-    if not successful or not output then return nil, error_message, nil end
+    if not successful or not output then
+        return files, directories, error_message, nil
+    end
 
     -- Otherwise, split the output at the newline character
     local output_lines = string_split(output, "\n")
@@ -1118,25 +1168,11 @@ local function archive_only_has_one_file(archive_path, config)
 
         -- The continue label to continue the loop
         ::continue::
-
-        -- If there is more than 1 file in the archive
-        -- then break out of the loop
-        if #files > 1 then break end
     end
 
-    -- If there are no files in the archive,
-    -- return nil, an error saying that there's
-    -- no files in the archive, and the password
-    if #files == 0 then return nil, "No files in the archive!", password end
-
-    -- If there is only one file in the archive and no directories,
-    -- then return true, the error message, and the password
-    if #files == 1 and #directories == 0 then
-        return true, error_message, password
-    end
-
-    -- Otherwise, return false, the error message and the password
-    return false, error_message, password
+    -- Return the list of files, the list of directories,
+    -- the error message, and the password
+    return files, directories, error_message, password
 end
 
 -- Function to get a temporary name.
@@ -1422,7 +1458,7 @@ local function move_extracted_items_to_archive_parent_directory(
             temporary_directory_url,
             "dir_all",
             move_successful,
-            "Failed to get a unique name for to move the extracted items to",
+            "Failed to get a unique name to move the extracted items to",
             extracted_items_path
         )
     end
@@ -1463,20 +1499,18 @@ local function move_extracted_items_to_archive_parent_directory(
 end
 
 --- The function to extract an archive.
---- This function returns 2 values:
---- 1. A boolean to indicate if the extraction of the archive was successful
---- 2. An error message if the extraction was unsuccessful
---- 3. The file path indicating the directory to change to, which can be nil
----@param archive_path string
----@param config Configuration
----@return boolean successful A boolean indicating extraction success
----@return string|nil error_message An error message if extraction failed
----@return string|nil extracted_items_path The path of the extracted items
-local function extract_archive(archive_path, config)
+---@param archive_path string The path to the archive
+---@param config Configuration The configuration object
+---@param has_only_one_file boolean Whether the archive has only one file
+---@param initial_password string|nil The initial password to try
+---@return ExtractionResult extraction_results The results of the extraction
+local function extract_archive(
+    archive_path,
+    config,
+    has_only_one_file,
+    initial_password
+)
     --
-
-    -- Initialise the extract files only flag to false
-    local extract_files_only = false
 
     -- Initialise the successful variable to false
     local successful = false
@@ -1484,25 +1518,8 @@ local function extract_archive(archive_path, config)
     -- Initialise the error message to nil
     local error_message = nil
 
-    -- Get the list of archive items, the error message and the password
-    local has_only_one_file, archive_error, correct_password =
-        archive_only_has_one_file(archive_path, config)
-
     -- Initialise the extracted items path to nil
     local extracted_items_path = nil
-
-    -- If there are no files in the archive,
-    -- then return the successful variable,
-    -- the error message, and the extracted items path
-    if has_only_one_file == nil then
-        return successful, archive_error, extracted_items_path
-    end
-
-    -- Otherwise, the archive only has one file,
-    -- then set the files only flag to true
-    if has_only_one_file then
-        extract_files_only = true
-    end
 
     -- Get the url of the temporary directory
     local temporary_directory_url = get_temporary_directory_url(archive_path)
@@ -1512,9 +1529,13 @@ local function extract_archive(archive_path, config)
     -- saying a path for the temporary directory
     -- cannot be determined, and the extracted items path
     if not temporary_directory_url then
-        return successful,
-            "Failed to determine a path for the temporary directory",
-            extracted_items_path
+        return {
+            archive_path = archive_path,
+            successful = successful,
+            extracted_items_path = extracted_items_path,
+            error_message = "Failed to determine a path "
+                .. "for the temporary directory",
+        }
     end
 
     -- Get the url of the archive
@@ -1529,7 +1550,12 @@ local function extract_archive(archive_path, config)
     -- that the archive file name is somehow empty,
     -- and the extracted items path
     if not archive_name then
-        return successful, "Archive file name is empty", extracted_items_path
+        return {
+            archive_path = archive_path,
+            successful = successful,
+            extracted_items_path = extracted_items_path,
+            error_message = "Archive file name is empty",
+        }
     end
 
     -- Create the extractor command
@@ -1539,7 +1565,7 @@ local function extract_archive(archive_path, config)
             tostring(temporary_directory_url),
             configuration,
             password,
-            extract_files_only,
+            has_only_one_file,
             ExtractBehaviour.Overwrite
         )
     end
@@ -1548,15 +1574,24 @@ local function extract_archive(archive_path, config)
     successful, error_message, _, _ = retry_extractor(
         extractor_command,
         config,
-        correct_password,
+        initial_password,
         archive_path
     )
 
     -- If the extraction was not successful,
-    -- then return whether the extraction was successful,
-    -- the error message and the extracted items path
     if not successful then
-        return successful, error_message, extracted_items_path
+        --
+
+        -- Clean up the temporary directory
+        clean_up_temporary_directory(temporary_directory_url, "dir_all")
+
+        -- Return the extraction results
+        return {
+            archive_path = archive_path,
+            successful = successful,
+            extracted_items_path = extracted_items_path,
+            error_message = error_message,
+        }
     end
 
     -- Otherwise, move the extracted items
@@ -1567,39 +1602,147 @@ local function extract_archive(archive_path, config)
             temporary_directory_url
         )
 
-    -- If the extract files only flag is false,
-    -- then return whether the extraction was successful,
-    -- the error message and the extracted items path
-    if not extract_files_only or not extracted_items_path then
-        return successful, error_message, extracted_items_path
-    end
-
-    -- If the item is not an archive
-    -- then return whether the extraction was successful,
-    -- the error message and the extract directory
-    if not is_archive_file(extracted_items_path) then
-        return successful, error_message, extracted_items_path
-    end
-
-    -- Save the extracted archive path
-    local extracted_archive_path = extracted_items_path
-
-    -- Extract the archive item
-    successful, error_message, extracted_items_path =
-        extract_archive(extracted_archive_path, config)
-
-    -- If the extraction was not successful,
-    -- then return whether the extraction was successful,
-    -- the error message and the extracted items path
-    if not successful then
-        return successful, error_message, extracted_items_path
-    end
-
-    -- Remove the archive after extracting it successfully
-    fs.remove("file", Url(extracted_archive_path))
+    -- Create the extraction results
+    local extraction_results = {
+        archive_path = archive_path,
+        successful = successful,
+        extracted_items_path = extracted_items_path,
+        error_message = error_message,
+    }
 
     -- Return the result of the extraction
-    return successful, error_message, extracted_items_path
+    return extraction_results
+end
+
+-- The function to recursively extract archives
+---@param archive_path string The path to the archive
+---@param config Configuration The configuration object
+---@return ExtractionResult[] extraction_result The list of extraction results
+---@return string|nil extracted_items_path The path to the extracted items
+local function recursively_extract_archives(archive_path, config)
+    --
+
+    -- Initialise the table of extraction results
+    ---@type ExtractionResult[]
+    local list_of_extraction_results = {}
+
+    -- Get the list of archive files and directories,
+    -- the error message and the password
+    local archive_files, archive_directories, err, password =
+        get_archive_items(archive_path, config)
+
+    -- If there are no are no archive files and directories
+    if #archive_files == 0 and #archive_directories == 0 then
+        --
+
+        -- Add that the archive is empty if there is no error message
+        table.insert(list_of_extraction_results, {
+            archive_path = archive_path,
+            successful = false,
+            error_message = err or "Archive is empty",
+        })
+
+        -- Return the list of extraction results
+        return list_of_extraction_results
+    end
+
+    -- Get if the archive has only one file
+    local archive_has_only_one_file = #archive_files == 1
+        and #archive_directories == 0
+
+    -- Extract the given archive
+    local extraction_results = extract_archive(
+        archive_path,
+        config,
+        archive_has_only_one_file,
+        password
+    )
+
+    -- Add the extraction results to the list of extraction results
+    table.insert(list_of_extraction_results, extraction_results)
+
+    -- Get the extracted items path
+    local extracted_items_path = extraction_results.extracted_items_path
+
+    -- If the extraction of the archive isn't successful,
+    -- or if the extracted items path is nil,
+    -- or if the user does not want to extract archives recursively,
+    -- return the list of extraction results
+    if
+        not extraction_results.successful
+        or not extracted_items_path
+        or not config.extract_archives_recursively
+    then
+        return list_of_extraction_results, extracted_items_path
+    end
+
+    -- Get the url of the extracted items path
+    local extracted_items_url = Url(extracted_items_path)
+
+    -- Initialise the base url for the extracted items
+    local base_url = extracted_items_url
+
+    -- Get the parent directory of the extracted items path
+    local parent_directory_url = extracted_items_url:parent()
+
+    -- If the parent directory doesn't exist,
+    -- then return the list of extraction results
+    if not parent_directory_url then return list_of_extraction_results end
+
+    -- If the archive has only one file
+    if archive_has_only_one_file then
+        --
+
+        -- Set the base url to the parent directory of the extracted items path
+        base_url = parent_directory_url
+    end
+
+    -- Iterate over the archive files
+    for _, file in ipairs(archive_files) do
+        --
+
+        -- Get the file extension of the file
+        local file_extension = file:match(file_extension_pattern)
+
+        -- If the file extension is not found, then skip the file
+        if not file_extension then goto continue end
+
+        -- If the file extension is not an archive file extension, skip the file
+        if not is_archive_file_extension(file_extension) then goto continue end
+
+        -- Otherwise, get the full url to the archive
+        local full_archive_url = base_url:join(file)
+
+        -- Get the full path to the archive
+        local full_archive_path = tostring(full_archive_url)
+
+        -- If the file is not an archive, skip the file
+        if not is_archive_file(full_archive_path) then goto continue end
+
+        -- Otherwise, recursively extract the archive
+        local archive_extraction_results, extracted_archive_path =
+            recursively_extract_archives(full_archive_path, config)
+
+        -- Merge the results with the existing list of extraction results
+        list_of_extraction_results =
+            merge_tables(list_of_extraction_results, archive_extraction_results)
+
+        -- If the archive has only one file,
+        -- update the extracted items path
+        -- to the extracted archive path
+        if archive_has_only_one_file then
+            extracted_items_path = extracted_archive_path
+        end
+
+        -- Remove the archive file after extracting it
+        fs.remove("file", full_archive_url)
+
+        -- The label the continue the loop
+        ::continue::
+    end
+
+    -- Return the list of extraction results and the extracted items path
+    return list_of_extraction_results, extracted_items_path
 end
 
 -- Function to handle the open command
@@ -1671,19 +1814,23 @@ local function handle_open(args, config, command_table)
     if not archive_path then return end
 
     -- Run the function to extract the archive
-    local extract_successful, err, extracted_items_path =
-        extract_archive(archive_path, config)
+    local extraction_results, extracted_items_path =
+        recursively_extract_archives(archive_path, config)
 
-    -- If the extraction of the archive isn't successful,
-    -- notify the user and exit the function
-    if not extract_successful then
-        return ya.notify(merge_tables(DEFAULT_NOTIFICATION_OPTIONS, {
-            content = "Failed to extract archive at: "
-                .. archive_path
-                .. "\nError: "
-                .. err,
-            level = "error",
-        }))
+    -- Iterate over the extraction results
+    for _, extraction_result in ipairs(extraction_results) do
+        --
+
+        -- If the extraction is not successful, notify the user
+        if not extraction_result.successful then
+            ya.notify(merge_tables(DEFAULT_NOTIFICATION_OPTIONS, {
+                content = "Failed to extract archive at: "
+                    .. extraction_result.archive_path
+                    .. "\nError: "
+                    .. extraction_result.error_message,
+                level = "error",
+            }))
+        end
     end
 
     -- If the extracted items path is nil,
