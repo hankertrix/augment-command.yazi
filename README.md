@@ -473,7 +473,7 @@ For a full configuration example,
 you can take a look at
 [my `keymap.toml` file](https://github.com/hankertrix/Dotfiles/blob/master/.config/yazi/keymap.toml).
 
-## Licence
+## [Licence](./LICENSE)
 
-This plugin is licenced under the GNU AGPL v3 licence.
-You can view the full licence in the `LICENSE` file.
+This plugin is licenced under the [GNU AGPL v3 licence](./LICENSE).
+You can view the full licence in the [`LICENSE`](./LICENSE) file.
