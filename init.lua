@@ -1970,10 +1970,6 @@ local function handle_yazi_command(command, args)
 
         -- Emit the command with the hovered option
         ya.manager_emit(command, merge_tables(args, { hovered = true }))
-
-    -- Otherwise, exit the function
-    else
-        return
     end
 end
 
