@@ -944,11 +944,11 @@ local function retry_extractor(
 
     -- Initialise the initial password prompt
     local initial_password_prompt =
-    "Archive is encrypted, please enter the password:"
+        "Archive is encrypted, please enter the password:"
 
     -- Initialise the wrong password prompt
     local wrong_password_prompt =
-    "Wrong password, please enter another password:"
+        "Wrong password, please enter another password:"
 
     -- Iterate over the number of times to try the extraction
     for tries = 0, total_number_of_tries do
@@ -2086,11 +2086,11 @@ local function fix_bat_default_pager_shell_command(command)
     -- when replacing the less command when it is quoted
     local modified_command, replacement_count = command:gsub(
         "("
-        .. bat_command_with_pager_pattern
-        .. "['\"]+%s*"
-        .. ")"
-        .. "less"
-        .. "(%s*['\"]+)",
+            .. bat_command_with_pager_pattern
+            .. "['\"]+%s*"
+            .. ")"
+            .. "less"
+            .. "(%s*['\"]+)",
         "%1" .. bat_default_pager_command_without_f_flag .. "%2"
     )
 
