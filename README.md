@@ -1,4 +1,3 @@
-# augment-command.yazi
 
 A [Yazi](https://github.com/sxyazi/yazi)
 plugin that enhances Yazi's default commands.
@@ -464,7 +463,7 @@ then it will operate on the selected items.
   is a directory, or if **all** the selected items are directories.
   This makes the pager command less annoying as it will not
   try to open a directory and then immediately fail with an error,
-  causing a flash and Yazi to send a notification.
+  causing a flash and causing Yazi to send a notification.
 
 ## Usage
 
