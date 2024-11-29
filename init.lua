@@ -50,8 +50,10 @@ local Commands = {
     Leave = "leave",
     Rename = "rename",
     Remove = "remove",
-    Paste = "paste",
     Shell = "shell",
+    Paste = "paste",
+    TabCreate = "tab_create",
+    TabSwitch = "tab_switch",
     Arrow = "arrow",
     ParentArrow = "parent-arrow",
     Editor = "editor",
@@ -74,6 +76,8 @@ local ExtractBehaviour = {
 ---@field default_item_group_for_prompt ItemGroup
 ---@field smart_enter boolean
 ---@field smart_paste boolean
+---@field smart_tab_create boolean
+---@field smart_tab_switch boolean
 ---@field enter_archives boolean
 ---@field extract_retries number
 ---@field extract_archives_recursively boolean
@@ -89,6 +93,8 @@ local DEFAULT_CONFIG = {
     default_item_group_for_prompt = ItemGroup.Hovered,
     smart_enter = true,
     smart_paste = false,
+    smart_tab_create = false,
+    smart_tab_switch = false,
     enter_archives = true,
     extract_retries = 3,
     extract_archives_recursively = true,
@@ -1971,34 +1977,6 @@ local function handle_yazi_command(command, args)
     end
 end
 
--- Function to handle the paste command
----@param args Arguments
----@param config Configuration
----@return nil
-local function handle_paste(args, config)
-    --
-
-    -- If the hovered item is a directory and smart paste is wanted
-    if hovered_item_is_dir() and (config.smart_paste or args.smart) then
-        --
-
-        -- Enter the directory
-        ya.manager_emit("enter", {})
-
-        -- Paste the items inside the directory
-        ya.manager_emit("paste", args)
-
-        -- Leave the directory
-        ya.manager_emit("leave", {})
-
-        -- Exit the function
-        return
-    end
-
-    -- Otherwise, just paste the items inside the current directory
-    ya.manager_emit("paste", args)
-end
-
 -- Function to remove the F flag from the less command
 ---@param command string
 ---@return string command The command with the F flag removed
@@ -2238,6 +2216,120 @@ local function handle_shell(args, _, _, exit_if_directory)
     ya.manager_emit("shell", args)
 end
 
+-- Function to handle the paste command
+---@param args Arguments
+---@param config Configuration
+---@return nil
+local function handle_paste(args, config)
+    --
+
+    -- If the hovered item is not a directory or smart paste is not wanted
+    if not hovered_item_is_dir() and not (config.smart_paste or args.smart) then
+        --
+
+        -- Just paste the items inside the current directory
+        -- and exit the function
+        return ya.manager_emit("paste", args)
+    end
+
+    -- Otherwise, enter the directory
+    ya.manager_emit("enter", {})
+
+    -- Paste the items inside the directory
+    ya.manager_emit("paste", args)
+
+    -- Leave the directory
+    ya.manager_emit("leave", {})
+end
+
+-- The function to execute the tab create command
+---@param state any
+---@param args Arguments
+---@return nil
+local execute_tab_create = ya.sync(function(state, args)
+    --
+
+    -- Get the hovered item
+    local hovered_item = cx.active.current.hovered
+
+    -- Get if the hovered item is a directory
+    local hovered_item_is_directory = hovered_item and hovered_item.cha.is_dir
+
+    -- If the hovered item is a directory,
+    -- and the user wants to create a tab
+    -- in the hovered directory
+    if
+        hovered_item_is_directory
+        and (state.config.smart_tab_create or args.smart)
+    then
+        --
+
+        -- Set the arguments to the url of the hovered item
+        args = { hovered_item.url }
+    end
+
+    -- Emit the command to create a new tab with the arguments
+    ya.manager_emit("tab_create", args)
+end)
+
+-- Function to handle the tab create command
+---@param args Arguments
+---@return nil
+local function handle_tab_create(args)
+    --
+
+    -- Call the function to execute the tab create command
+    execute_tab_create(args)
+end
+
+-- Function to execute the tab switch command
+---@param state any
+---@param args Arguments
+---@return nil
+local execute_tab_switch = ya.sync(function(state, args)
+    --
+
+    -- Get the tab index
+    local tab_index = args[1]
+
+    -- If no tab index is given, exit the function
+    if not tab_index then return end
+
+    -- If the user doesn't want to create tabs
+    -- when switching to a new tab,
+    -- or the tab index is not given,
+    -- then just call the tab switch command
+    -- and exit the function
+    if not (state.config.smart_tab_switch or args.smart) then
+        return ya.manager_emit("tab_switch", args)
+    end
+
+    -- Get the number of tabs currently open
+    local number_of_open_tabs = #cx.tabs
+
+    -- Iterate from the number of current open tabs
+    -- to the given tab number
+    for _ = number_of_open_tabs, tab_index do
+        --
+
+        -- Call the tab create command
+        ya.manager_emit("tab_create", { current = true })
+    end
+
+    -- Switch to the given tab index
+    ya.manager_emit("tab_switch", args)
+end)
+
+-- Function to handle the tab switch command
+---@param args Arguments
+---@return nil
+local function handle_tab_switch(args, config)
+    --
+
+    -- Call the function to execute the tab switch command
+    execute_tab_switch(args)
+end
+
 -- Function to do the wraparound for the arrow command
 ---@param _ any
 ---@param args Arguments
@@ -2330,7 +2422,7 @@ end)
 ---@param state any
 ---@param args Arguments
 ---@return nil
-local execute_parent_arrow_command = ya.sync(function(state, args)
+local execute_parent_arrow = ya.sync(function(state, args)
     --
 
     -- Gets the parent directory
@@ -2444,7 +2536,7 @@ local function handle_parent_arrow(args)
 
     -- Call the function to execute the parent arrow command
     -- with the arguments given
-    execute_parent_arrow_command(args)
+    execute_parent_arrow(args)
 end
 
 -- Function to handle the editor command
@@ -2534,8 +2626,10 @@ local function run_command_func(command, args, config)
         [Commands.Remove] = function(_)
             handle_yazi_command("remove", args)
         end,
-        [Commands.Paste] = handle_paste,
         [Commands.Shell] = handle_shell,
+        [Commands.Paste] = handle_paste,
+        [Commands.TabCreate] = handle_tab_create,
+        [Commands.TabSwitch] = handle_tab_switch,
         [Commands.Arrow] = handle_arrow,
         [Commands.ParentArrow] = handle_parent_arrow,
         [Commands.Editor] = handle_editor,
