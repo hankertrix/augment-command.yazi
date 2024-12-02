@@ -2123,9 +2123,9 @@ end
 -- Function to handle a shell command
 ---@param args Arguments The arguments passed to the plugin
 ---@param _ any
----@param exit_if_directory boolean|nil Whether to exit when all are directories
+---@param exit_if_dir boolean|nil Whether to exit when all are directories
 ---@return nil
-local function handle_shell(args, _, _, exit_if_directory)
+local function handle_shell(args, _, _, exit_if_dir)
     --
 
     -- Get the first item of the arguments given
@@ -2147,11 +2147,11 @@ local function handle_shell(args, _, _, exit_if_directory)
     -- If the exit if directory flag is not given,
     -- and the arguments contain the
     -- exit if directory flag
-    if not exit_if_directory and args.exit_if_directory then
+    if not exit_if_dir and args.exit_if_dir then
         --
 
         -- Set the exit if directory flag to true
-        exit_if_directory = true
+        exit_if_dir = true
     end
 
     -- If the item group is the selected items
@@ -2159,7 +2159,7 @@ local function handle_shell(args, _, _, exit_if_directory)
         --
 
         -- If the exit if directory flag is passed
-        if exit_if_directory then
+        if exit_if_dir then
             --
 
             -- Initialise the number of files
@@ -2199,7 +2199,7 @@ local function handle_shell(args, _, _, exit_if_directory)
         -- If the exit if directory flag is passed,
         -- and the hovered item is a directory,
         -- then exit the function
-        if exit_if_directory and hovered_item_is_dir() then return end
+        if exit_if_dir and hovered_item_is_dir() then return end
 
         -- Replace the shell variable in the command
         -- with the quoted path of the hovered item

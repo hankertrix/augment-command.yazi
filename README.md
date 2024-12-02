@@ -247,7 +247,7 @@ then it will operate on the selected items.
   desc = "Open the pager"
   ```
 
-- `--exit-if-directory` flag to stop the shell command given
+- `--exit-if-dir` flag to stop the shell command given
   from executing if the item group consists only of directories.
   For example, if the item group is the hovered item, then
   the shell command will not be executed if the hovered item
@@ -263,7 +263,7 @@ then it will operate on the selected items.
 
   [[manager.prepend_keymap]]
   on = [ "i" ]
-  run = '''plugin augment-command --args="shell '$PAGER $@' --block --confirm --exit-if-directory"'''
+  run = '''plugin augment-command --args="shell '$PAGER $@' --block --confirm --exit-if-dir"'''
   desc = "Open the pager"
   ```
 
