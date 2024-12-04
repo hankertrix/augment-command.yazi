@@ -157,6 +157,7 @@ local ARCHIVE_MIME_TYPES = {
     "application/7z-compressed",
     "application/rar-compressed",
     "application/rar",
+    "application/vnd.rar",
     "application/xz",
 }
 
