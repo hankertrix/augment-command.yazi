@@ -149,6 +149,7 @@ local INPUT_OPTIONS_TABLE = {
 -- The list of archive mime types
 ---@type string[]
 local ARCHIVE_MIME_TYPES = {
+    "application/octet-stream",
     "application/zip",
     "application/gzip",
     "application/tar",
