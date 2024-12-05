@@ -5,7 +5,8 @@ plugin that enhances Yazi's default commands.
 This plugin is inspired by the
 [Yazi tips page](https://yazi-rs.github.io/docs/tips),
 the [bypass.yazi](https://github.com/Rolv-Apneseth/bypass.yazi) plugin
-and the [fast-enter.yazi](https://github.com/ourongxing/fast-enter.yazi) plugin.
+and the [fast-enter.yazi](https://github.com/ourongxing/fast-enter.yazi)
+plugin.
 
 ## Table of Contents
 
@@ -89,9 +90,11 @@ require("augment-command"):setup({
 
 However, if you would like to configure the plugin, you can add
 your desired configuration options to your `~/.config/yazi/init.lua` file
-on Linux and macOS, or your `C:\Users\USERNAME\AppData\Roaming\yazi\config\init.lua`
+on Linux and macOS, or your
+`C:\Users\USERNAME\AppData\Roaming\yazi\config\init.lua`
 file on Windows, where `USERNAME` is your Windows username.
-You can leave out configuration options that you would like to be left as default.
+You can leave out configuration options that you would
+like to be left as default.
 An example configuration is shown below:
 
 ```lua
@@ -141,7 +144,8 @@ then it will operate on the selected items.
 - Automatically extracts and enters archive files,
   with support for skipping directories
   that contain only one subdirectory in the extracted archive.
-  This can be disabled by setting `enter_archives` to `false` in the configuration.
+  This can be disabled by setting `enter_archives` to `false`
+  in the configuration.
   This feature requires the
   [`7z` or `7zz` command](https://github.com/p7zip-project/p7zip)
   to be present to extract the archives.
@@ -368,8 +372,8 @@ then it will operate on the selected items.
   i.e. if you have set the
   [`sort_dir_first`](https://yazi-rs.github.io/docs/configuration/yazi#manager.sort_dir_first)
   to `true` in your `~/.config/yazi/yazi.toml` file on Linux and macOS,
-  or your `C:\Users\USERNAME\AppData\Roaming\yazi\config\yazi.toml` on Windows,
-  like so:
+  or your `C:\Users\USERNAME\AppData\Roaming\yazi\config\yazi.toml`
+  on Windows, like so:
 
   ```toml
   # ~/.config/yazi/yazi.toml on Linux and macOS
@@ -449,13 +453,15 @@ then it will operate on the selected items.
 
 ### Editor (`editor`)
 
-- The `editor` command opens the default editor set by the `$EDITOR` environment variable.
+- The `editor` command opens the default editor set by the
+  `$EDITOR` environment variable.
 - The command is also augmented as stated in
   [this section above](#what-about-the-commands-are-augmented).
 
 ### Pager (`pager`)
 
-- The `pager` command opens the default pager set by the `$PAGER` environment variable.
+- The `pager` command opens the default pager set by the
+  `$PAGER` environment variable.
 - The command is also augmented as stated in
   [this section above](#what-about-the-commands-are-augmented).
 - The `pager` command will also skip opening directories, as the pager
@@ -495,7 +501,8 @@ run = "plugin augment-command --args='enter'"
 desc = "Enter a directory and skip directories with only a single subdirectory"
 ```
 
-All the default arguments, flags and options provided by Yazi are also supported, for example:
+All the default arguments, flags and options provided by Yazi
+are also supported, for example:
 
 ```toml
 # ~/.config/yazi/keymap.toml on Linux and macOS
@@ -534,7 +541,7 @@ For a full configuration example,
 you can take a look at
 [my `keymap.toml` file](https://github.com/hankertrix/Dotfiles/blob/master/.config/yazi/keymap.toml).
 
-## [Licence](./LICENSE)
+## [Licence](LICENSE)
 
-This plugin is licenced under the [GNU AGPL v3 licence](./LICENSE).
-You can view the full licence in the [`LICENSE`](./LICENSE) file.
+This plugin is licenced under the [GNU AGPL v3 licence](LICENSE).
+You can view the full licence in the [`LICENSE`](LICENSE) file.
