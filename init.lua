@@ -149,7 +149,6 @@ local INPUT_OPTIONS_TABLE = {
 -- The list of archive mime types
 ---@type string[]
 local ARCHIVE_MIME_TYPES = {
-    "application/octet-stream",
     "application/zip",
     "application/gzip",
     "application/tar",
@@ -158,8 +157,15 @@ local ARCHIVE_MIME_TYPES = {
     "application/7z-compressed",
     "application/rar-compressed",
     "application/rar",
-    "application/vnd.rar",
     "application/xz",
+
+    -- Bug in file(1) that classifies
+    -- some zip archives as a data stream,
+    -- hopefully this can be removed in the future.
+    --
+    -- Link to bug report:
+    -- https://bugs.astron.com/view.php?id=571
+    "application/octet-stream",
 }
 
 -- The list of archive file extensions
@@ -175,13 +181,25 @@ local ARCHIVE_FILE_EXTENSIONS = {
     "xz",
 }
 
+-- The list of mime type prefixes to remove
+--
+-- The prefixes are used in a lua pattern
+-- to match on the mime type, so special
+-- characters need to be escaped
+---@type string[]
+local MIME_TYPE_PREFIXES_TO_REMOVE = {
+    "x%-",
+    "vnd%.",
+}
+
 -- The pattern to get the double dash from the front of the argument
 ---@type string
 local double_dash_pattern = "^%-%-"
 
--- The pattern to get the mime type without the "x-" prefix
+-- The pattern template to get the mime type without a prefix
 ---@type string
-local get_mime_type_without_x_prefix_pattern = "^(%a-)/x%-([%-%d%a]-)$"
+local get_mime_type_without_prefix_template_pattern =
+    "^(%%a-)/%s([%%-%%d%%a]-)$"
 
 -- The pattern to get the information from an archive item
 ---@type string
@@ -543,6 +561,38 @@ local function initialise_plugin(opts)
     return config
 end
 
+-- Function to standardise the mime type of a file.
+-- This function will follow what Yazi does to standardise
+-- mime types returned by the file command.
+---@param mime_type string The mime type of the file
+---@return string standardised_mime_type The standardised mime type of the file
+local function standardise_mime_type(mime_type)
+    --
+
+    -- Trim the whitespace from the mime type
+    local trimmed_mime_type = string_trim(mime_type)
+
+    -- Iterate over the mime type prefixes to remove
+    for _, prefix in ipairs(MIME_TYPE_PREFIXES_TO_REMOVE) do
+        --
+
+        -- Get the pattern to remove the mime type prefix
+        local pattern =
+            get_mime_type_without_prefix_template_pattern:format(prefix)
+
+        -- Remove the prefix from the mime type
+        local mime_type_without_prefix, replacement_count =
+            trimmed_mime_type:gsub(pattern, "%1/%2")
+
+        -- If the replacement count is greater than zero,
+        -- return the mime type without the prefix
+        if replacement_count > 0 then return mime_type_without_prefix end
+    end
+
+    -- Return the mime type with whitespace removed
+    return trimmed_mime_type
+end
+
 -- Function to check if a given mime type is an archive
 ---@param mime_type string|nil The mime type of the file
 ---@return boolean is_archive Whether the mime type is an archive
@@ -552,14 +602,11 @@ local function is_archive_mime_type(mime_type)
     -- If the mime type is nil, return false
     if not mime_type then return false end
 
-    -- Trim the whitespace from the mime type
-    mime_type = string_trim(mime_type)
-
-    -- Remove the "x-" prefix from the mime type
-    mime_type = mime_type:gsub(get_mime_type_without_x_prefix_pattern, "%1/%2")
+    -- Standardise the mime type
+    local standardised_mime_type = standardise_mime_type(mime_type)
 
     -- Get if the mime type is an archive
-    local is_archive = list_contains(ARCHIVE_MIME_TYPES, mime_type)
+    local is_archive = list_contains(ARCHIVE_MIME_TYPES, standardised_mime_type)
 
     -- Return if the mime type is an archive
     return is_archive
