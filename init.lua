@@ -2274,8 +2274,8 @@ end
 local function handle_paste(args, config)
     --
 
-    -- If the hovered item is not a directory or smart paste is not wanted
-    if not hovered_item_is_dir() and not (config.smart_paste or args.smart) then
+    -- If the hovered item is a directory or smart paste is not wanted
+    if hovered_item_is_dir() and not (config.smart_paste or args.smart) then
         --
 
         -- Just paste the items inside the current directory
