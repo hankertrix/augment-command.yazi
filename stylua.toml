@@ -5,7 +5,7 @@ indent_type = "Spaces"
 indent_width = 4
 quote_style = "AutoPreferDouble"
 call_parentheses = "Always"
-collapse_simple_statement = "ConditionalOnly"
+collapse_simple_statement = "Always"
 
 [sort_requires]
 enabled = false
