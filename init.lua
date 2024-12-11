@@ -6,12 +6,51 @@
 -- The type for the arguments
 ---@alias Arguments table<string|number, string|number|boolean>
 
+-- The type for the job object
+---@alias Job string[] | Arguments
+
+-- The type for the input event
+--
+-- The event for the input function
+-- can be one of 3 values:
+--     0: Unknown error
+--     1: The user has confirmed the input
+--     2: The user has cancelled the input
+--     3: The user has changed the input (only if realtime is true)
+---@alias InputEvent integer
+
 -- The type for the extractor command
 ---@alias ExtractorFunction fun(
 ---    password: string|nil,
 ---    configuration: Configuration): CommandOutput|nil, integer
 
 -- Custom types
+
+-- The type of the user configuration table
+-- The user configuration for the plugin
+---@class (exact) UserConfiguration
+---@field prompt boolean Whether or not to prompt the user
+---@field default_item_group_for_prompt ItemGroup The default prompt item group
+---@field smart_enter boolean Whether to use smart enter
+---@field smart_paste boolean Whether to use smart paste
+---@field smart_tab_create boolean Whether to use smart tab create
+---@field smart_tab_switch boolean Whether to use smart tab switch
+---@field enter_archives boolean Whether to enter archives
+---@field extract_retries number How many times to retry extracting
+---@field extract_archives_recursively boolean Re-extract inner archives or not
+---@field must_have_hovered_item boolean Whether to stop when no item is hovered
+---@field skip_single_subdirectory_on_enter boolean Skip single subdir on enter
+---@field skip_single_subdirectory_on_leave boolean Skip single subdir on leave
+---@field ignore_hidden_items boolean Whether to ignore hidden items
+---@field wraparound_file_navigation boolean Have wraparound navigation or not
+---@field sort_directories_first boolean Informs the plugin if dirs are first
+
+-- The additional data passed to the function to initialise the configuration
+---@class (exact) AdditionalData
+---@field extractor_command string The extractor shell command, like 7z
+
+-- The full configuration for the plugin
+---@class (exact) Configuration: UserConfiguration, AdditionalData
 
 -- The type for the state
 ---@class (exact) State
@@ -83,24 +122,10 @@ local ExtractBehaviour = {
     RenameExisting = "-aot",
 }
 
+-- The user configuration for the plugin
+
 -- The default configuration for the plugin
----@class (exact) Configuration
----@field prompt boolean
----@field default_item_group_for_prompt ItemGroup
----@field smart_enter boolean
----@field smart_paste boolean
----@field smart_tab_create boolean
----@field smart_tab_switch boolean
----@field enter_archives boolean
----@field extract_retries number
----@field extract_archives_recursively boolean
----@field must_have_hovered_item boolean
----@field skip_single_subdirectory_on_enter boolean
----@field skip_single_subdirectory_on_leave boolean
----@field ignore_hidden_items boolean
----@field wraparound_file_navigation boolean
----@field sort_directories_first boolean
----@field extractor_command string
+---@type UserConfiguration
 local DEFAULT_CONFIG = {
     prompt = false,
     default_item_group_for_prompt = ItemGroup.Hovered,
@@ -340,66 +365,60 @@ local function parse_args(args)
     local parsed_arguments = {}
 
     -- Iterates over the arguments given
-    for index, argument in ipairs(args) do
+    for _, argument in ipairs(args) do
         --
 
-        -- If the index isn't 1,
-        -- which means it is the arguments to the command given
-        if index ~= 1 then
+        -- If the argument doesn't start with a double dash
+        if not argument:find(double_dash_pattern) then
             --
 
-            -- If the argument doesn't start with a double dash
-            if not argument:find(double_dash_pattern) then
-                --
+            -- Try to convert the argument to a number
+            local number_argument = tonumber(argument)
 
-                -- Try to convert the argument to a number
-                local number_argument = tonumber(argument)
+            -- Add the argument to the list of options
+            table.insert(
+                parsed_arguments,
+                number_argument and number_argument or argument
+            )
 
-                -- Add the argument to the list of options
-                table.insert(
-                    parsed_arguments,
-                    number_argument and number_argument or argument
-                )
-
-                -- Continue the loop
-                goto continue
-            end
-
-            -- Otherwise, remove the double dash from the front of the argument
-            local cleaned_argument = argument:gsub(double_dash_pattern, "")
-
-            -- Replace all of the dashes with underscores
-            cleaned_argument = cleaned_argument:gsub("%-", "_")
-
-            -- Split the arguments at the = character
-            local arg_name, arg_value =
-                table.unpack(string_split(cleaned_argument, "="))
-
-            -- If the argument value is nil
-            if arg_value == nil then
-                --
-
-                -- Set the argument name to the cleaned argument
-                arg_name = cleaned_argument
-
-                -- Set the argument value to true
-                arg_value = true
-
-            -- Otherwise
-            else
-                --
-
-                -- Try to convert the argument value to a number
-                local number_arg_value = tonumber(arg_value)
-
-                -- Set the argument value to the number
-                -- if the the argument value can be converted to a number
-                arg_value = number_arg_value and number_arg_value or arg_value
-            end
-
-            -- Add the argument name and value to the options
-            parsed_arguments[arg_name] = arg_value
+            -- Continue the loop
+            goto continue
         end
+
+        -- Otherwise, remove the double dash from the front of the argument
+        local cleaned_argument = argument:gsub(double_dash_pattern, "")
+
+        -- Replace all of the dashes with underscores
+        cleaned_argument = cleaned_argument:gsub("%-", "_")
+
+        -- Split the arguments at the = character
+        local arg_name, arg_value =
+            table.unpack(string_split(cleaned_argument, "="))
+
+        -- If the argument value is nil
+        if arg_value == nil then
+            --
+
+            -- Set the argument name to the cleaned argument
+            arg_name = cleaned_argument
+
+            -- Set the argument value to true
+            arg_value = true
+
+        -- Otherwise
+        else
+            --
+
+            -- Try to convert the argument value to a number
+            local number_arg_value = tonumber(arg_value)
+
+            -- Set the argument value to the number
+            -- if the the argument value can be converted to a number
+            arg_value = number_arg_value and number_arg_value or arg_value
+        end
+
+        -- Add the argument name and value to the options
+        parsed_arguments[arg_name] = arg_value
 
         -- The label to continue the loop
         ::continue::
@@ -409,9 +428,39 @@ local function parse_args(args)
     return parsed_arguments
 end
 
+-- Function to warn the user
+---@param warning string The warning message
+---@return nil
+local function warn_user(warning)
+    return ya.notify(merge_tables(DEFAULT_NOTIFICATION_OPTIONS, {
+        content = warning,
+        level = "warn",
+    }))
+end
+
+-- Function to show an error
+---@param error_message string The error message
+---@return nil
+local function show_error(error_message)
+    return ya.notify(merge_tables(DEFAULT_NOTIFICATION_OPTIONS, {
+        content = error_message,
+        level = "error",
+    }))
+end
+
+-- Function to get the user's input
+---@param prompt string The prompt to show to the user
+---@return string|nil user_input The user's input
+---@return InputEvent event The event for the input function
+local function get_user_input(prompt)
+    return ya.input(merge_tables(DEFAULT_INPUT_OPTIONS, {
+        title = prompt,
+    }))
+end
+
 -- Function to merge the given configuration table with the default one
----@param config Configuration|nil The configuration table to merge
----@return Configuration merged_config The merged configuration table
+---@param config UserConfiguration|nil The configuration table to merge
+---@return UserConfiguration merged_config The merged configuration table
 local function merge_configuration(config)
     --
 
@@ -458,12 +507,11 @@ local function merge_configuration(config)
     -- then return the merged configuration
     if #invalid_configuration_options <= 0 then return merged_config end
 
-    -- Otherwise, notify the user of the invalid configuration options
-    ya.notify(merge_tables(DEFAULT_NOTIFICATION_OPTIONS, {
-        content = "Invalid configuration options: "
-            .. table.concat(invalid_configuration_options, ", "),
-        level = "warn",
-    }))
+    -- Otherwise, warn the user of the invalid configuration options
+    warn_user(
+        "Invalid configuration options: "
+            .. table.concat(invalid_configuration_options, ", ")
+    )
 
     -- Return the merged configuration
     return merged_config
@@ -472,7 +520,7 @@ end
 -- Function to initialise the configuration
 ---@param state State The state object
 ---@param user_config Configuration|nil The configuration object
----@param additional_data table<string, string|number|boolean> Additional data
+---@param additional_data AdditionalData The additional data
 ---@return Configuration config The initialised configuration object
 local initialise_config = ya.sync(function(state, user_config, additional_data)
     --
@@ -489,7 +537,7 @@ end)
 
 -- The function to try if a shell command exists
 ---@param shell_command string The shell command to check
----@return boolean Whether the shell command exists
+---@return boolean shell_command_exists Whether the shell command exists
 local function shell_command_exists(shell_command)
     --
 
@@ -811,9 +859,12 @@ local function prompt_for_desired_item_group()
     if default_item_group == ItemGroup.None then default_item_group = nil end
 
     -- Prompt the user for their input
-    local user_input, event = ya.input(merge_tables(DEFAULT_INPUT_OPTIONS, {
-        title = "Operate on hovered or selected items? " .. input_options,
-    }))
+    local user_input, event = get_user_input(
+        "Operate on hovered or selected items? " .. input_options
+    )
+
+    -- If the user input is empty, then exit the function
+    if not user_input then return end
 
     -- Lowercase the user's input
     user_input = user_input:lower()
@@ -1067,14 +1118,14 @@ local function retry_extractor(
         end
 
         -- Ask the user for the password
-        local user_input, event = ya.input(merge_tables(DEFAULT_INPUT_OPTIONS, {
-            title = tries == 0 and initial_password_prompt
-                or wrong_password_prompt,
-        }))
+        local user_input, event = get_user_input(
+            tries == 0 and initial_password_prompt or wrong_password_prompt
+        )
 
         -- If the user has confirmed the input,
+        -- and the user input is not nil,
         -- set the password to the user's input
-        if event == 1 then
+        if event == 1 and user_input ~= nil then
             password = user_input
 
         -- Otherwise, return false, the error message,
@@ -1885,13 +1936,12 @@ local function handle_open(args, config, command_table)
 
         -- If the extraction is not successful, notify the user
         if not extraction_result.successful then
-            ya.notify(merge_tables(DEFAULT_NOTIFICATION_OPTIONS, {
-                content = "Failed to extract archive at: "
+            show_error(
+                "Failed to extract archive at: "
                     .. extraction_result.archive_path
                     .. "\nError: "
-                    .. extraction_result.error_message,
-                level = "error",
-            }))
+                    .. extraction_result.error_message
+            )
         end
     end
 
@@ -2688,15 +2738,8 @@ local function run_command_func(command, args, config)
 
     -- If the function isn't found, notify the user and exit the function
     if not command_func then
-        return ya.notify(merge_tables(DEFAULT_NOTIFICATION_OPTIONS, {
-            content = "Unknown command: " .. command,
-            level = "error",
-        }))
+        return show_error("Unknown command: " .. command)
     end
-
-    -- Parse the arguments and set it to the args variable
-    ---@type Arguments
-    args = parse_args(args)
 
     -- Otherwise, call the function for the command
     command_func(args, config, command_table)
@@ -2715,13 +2758,16 @@ end
 
 -- The function to be called to use the plugin
 ---@param _ any
----@param args string[] The list of string arguments given by Yazi
+---@param job Job The job object given by Yazi
 ---@return nil
-local function entry(_, args)
+local function entry(_, job)
     --
 
+    -- Get the arguments passed to the plugin
+    local args = (job.args or {}).args or parse_args(job)
+
     -- Gets the command passed to the plugin
-    local command = args[1]
+    local command = table.remove(args, 1)
 
     -- If the command isn't given, exit the function
     if not command then return end
