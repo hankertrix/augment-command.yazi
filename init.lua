@@ -7,7 +7,7 @@
 ---@alias Arguments table<string|number, string|number|boolean>
 
 -- The type for the job object
----@alias Job string[] | Arguments
+---@alias Job string[] | { args: Arguments }
 
 -- The type for the input event
 --
@@ -2745,6 +2745,39 @@ local function run_command_func(command, args, config)
     command_func(args, config, command_table)
 end
 
+-- The function to handle the arguments from the job object
+---@param job Job The job object given by Yazi
+---@return Arguments args The arguments from the job object
+local function get_args_from_job(job)
+    --
+
+    -- If the job object has no argument field
+    -- that means the arguments are given
+    -- as a list of strings (Yazi v0.3.x and below)
+    if not job.args then
+        return parse_args(job)
+
+    -- Otherwise, the arguments are given as a table (Yazi v0.4.x and above)
+    else
+        --
+
+        -- Get the string arguments from the job object
+        local string_args = job.args.args
+
+        -- If the string arguments are nil,
+        -- then return the job arguments
+        if not string_args then return job.args end
+
+        -- Otherwise, if the string arguments are not a string,
+        -- return an empty table of arguments
+        if type(string_args) ~= "string" then return {} end
+
+        -- Otherwise, split the string arguments, parse them,
+        -- and return the result
+        return parse_args(string_split(string_args, " "))
+    end
+end
+
 -- The setup function to setup the plugin
 ---@param _ any
 ---@param opts Configuration|nil The options given to the plugin
@@ -2763,16 +2796,17 @@ end
 local function entry(_, job)
     --
 
-    -- Get the arguments passed to the plugin
-    local args = (job.args or {}).args or parse_args(job)
+    -- Get the arguments to the plugin
+    ---@type Arguments
+    local args = get_args_from_job(job)
 
-    -- Gets the command passed to the plugin
+    -- Get the command passed to the plugin
     local command = table.remove(args, 1)
 
     -- If the command isn't given, exit the function
     if not command then return end
 
-    -- Gets the configuration object
+    -- Get the configuration object
     local config = get_config()
 
     -- If the configuration hasn't been initialised yet,
