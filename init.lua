@@ -2374,7 +2374,7 @@ end)
 -- Function to handle the tab switch command
 ---@param args Arguments The arguments passed to the plugin
 ---@return nil
-local function handle_tab_switch(args, config)
+local function handle_tab_switch(args)
     --
 
     -- Call the function to execute the tab switch command
