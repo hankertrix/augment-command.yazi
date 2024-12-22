@@ -7,7 +7,7 @@
 ---@alias Arguments table<string|number, string|number|boolean>
 
 -- The type for the job object
----@alias Job string[] | { args: Arguments }
+---@alias Job { args: Arguments }
 
 -- The type for the input event
 --
