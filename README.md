@@ -21,7 +21,7 @@ plugin.
 
 ## Requirements
 
-- [Yazi](https://github.com/sxyazi/yazi) v0.3.0+
+- [Yazi](https://github.com/sxyazi/yazi) v0.4.2+
 - [`7z` or `7zz` command](https://github.com/p7zip-project/p7zip)
 - [`file` command](https://www.darwinsys.com/file/)
 
@@ -44,10 +44,13 @@ ya pack -u
 | ----------------------------------- | ------------------------------------- | --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `prompt`                            | `true` or `false`                     | `false`   | Create a prompt to choose between hovered and selected items when both exist. If this option is disabled, selected items will only be operated on when the hovered item is selected, otherwise the hovered item will be the default item that is operated on.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | `default_item_group_for_prompt`     | `hovered`, `selected` or `none`       | `hovered` | The default item group to operate on when the prompt is submitted without any value. This only takes effect if `prompt` is set to `true`, otherwise this option doesn't do anything. `hovered` means the hovered item is operated on, `selected` means the selected items are operated on, and `none` just cancels the operation.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
-| `smart_enter`                       | `true` or `false`                     | `true`    | Use one command to open files or enter a directory. With this option set, the `enter` and `open` commands will both call the `enter` command when a directory is hovered and call the `open` command when a regular file is hovered.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| `smart_enter`                       | `true` or `false`                     | `true`    | Use one command to open files or enter a directory. With this option set, the `enter` and `open` commands will both call the `enter` command when a directory is hovered and call the `open` command when a regular file is hovered. You can also enable this behaviour by passing the `--smart` flag to the `enter` or `open` commands.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | `smart_paste`                       | `true` or `false`                     | `false`   | Paste items into a directory without entering it. The behaviour is exactly the same as the [smart paste tip on Yazi's documentation](https://yazi-rs.github.io/docs/tips#smart-paste). Setting this option to `false` will use the default `paste` behaviour. You can also enable this behaviour by passing the `--smart` flag to the `paste` command.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | `smart_tab_create`                  | `true` or `false`                     | `false`   | Create tabs in the directory that is being hovered instead of the current directory. The behaviour is exactly the same as the [smart tab tip on Yazi's documentation](https://yazi-rs.github.io/docs/tips#smart-tab). Setting this option to `false` will use the default `tab_create` behaviour, which means you need to pass the `--current` flag to the command. You can also enable this behaviour by passing the `--smart` flag to the `tab_create` command.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | `smart_tab_switch`                  | `true` or `false`                     | `false`   | If the tab that is being switched to does not exist yet, setting this option to `true` will create all the tabs in between the current number of open tabs, and the tab that is being switched to. The behaviour is exactly the same as [this tip](https://github.com/sxyazi/yazi/issues/918#issuecomment-2058157773). Setting this option to `false` will use the default `tab_switch` behaviour. You can also enable this behaviour by passing the `--smart` flag to the `tab_switch` command.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| `open_file_after_creation`          | `true` or `false`                     | `false`   | This option determines whether the plugin will open a file after it has been created. Setting this option to `true` will cause the plugin to open created file. You can also enable this behaviour by passing the `--open` flag to the `create` command.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `enter_directory_after_creation`    | `true` or `false`                     | `false`   | This option determines whether the plugin will enter a directory after it has been created. Setting this option to `true` will cause the plugin enter the created directory. You can also enable this behaviour by passing the `--enter` flag to the `create` command.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| `use_default_create_behaviour`      | `true` or `false`                     | `false`   | This option determines whether the plugin will use the behaviour of Yazi's `create` command. Setting this option to `true` will use the behaviour of Yazi's `create` command. You can also enable this behaviour by passing the `--default-behaviour` flag to the `create` command.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | `enter_archives`                    | `true` or `false`                     | `true`    | Automatically extract and enter archive files. This option requires the [7z or 7zz command](https://github.com/p7zip-project/p7zip) to be present.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | `extract_retries`                   | An integer, like `1`, `3`, `10`, etc. | `3`       | This option determines how many times the plugin will retry opening an encrypted or password-protected archive when a wrong password is given. This value plus 1 is the total number of times the plugin will try opening an encrypted or password-protected archive.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 | `extract_archives_recursively`      | `true` or `false`                     | `true`    | This option determines whether the plugin will extract all archives inside an archive file recursively. If this option is set to `false`, archive files inside an archive will not be extracted, and you will have to manually extract them yourself.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
@@ -76,6 +79,9 @@ require("augment-command"):setup({
     smart_paste = false,
     smart_tab_create = false,
     smart_tab_switch = false,
+    open_file_after_creation = false,
+    enter_directory_after_creation = false,
+    use_default_create_behaviour = false,
     enter_archives = true,
     extract_retries = 3,
     extract_archives_recursively = true,
@@ -105,6 +111,8 @@ An example configuration is shown below:
 require("augment-command"):setup({
     prompt = true,
     default_item_group_for_prompt = "none",
+    open_file_after_creation = true,
+    enter_directory_after_creation = true,
     extract_retries = 5,
     ignore_hidden_items = true,
     wraparound_file_navigation = true,
@@ -137,6 +145,12 @@ then it will operate on the selected items.
 
 - When `smart_enter` is set to `true`,
   it calls the `enter` command when the hovered item is a directory.
+- `--smart` flag to use one command to `open` files and `enter` directories.
+  This flag will cause the `open` command to call the `enter` command when
+  the hovered item is a directory even when `smart_enter` is set to `false`.
+  This allows you to set a key to use this behaviour
+  with the `open` command instead of using it for
+  every `open` command.
 - `--no-skip` flag, which only applies
   when `smart_enter` is used as it is passed to the `enter` command.
   More details about this flag can be found at the documentation
@@ -174,6 +188,13 @@ then it will operate on the selected items.
   contain only one subdirectory when entering directories.
   This can be turned off by setting
   `skip_single_subdirectory_on_enter` to `false` in the configuration.
+- `--smart` flag to use one command to `enter` directories and `open` files.
+  This flag will cause the `enter` command to call the `open` command when
+  the selected items or the hovered item is a file,
+  even when `smart_enter` is set to `false`.
+  This allows you to set a key to use this behaviour
+  with the `enter` command instead of using it for
+  every `enter` command.
 - `--no-skip` flag. It stops the plugin from skipping directories
   that contain only one subdirectory when entering directories,
   even when `skip_single_subdirectory_on_enter` is set to `true`.
@@ -203,6 +224,46 @@ then it will operate on the selected items.
 - The `remove` command is augmented as stated in
   [this section above](#what-about-the-commands-are-augmented).
 
+### Create (`create`)
+
+- You should use Yazi's default `create` command instead of this augmented
+  `create` command if you don't want the paths without file extensions to
+  be created as directories by default, and you don't care about automatically
+  opening and entering the created file and directory respectively.
+- The `create` command has a different behaviour from Yazi's `create` command.
+  When the path given to the command doesn't have a file extension,
+  the `create` command will create a directory instead of a file,
+  unlike Yazi's `create` command. Other that this major difference,
+  the `create` command functions identically to Yazi's `create` command,
+  which means that you can use a trailing `/` on Unix-like systems
+  or `\` on Windows to create a directory. It will also recursively
+  create directories to ensure that the path given exists.
+  It also supports all the options supported by Yazi's `create` command,
+  so you can pass them to the command and expect the same behaviour.
+  However, due to the
+  [`confirm` component](https://github.com/sxyazi/yazi/issues/2082)
+  currently not being exposed to plugin developers, it uses Yazi's input
+  component to prompt for a confirmation, like in Yazi v0.3.0 and below.
+  This is not ideal, but it shouldn't happen that often and
+  hopefully wouldn't be too annoying.
+- The rationale for this behaviour is that creating a path without
+  a file extension usually means you intend to create a directory instead
+  of a file, as files usually have file extensions.
+- When `open_file_after_creation` is set to `true`, the `create` command
+  will `open` the created file. This behaviour can also be enabled by
+  passing the `--open` flag to the `create` command.
+  Likewise, when `enter_directory_after_creation` is set to `true`,
+  the `create` command will `enter` the created directory.
+  This behaviour can also be enabled by passing the `--enter` flag
+  to the `create` command.
+  To enable both behaviours with flags, just pass both the `--open` flag
+  and the `--enter` flag to the `create` command.
+- If you would like to use the behaviour of Yazi's `create` command,
+  probably because you would like to automatically open and enter the created
+  file and directory respectively, you can either set
+  `use_default_create_behaviour` to `true`,
+  or pass the `--default-behaviour` flag to the `create` command.
+
 ### Shell (`shell`)
 
 - This command runs the shell command given with the augment stated in
@@ -228,7 +289,7 @@ then it will operate on the selected items.
 
   [[manager.prepend_keymap]]
   on = [ "o" ]
-  run = 'plugin augment-command --args="shell \"$EDITOR $@\" --block --confirm"'
+  run = 'plugin augment-command --args="shell \"$EDITOR $@\" --block"'
   desc = "Open the editor"
   ```
 
@@ -242,12 +303,12 @@ then it will operate on the selected items.
 
   [[manager.prepend_keymap]]
   on = [ "o" ]
-  run = '''plugin augment-command --args='shell "$EDITOR $@" --block --confirm''''
+  run = '''plugin augment-command --args='shell "$EDITOR $@" --block''''
   desc = "Open the editor"
 
   [[manager.prepend_keymap]]
   on = [ "i" ]
-  run = '''plugin augment-command --args="shell '$PAGER $@' --block --confirm"'''
+  run = '''plugin augment-command --args="shell '$PAGER $@' --block"'''
   desc = "Open the pager"
   ```
 
@@ -267,7 +328,7 @@ then it will operate on the selected items.
 
   [[manager.prepend_keymap]]
   on = [ "i" ]
-  run = '''plugin augment-command --args="shell '$PAGER $@' --block --confirm --exit-if-dir"'''
+  run = '''plugin augment-command --args="shell '$PAGER $@' --block --exit-if-dir"'''
   desc = "Open the pager"
   ```
 
