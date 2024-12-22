@@ -600,7 +600,7 @@ in front of it, which results in
 
 For a full configuration example,
 you can take a look at
-[my `keymap.toml` file](https://github.com/hankertrix/Dotfiles/blob/master/.config/yazi/keymap.toml).
+[my `keymap.toml` file](https://github.com/hankertrix/Dotfiles/blob/main/.config/yazi/keymap.toml).
 
 ## [Licence](LICENSE)
 
