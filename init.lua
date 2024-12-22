@@ -1300,7 +1300,7 @@ end
 ---@return string temporary_name The temporary name for the item
 local function get_temporary_name(path)
     return ".tmp_"
-        .. ya.md5(string.format("extract//%s//%.10f", path, ya.time()))
+        .. ya.hash(string.format("extract//%s//%.10f", path, ya.time()))
 end
 
 -- Function to get a temporary directory url
