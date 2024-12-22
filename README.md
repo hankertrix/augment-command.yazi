@@ -235,7 +235,7 @@ then it will operate on the selected items.
   the `create` command will create a directory instead of a file,
   unlike Yazi's `create` command. Other that this major difference,
   the `create` command functions identically to Yazi's `create` command,
-  which means that you can use a trailing `/` on Unix-like systems
+  which means that you can use a trailing `/` on Linux and macOS,
   or `\` on Windows to create a directory. It will also recursively
   create directories to ensure that the path given exists.
   It also supports all the options supported by Yazi's `create` command,
