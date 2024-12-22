@@ -358,6 +358,7 @@ end
 ---@param table table The table to pop from
 ---@param key string The key to pop
 ---@param default any The default value to return if the key doesn't exist
+---@return any value The value of the key or the default value
 local function table_pop(table, key, default)
     --
 
