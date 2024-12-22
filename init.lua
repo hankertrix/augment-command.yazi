@@ -2425,10 +2425,8 @@ end
 
 -- Function to handle a shell command
 ---@param args Arguments The arguments passed to the plugin
----@param _ any
----@param exit_if_dir boolean|nil Whether to exit when all are directories
 ---@return nil
-local function handle_shell(args, _, _, exit_if_dir)
+local function handle_shell(args)
     --
 
     -- Get the first item of the arguments given
@@ -2447,15 +2445,8 @@ local function handle_shell(args, _, _, exit_if_dir)
     -- If no item group is returned, exit the function
     if not item_group then return end
 
-    -- If the exit if directory flag is not given,
-    -- and the arguments contain the
-    -- exit if directory flag
-    if not exit_if_dir and table_pop(args, "exit_if_dir", false) then
-        --
-
-        -- Set the exit if directory flag to true
-        exit_if_dir = true
-    end
+    -- Get whether the exit if directory flag is passed
+    local exit_if_dir = table_pop(args, "exit_if_dir", false)
 
     -- If the item group is the selected items
     if item_group == ItemGroup.Selected then
@@ -2851,9 +2842,8 @@ end
 
 -- Function to handle the editor command
 ---@param args Arguments The arguments passed to the plugin
----@param config Configuration The configuration object
 ---@return nil
-local function handle_editor(args, config)
+local function handle_editor(args)
     --
 
     -- Call the function to get the item group
@@ -2870,22 +2860,17 @@ local function handle_editor(args, config)
 
     -- Call the handle shell function
     -- with the editor command
-    handle_shell(
-        merge_tables({
-            editor .. " $@",
-            confirm = true,
-            block = true,
-        }, args),
-        config
-    )
+    handle_shell(merge_tables({
+        editor .. " $@",
+        block = true,
+        exit_if_dir = true,
+    }, args))
 end
 
 -- Function to handle the pager command
 ---@param args Arguments The arguments passed to the plugin
----@param config Configuration The configuration object
----@param command_table CommandTable The command table
 ---@return nil
-local function handle_pager(args, config, command_table)
+local function handle_pager(args)
     --
 
     -- Get the pager environment variable
@@ -2904,16 +2889,11 @@ local function handle_pager(args, config, command_table)
 
     -- Call the handle shell function
     -- with the pager command
-    handle_shell(
-        merge_tables({
-            pager .. " $@",
-            confirm = true,
-            block = true,
-        }, args),
-        config,
-        command_table,
-        true
-    )
+    handle_shell(merge_tables({
+        pager .. " $@",
+        block = true,
+        exit_if_dir = true,
+    }, args))
 end
 
 -- Function to run the commands given
