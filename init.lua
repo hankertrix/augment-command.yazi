@@ -11,13 +11,26 @@
 
 -- The type for the input event
 --
--- The event for the input function
--- can be one of 3 values:
+-- The event for the input function can be one of 3 values:
 --     0: Unknown error
 --     1: The user has confirmed the input
 --     2: The user has cancelled the input
 --     3: The user has changed the input (only if realtime is true)
 ---@alias InputEvent integer
+
+-- The type for the function to handle a command
+--
+-- Description of the function parameters:
+--     args: The arguments to pass to the command
+--     config: The configuration object
+--     command_table: The command table containing all the command functions
+---@alias CommandFunction fun(
+---    args: Arguments,
+---    config: Configuration,
+---    command_table: CommandTable): nil
+
+-- The type of the command table
+---@alias CommandTable table<SupportedCommands, CommandFunction>
 
 -- The type for the extractor command
 ---@alias ExtractorFunction fun(
@@ -1870,10 +1883,7 @@ local function recursively_extract_archives(archive_path, config)
 end
 
 -- Function to handle the open command
----@param args Arguments The arguments passed to the plugin
----@param config Configuration The configuration object
----@param command_table CommandTable The command table
----@return nil
+---@type CommandFunction
 local function handle_open(args, config, command_table)
     --
 
@@ -1979,10 +1989,7 @@ local function handle_open(args, config, command_table)
 end
 
 -- Function to handle the enter command
----@param args Arguments The arguments passed to the plugin
----@param config Configuration The configuration object
----@param command_table CommandTable The command table
----@return nil
+---@type CommandFunction
 local function handle_enter(args, config, command_table)
     --
 
@@ -2013,9 +2020,7 @@ local function handle_enter(args, config, command_table)
 end
 
 -- Function to handle the leave command
----@param args Arguments The arguments passed to the plugin
----@param config Configuration The configuration object
----@return nil
+---@type CommandFunction
 local function handle_leave(args, config)
     --
 
@@ -2208,9 +2213,7 @@ local function execute_create(item_url, is_directory, args, config)
 end
 
 -- Function to handle the create command
----@param args Arguments The arguments passed to the plugin
----@param config Configuration The configuration object
----@return nil
+---@type CommandFunction
 local function handle_create(args, config)
     --
 
@@ -2424,9 +2427,8 @@ local function fix_shell_command(command)
 end
 
 -- Function to handle a shell command
----@param args Arguments The arguments passed to the plugin
----@return nil
-local function handle_shell(args)
+---@type CommandFunction
+local function handle_shell(args, _, _)
     --
 
     -- Get the first item of the arguments given
@@ -2513,9 +2515,7 @@ local function handle_shell(args)
 end
 
 -- Function to handle the paste command
----@param args Arguments The arguments passed to the plugin
----@param config Configuration The configuration object
----@return nil
+---@type CommandFunction
 local function handle_paste(args, config)
     --
 
@@ -2572,8 +2572,7 @@ local execute_tab_create = ya.sync(function(state, args)
 end)
 
 -- Function to handle the tab create command
----@param args Arguments The arguments passed to the plugin
----@return nil
+---@type CommandFunction
 local function handle_tab_create(args)
     --
 
@@ -2622,8 +2621,7 @@ local execute_tab_switch = ya.sync(function(state, args)
 end)
 
 -- Function to handle the tab switch command
----@param args Arguments The arguments passed to the plugin
----@return nil
+---@type CommandFunction
 local function handle_tab_switch(args)
     --
 
@@ -2665,9 +2663,7 @@ local wraparound_arrow = ya.sync(function(_, args)
 end)
 
 -- Function to handle the arrow command
----@param args Arguments The arguments passed to the plugin
----@param config Configuration The configuration object
----@return nil
+---@type CommandFunction
 local function handle_arrow(args, config)
     --
 
@@ -2736,8 +2732,20 @@ local execute_parent_arrow = ya.sync(function(state, args)
     -- Get the offset from the arguments given
     local offset = table.remove(args, 1)
 
-    -- If the offset is not a number, then exit the function
-    if type(offset) ~= "number" then return end
+    -- Get the type of the offset
+    local offset_type = type(offset)
+
+    -- If the offset is not a number,
+    -- then show an error that the offset is not a number
+    -- and exit the function
+    if offset_type ~= "number" then
+        return show_error(
+            string.format(
+                "The given offset is not a `number`, instead it is a `%s`",
+                offset_type
+            )
+        )
+    end
 
     -- Get the number of items in the parent directory
     local number_of_items = #parent_directory.files
@@ -2830,8 +2838,7 @@ local execute_parent_arrow = ya.sync(function(state, args)
 end)
 
 -- Function to handle the parent arrow command
----@param args Arguments The arguments passed to the plugin
----@return nil
+---@type CommandFunction
 local function handle_parent_arrow(args)
     --
 
@@ -2841,9 +2848,8 @@ local function handle_parent_arrow(args)
 end
 
 -- Function to handle the editor command
----@param args Arguments The arguments passed to the plugin
----@return nil
-local function handle_editor(args)
+---@type CommandFunction
+local function handle_editor(args, config, command_table)
     --
 
     -- Call the function to get the item group
@@ -2860,17 +2866,20 @@ local function handle_editor(args)
 
     -- Call the handle shell function
     -- with the editor command
-    handle_shell(merge_tables({
-        editor .. " $@",
-        block = true,
-        exit_if_dir = true,
-    }, args))
+    handle_shell(
+        merge_tables({
+            editor .. " $@",
+            block = true,
+            exit_if_dir = true,
+        }, args),
+        config,
+        command_table
+    )
 end
 
 -- Function to handle the pager command
----@param args Arguments The arguments passed to the plugin
----@return nil
-local function handle_pager(args)
+---@type CommandFunction
+local function handle_pager(args, config, command_table)
     --
 
     -- Get the pager environment variable
@@ -2889,11 +2898,15 @@ local function handle_pager(args)
 
     -- Call the handle shell function
     -- with the pager command
-    handle_shell(merge_tables({
-        pager .. " $@",
-        block = true,
-        exit_if_dir = true,
-    }, args))
+    handle_shell(
+        merge_tables({
+            pager .. " $@",
+            block = true,
+            exit_if_dir = true,
+        }, args),
+        config,
+        command_table
+    )
 end
 
 -- Function to run the commands given
@@ -2905,7 +2918,7 @@ local function run_command_func(command, args, config)
     --
 
     -- The command table
-    ---@enum CommandTable
+    ---@type CommandTable
     local command_table = {
         [Commands.Open] = handle_open,
         [Commands.Enter] = handle_enter,
@@ -2924,6 +2937,7 @@ local function run_command_func(command, args, config)
     }
 
     -- Get the function for the command
+    ---@type CommandFunction|nil
     local command_func = command_table[command]
 
     -- If the function isn't found, notify the user and exit the function
