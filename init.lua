@@ -342,7 +342,7 @@ local function string_split(given_string, separator)
     return splitted_strings
 end
 
--- The function to trim a string
+-- Function to trim a string
 ---@param string string The string to trim
 ---@return string trimmed_string The trimmed string
 local function string_trim(string)
@@ -353,6 +353,33 @@ local function string_trim(string)
     return string:match("^%s*(.-)%s*$")
 end
 
+-- Function to parse the number arguments to the number type
+---@param args Arguments The arguments to parse
+---@return Arguments parsed_args The parsed arguments
+local function parse_number_arguments(args)
+    --
+
+    -- The parsed arguments
+    ---@type Arguments
+    local parsed_args = {}
+
+    -- Iterate over the arguments given
+    for arg_name, arg_value in ipairs(args) do
+        --
+
+        -- Try to convert the argument to a number
+        local number_arg_value = tonumber(arg_value)
+
+        -- Set the argument to the number argument value
+        -- if the argument is a number,
+        -- otherwise just set it to the given argument value
+        parsed_args[arg_name] = number_arg_value or arg_value
+    end
+
+    -- Return the parsed arguments
+    return parsed_args
+end
+
 -- Function to parse the arguments given.
 -- This function takes the arguments passed to the entry function
 ---@param args string[] The list of string arguments given by Yazi
@@ -361,7 +388,7 @@ local function parse_args(args)
     --
 
     -- The table of arguments to pass to ya.manager_emit
-    ---@type table<(string|number), (string|number|boolean)>
+    ---@type Arguments
     local parsed_arguments = {}
 
     -- Iterates over the arguments given
@@ -2766,7 +2793,7 @@ local function get_args_from_job(job)
 
         -- If the string arguments are nil,
         -- then return the job arguments
-        if not string_args then return job.args end
+        if not string_args then return parse_number_arguments(job.args) end
 
         -- Otherwise, if the string arguments are not a string,
         -- return an empty table of arguments
