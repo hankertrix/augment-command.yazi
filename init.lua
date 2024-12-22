@@ -701,8 +701,7 @@ local get_config = ya.sync(function(state)
 end)
 
 -- Function to get the current working directory
----@param _ any
----@return string current_working_directory The current working directory
+---@type fun(_): string Returns the current working directory
 local get_current_directory = ya.sync(
     function(_) return tostring(cx.active.current.cwd) end
 )
@@ -793,8 +792,7 @@ local get_paths_of_selected_items = ya.sync(function(_, quote)
 end)
 
 -- Function to get if Yazi is loading
----@param _ any
----@return boolean is_loading Whether Yazi is loading
+---@type fun(_): boolean Returns whether Yazi is loading
 local yazi_is_loading = ya.sync(
     function(_) return cx.active.current.stage.is_loading end
 )
@@ -1549,6 +1547,22 @@ local function move_extracted_items_to_archive_parent_directory(
         )
     end
 
+    -- Get the file name of the archive without the extension
+    local archive_file_name = archive_url:stem()
+
+    -- If the archive file name is nil,
+    -- then return the move successful variable,
+    -- the error message, and the extracted item path
+    if not archive_file_name then
+        return clean_up_temporary_directory(
+            temporary_directory_url,
+            "dir_all",
+            move_successful,
+            "Archive's file name is empty",
+            extracted_items_path
+        )
+    end
+
     -- Get the first extracted item
     local first_extracted_item = table.unpack(extracted_items)
 
@@ -1563,7 +1577,7 @@ local function move_extracted_items_to_archive_parent_directory(
     -- Initialise the target directory url to move the extracted items to,
     -- which is the parent directory of the archive
     -- joined with the file name of the archive without the extension
-    local target_url = parent_directory_url:join(archive_url:stem())
+    local target_url = parent_directory_url:join(archive_file_name)
 
     -- If there is only one item in the archive
     if #extracted_items == 1 then
