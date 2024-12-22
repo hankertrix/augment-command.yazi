@@ -6,9 +6,6 @@
 -- The type for the arguments
 ---@alias Arguments table<string|number, string|number|boolean>
 
--- The type for the job object
----@alias Job { args: Arguments }
-
 -- The type for the input event
 --
 -- The event for the input function can be one of 3 values:
@@ -2962,7 +2959,7 @@ end
 
 -- Function to be called to use the plugin
 ---@param _ any
----@param job Job The job object given by Yazi
+---@param job { args: Arguments } The job object given by Yazi
 ---@return nil
 local function entry(_, job)
     --
