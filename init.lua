@@ -701,9 +701,9 @@ local get_config = ya.sync(function(state)
 end)
 
 -- Function to get the current working directory
----@type fun(_): string Returns the current working directory
-local get_current_directory = ya.sync(
-    function(_) return tostring(cx.active.current.cwd) end
+---@type fun(_): Url Returns the current working directory as a url
+local get_current_directory_url = ya.sync(
+    function(_) return cx.active.current.cwd end
 )
 
 -- Function to get the path of the hovered item
@@ -928,12 +928,12 @@ local function get_item_group()
 end
 
 -- Function to get all the items in the given directory
----@param directory string The path to the directory
+---@param directory_url Url The url to the directory
 ---@param ignore_hidden_items boolean Whether to ignore hidden items
 ---@param directories_only boolean|nil Whether to only get directories
----@return string[] directory_items The list of paths to the directory items
+---@return Url[] directory_items The list of urls to the directory items
 local function get_directory_items(
-    directory,
+    directory_url,
     ignore_hidden_items,
     directories_only
 )
@@ -943,7 +943,7 @@ local function get_directory_items(
     local directory_items = {}
 
     -- Read the contents of the directory
-    local directory_contents, _ = fs.read_dir(Url(directory), {})
+    local directory_contents, _ = fs.read_dir(directory_url, {})
 
     -- If there are no directory contents,
     -- then return the empty list of directory items
@@ -963,8 +963,8 @@ local function get_directory_items(
         -- then continue the loop
         if directories_only and not item.cha.is_dir then goto continue end
 
-        -- Otherwise, add the item path to the list of directory items
-        table.insert(directory_items, tostring(item.url))
+        -- Otherwise, add the item url to the list of directory items
+        table.insert(directory_items, item.url)
 
         -- The continue label to continue the loop
         ::continue::
@@ -976,13 +976,13 @@ end
 
 -- Function to skip child directories with only one directory
 ---@param config Configuration The configuration object
----@param initial_directory string The path of the initial directory
+---@param initial_directory_url Url The url of the initial directory
 ---@return nil
-local function skip_single_child_directories(config, initial_directory)
+local function skip_single_child_directories(config, initial_directory_url)
     --
 
     -- Initialise the directory variable to the initial directory given
-    local directory = initial_directory
+    local directory = initial_directory_url
 
     -- Start an infinite loop
     while true do
@@ -997,18 +997,19 @@ local function skip_single_child_directories(config, initial_directory)
         if #directory_items ~= 1 then break end
 
         -- Otherwise, get the directory item
-        local directory_item = table.unpack(directory_items)
+        ---@type Url
+        local directory_item_url = table.unpack(directory_items)
 
         -- Get the cha object of the directory item
         -- and don't follow symbolic links
-        local directory_item_cha = fs.cha(Url(directory_item), false)
+        local directory_item_cha = fs.cha(directory_item_url, false)
 
         -- If the directory item is not a directory,
         -- break the loop
         if not directory_item_cha.is_dir then break end
 
         -- Otherwise, set the directory to the inner directory
-        directory = directory_item
+        directory = directory_item_url
     end
 
     -- Emit the change directory command to change to the directory variable
@@ -2002,7 +2003,7 @@ local function handle_open(args, config, command_table)
 
     -- Calls the function to skip child directories
     -- with only a single directory inside
-    skip_single_child_directories(config, extracted_items_path)
+    skip_single_child_directories(config, Url(extracted_items_path))
 end
 
 -- Function to handle the enter command
@@ -2043,7 +2044,7 @@ local function handle_enter(args, config, command_table)
 
     -- Otherwise, call the function to skip child directories
     -- with only a single directory inside
-    skip_single_child_directories(config, get_current_directory())
+    skip_single_child_directories(config, get_current_directory_url())
 end
 
 -- Function to handle the leave command
@@ -2065,7 +2066,8 @@ local function handle_leave(args, config)
     end
 
     -- Otherwise, initialise the directory to the current directory
-    local directory = get_current_directory()
+    ---@type Url
+    local directory = get_current_directory_url()
 
     -- Start an infinite loop
     while true do
@@ -2080,15 +2082,15 @@ local function handle_leave(args, config)
         if #directory_items ~= 1 then break end
 
         -- Get the parent directory of the current directory
-        ---@type Url
-        local parent_directory = Url(directory):parent()
+        ---@type Url|nil
+        local parent_directory = directory:parent()
 
         -- If the parent directory is nil,
         -- break the loop
         if not parent_directory then break end
 
         -- Otherwise, set the new directory to the parent directory
-        directory = tostring(parent_directory)
+        directory = parent_directory
     end
 
     -- Emit the change directory command to change to the directory variable
@@ -2253,13 +2255,7 @@ local function handle_create(args, config)
 
     -- Get the current working directory as a url
     ---@type Url
-    local current_working_directory = Url(get_current_directory())
-
-    -- If there's not current working directory,
-    -- then show an error and exit the function
-    if not current_working_directory then
-        return show_error("Current working directory doesn't exist")
-    end
+    local current_working_directory = get_current_directory_url()
 
     -- Get whether the url ends with a path delimiter
     local ends_with_path_delimiter = user_input:find("[/\\]$")
