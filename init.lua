@@ -797,6 +797,13 @@ local yazi_is_loading = ya.sync(
     function(_) return cx.active.current.stage.is_loading end
 )
 
+-- Function to wait until Yazi is loaded
+---@return nil
+local function wait_until_yazi_is_loaded()
+    while yazi_is_loading() do
+    end
+end
+
 -- Function to choose which group of items to operate on.
 -- It returns ItemGroup.Hovered for the hovered item,
 -- ItemGroup.Selected for the selected items,
@@ -968,22 +975,11 @@ local function get_directory_items(
 end
 
 -- Function to skip child directories with only one directory
----@param args Arguments The arguments passed to the plugin
 ---@param config Configuration The configuration object
 ---@param initial_directory string The path of the initial directory
 ---@return nil
-local function skip_single_child_directories(args, config, initial_directory)
+local function skip_single_child_directories(config, initial_directory)
     --
-
-    -- If the user doesn't want to skip single subdirectories on enter,
-    -- or one of the arguments passed is no skip,
-    -- then exit the function
-    if
-        not config.skip_single_subdirectory_on_enter
-        or table_pop(args, "no_skip", false)
-    then
-        return
-    end
 
     -- Initialise the directory variable to the initial directory given
     local directory = initial_directory
@@ -1994,9 +1990,19 @@ local function handle_open(args, config, command_table)
     -- Enter the archive directory
     ya.manager_emit("cd", { extracted_items_path })
 
+    -- If the user doesn't want to skip single subdirectories on enter,
+    -- or one of the arguments passed is no skip,
+    -- then exit the function
+    if
+        not config.skip_single_subdirectory_on_enter
+        or table_pop(args, "no_skip", false)
+    then
+        return
+    end
+
     -- Calls the function to skip child directories
     -- with only a single directory inside
-    skip_single_child_directories(args, config, extracted_items_path)
+    skip_single_child_directories(config, extracted_items_path)
 end
 
 -- Function to handle the enter command
@@ -2025,9 +2031,19 @@ local function handle_enter(args, config, command_table)
     -- Otherwise, always emit the enter command,
     ya.manager_emit("enter", args)
 
-    -- Calls the function to skip child directories
+    -- If the user doesn't want to skip single subdirectories on enter,
+    -- or one of the arguments passed is no skip,
+    -- then exit the function
+    if
+        not config.skip_single_subdirectory_on_enter
+        or table_pop(args, "no_skip", false)
+    then
+        return
+    end
+
+    -- Otherwise, call the function to skip child directories
     -- with only a single directory inside
-    skip_single_child_directories(args, config, get_current_directory())
+    skip_single_child_directories(config, get_current_directory())
 end
 
 -- Function to handle the leave command
@@ -2154,8 +2170,7 @@ local function enter_or_open_created_item(item_url, is_directory, args, config)
         ya.manager_emit("reveal", { tostring(item_url) })
 
         -- Wait for Yazi to finish loading
-        while yazi_is_loading() do
-        end
+        wait_until_yazi_is_loaded()
 
         -- Call the function to open the file
         ya.manager_emit("open", { hovered = true })
@@ -2237,7 +2252,8 @@ local function handle_create(args, config)
     if not user_input or event ~= 1 then return end
 
     -- Get the current working directory as a url
-    local current_working_directory = fs.cwd()
+    ---@type Url
+    local current_working_directory = Url(get_current_directory())
 
     -- If there's not current working directory,
     -- then show an error and exit the function
