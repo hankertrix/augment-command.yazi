@@ -195,7 +195,6 @@ local ARCHIVE_MIME_TYPES = {
     "application/bzip",
     "application/bzip2",
     "application/7z-compressed",
-    "application/rar-compressed",
     "application/rar",
     "application/xz",
 
@@ -211,14 +210,27 @@ local ARCHIVE_MIME_TYPES = {
 -- The list of archive file extensions
 ---@type string[]
 local ARCHIVE_FILE_EXTENSIONS = {
-    "zip",
-    "tar",
+    "7z",
     "boz",
     "bz",
     "bz2",
-    "7z",
+    "bzip2",
+    "cb7",
+    "cbr",
+    "cbz",
+    "cbt",
+    "cbz",
+    "gz",
+    "gzip",
     "rar",
+    "s7z",
+    "tar",
+    "tbz",
+    "tbz2",
+    "tgz",
+    "txz",
     "xz",
+    "zip",
 }
 
 -- The list of mime type prefixes to remove
