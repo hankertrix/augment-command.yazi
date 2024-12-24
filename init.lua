@@ -1199,6 +1199,9 @@ local function list_archive_items_command(
         -- List the items in the archive
         "l",
 
+        -- Use UTF-8 encoding for console input and output
+        "-sccUTF-8",
+
         -- Pass the password to the command
         "-p" .. password,
     }
@@ -1394,6 +1397,9 @@ local function extract_command(
 
         -- Assume yes to all prompts
         "-y",
+
+        -- Use UTF-8 encoding for console input and output
+        "-sccUTF-8",
 
         -- Configure the extraction behaviour
         extract_behaviour,
