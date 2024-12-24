@@ -585,9 +585,8 @@ run = "plugin augment-command --args='remove --permanently'"
 desc = "Permanently delete the files"
 ```
 
-For the default descriptions of the commands,
-you can refer to
-[Yazi's `keymap.toml` file](https://github.com/sxyazi/yazi/blob/main/yazi-config/preset/keymap.toml).
+For the default descriptions of the commands, you can refer to
+[Yazi's default `keymap.toml` file](https://github.com/sxyazi/yazi/blob/main/yazi-config/preset/keymap-default.toml).
 
 Essentially, all you need to do to use this plugin
 is to wrap a Yazi command in single quotes,
