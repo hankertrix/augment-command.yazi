@@ -2780,7 +2780,7 @@ local execute_parent_arrow = ya.sync(function(state, args)
                     .. "instead it is a '%s', "
                     .. "with value '%s'",
                 offset_type,
-                offset
+                tostring(offset)
             )
         )
     end
