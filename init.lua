@@ -2257,11 +2257,11 @@ end
 local function handle_create(args, config)
     --
 
-    -- Otherwise, get the user's input for the item to create
+    -- Get the user's input for the item to create
     local user_input, event = get_user_input("Create:")
 
-    -- If the user did not confirm the input,
-    -- or the user input is nil,
+    -- If the user input is nil,
+    -- or if the user did not confirm the input,
     -- exit the function
     if not user_input or event ~= 1 then return end
 
@@ -2776,8 +2776,11 @@ local execute_parent_arrow = ya.sync(function(state, args)
     if offset_type ~= "number" then
         return show_error(
             string.format(
-                "The given offset is not a `number`, instead it is a `%s`",
-                offset_type
+                "The given offset is not of the type 'number', "
+                    .. "instead it is a '%s', "
+                    .. "with value '%s'",
+                offset_type,
+                offset
             )
         )
     end
