@@ -760,9 +760,6 @@
 ---    msg: any,
 ---    ...: any,
 ---): nil Append error messages to the log file.
----@field sync fun(
----    func: SyncFunction,
----): SyncFunction Run a function in the sync context.
 ---
 --- Preview a file as code into the specified area.
 --- Returns an error string if the preview fails.
@@ -784,6 +781,9 @@
 ---},
 ---widgets: (ui.Text|ui.List|ui.Line|ui.Span)[],    -- The widgets to preview.
 ---): nil
+---@field sync fun(
+---    func: SyncFunction,
+---): SyncFunction Run a function in the sync context.
 ---
 --- Return the target operating system.
 ---@field target_os fun():
@@ -1025,6 +1025,18 @@
 ---        timeout: integer,    -- The timeout in milliseconds.
 ---     },
 ---): string|nil, ReadEvent Read a line from the child process with a timeout.
+---
+--- Write all bytes from the src string to the stdin of the child process.
+--- The child process' stdin should be available for writing,
+--- so stdin(Command.PIPED) is set, and take_stdin() is never called.
+--- Otherwise, an error will be thrown.
+---@field write_all fun(
+---    self: Child,
+---    src: string,    -- The source to write to the child process.
+---): boolean, Error|nil
+---@field flush fun(
+---    self: Child,
+---): boolean, Error|nil Flush buffered data to the stdin of the child process.
 ---@field wait fun(
 ---    self: Child,
 ---): CommandStatus|nil, Error|nil Wait for the child process to finish.
@@ -1061,18 +1073,6 @@
 ---@field take_stderr fun(
 ---    self: Child,
 ---): string|nil
----
---- Write all bytes from the src string to the stdin of the child process.
---- The child process' stdin should be available for writing,
---- so stdin(Command.PIPED) is set, and take_stdin() is never called.
---- Otherwise, an error will be thrown.
----@field write_all fun(
----    self: Child,
----    src: string,    -- The source to write to the child process.
----): boolean, Error|nil
----@field flush fun(
----    self: Child,
----): boolean, Error|nil Flush buffered data to the stdin of the child process.
 
 -- Type the globals provided by Yazi
 
