@@ -45,9 +45,7 @@
 ---@field must_have_hovered_item boolean Whether to stop when no item is hovered
 ---@field skip_single_subdirectory_on_enter boolean Skip single subdir on enter
 ---@field skip_single_subdirectory_on_leave boolean Skip single subdir on leave
----@field ignore_hidden_items boolean Whether to ignore hidden items
 ---@field wraparound_file_navigation boolean Have wraparound navigation or not
----@field sort_directories_first boolean Informs the plugin if dirs are first
 
 -- The additional data passed to the function to initialise the configuration
 ---@class (exact) AdditionalData
@@ -123,15 +121,7 @@ local DEFAULT_CONFIG = {
     must_have_hovered_item = true,
     skip_single_subdirectory_on_enter = true,
     skip_single_subdirectory_on_leave = true,
-    ignore_hidden_items = false,
     wraparound_file_navigation = false,
-    sort_directories_first = true,
-}
-
--- The default notification options for this plugin
-local DEFAULT_NOTIFICATION_OPTIONS = {
-    title = "Augment Command Plugin",
-    timeout = 5,
 }
 
 -- The default input options for this plugin
@@ -142,6 +132,27 @@ local DEFAULT_INPUT_OPTIONS = {
 -- The default confirm options for this plugin
 local DEFAULT_CONFIRM_OPTIONS = {
     pos = { "center", x = 0, y = 0, w = 50, h = 15 },
+}
+
+-- The default notification options for this plugin
+local DEFAULT_NOTIFICATION_OPTIONS = {
+    title = "Augment Command Plugin",
+    timeout = 5,
+}
+
+-- The tab configuration keys.
+-- The values are just dummy values
+-- so that I don't have to maintain two
+-- different types for the same thing.
+---@type tab.Config
+local TAB_CONFIG_KEYS = {
+    sort_by = "alphabetical",
+    sort_sensitive = false,
+    sort_reverse = false,
+    sort_dir_first = true,
+    sort_translit = false,
+    linemode = "none",
+    show_hidden = false,
 }
 
 -- The table of input options for the prompt
@@ -787,6 +798,27 @@ local get_paths_of_selected_items = ya.sync(function(_, quote)
     return paths_of_selected_items
 end)
 
+-- Function to get the tab configuration
+---@type fun(_): tab.Config
+local get_tab_config = ya.sync(function(_)
+    --
+
+    -- Create the table to store the tab configuration
+    local tab_config = {}
+
+    -- Iterate over the tab configuration keys
+    for key, _ in pairs(TAB_CONFIG_KEYS) do
+        --
+
+        -- Set the key in the table to the value
+        -- from the state
+        tab_config[key] = cx.active.pref[key]
+    end
+
+    -- Return the tab configuration
+    return tab_config
+end)
+
 -- Function to get if Yazi is loading
 ---@type fun(_): boolean Returns whether Yazi is loading
 local yazi_is_loading = ya.sync(
@@ -925,12 +957,12 @@ end
 
 -- Function to get all the items in the given directory
 ---@param directory_url Url The url to the directory
----@param ignore_hidden_items boolean Whether to ignore hidden items
+---@param get_hidden_items boolean Whether to get hidden items
 ---@param directories_only boolean|nil Whether to only get directories
 ---@return Url[] directory_items The list of urls to the directory items
 local function get_directory_items(
     directory_url,
-    ignore_hidden_items,
+    get_hidden_items,
     directories_only
 )
     --
@@ -949,10 +981,10 @@ local function get_directory_items(
     for _, item in ipairs(directory_contents) do
         --
 
-        -- If the ignore hidden items flag is passed
+        -- If the get hidden items flag is set to false
         -- and the item is a hidden item,
         -- then continue the loop
-        if ignore_hidden_items and item.cha.is_hidden then goto continue end
+        if not get_hidden_items and item.cha.is_hidden then goto continue end
 
         -- If the directories only flag is passed
         -- and the item is not a directory,
@@ -971,14 +1003,16 @@ local function get_directory_items(
 end
 
 -- Function to skip child directories with only one directory
----@param config Configuration The configuration object
 ---@param initial_directory_url Url The url of the initial directory
 ---@return nil
-local function skip_single_child_directories(config, initial_directory_url)
+local function skip_single_child_directories(initial_directory_url)
     --
 
     -- Initialise the directory variable to the initial directory given
     local directory = initial_directory_url
+
+    -- Get the tab configuration
+    local tab_config = get_tab_config()
 
     -- Start an infinite loop
     while true do
@@ -986,7 +1020,7 @@ local function skip_single_child_directories(config, initial_directory_url)
 
         -- Get all the items in the current directory
         local directory_items =
-            get_directory_items(directory, config.ignore_hidden_items)
+            get_directory_items(directory, tab_config.show_hidden)
 
         -- If the number of directory items is not 1,
         -- then break out of the loop.
@@ -2028,7 +2062,7 @@ local function handle_open(args, config, command_table)
 
     -- Calls the function to skip child directories
     -- with only a single directory inside
-    skip_single_child_directories(config, Url(extracted_items_path))
+    skip_single_child_directories(Url(extracted_items_path))
 end
 
 -- Function to handle the enter command
@@ -2069,7 +2103,7 @@ local function handle_enter(args, config, command_table)
 
     -- Otherwise, call the function to skip child directories
     -- with only a single directory inside
-    skip_single_child_directories(config, get_current_directory_url())
+    skip_single_child_directories(get_current_directory_url())
 end
 
 -- Function to handle the leave command
@@ -2094,13 +2128,16 @@ local function handle_leave(args, config)
     ---@type Url
     local directory = get_current_directory_url()
 
+    -- Get the tab configuration
+    local tab_config = get_tab_config()
+
     -- Start an infinite loop
     while true do
         --
 
         -- Get all the items in the current directory
         local directory_items =
-            get_directory_items(directory, config.ignore_hidden_items)
+            get_directory_items(directory, tab_config.show_hidden)
 
         -- If the number of directory items is not 1,
         -- then break out of the loop.
@@ -2822,12 +2859,15 @@ local execute_parent_arrow = ya.sync(function(state, args)
     -- to the current cursor index
     local new_cursor_index = parent_directory.cursor
 
+    -- Get whether the user wants to sort directories first
+    local sort_directories_first = cx.active.pref.sort_dir_first
+
     -- If wraparound file navigation is wanted
     if state.config.wraparound_file_navigation then
         --
 
         -- If the user sorts their directories first
-        if state.config.sort_directories_first then
+        if sort_directories_first then
             --
 
             -- Get the directories in the parent directory
