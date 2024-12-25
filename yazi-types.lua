@@ -586,7 +586,7 @@
 -- The type of the tab::Tab object
 ---@class (exact) tab.Tab
 ---@field mode tab.Mode The mode of the tab.
----@field conf tab.Config The configuration of the tab.
+---@field pref tab.Config The configuration of the tab.
 ---@field current folder.Folder The current folder of the tab.
 ---@field parent folder.Folder|nil The parent folder of the tab.
 ---@field selected tab.Selected The selected files within the tab.
