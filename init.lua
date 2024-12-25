@@ -4,16 +4,7 @@
 -- Type aliases
 
 -- The type for the arguments
----@alias Arguments table<string|number, string|number|boolean>
-
--- The type for the input event
---
--- The event for the input function can be one of 3 values:
---     0: Unknown error
---     1: The user has confirmed the input
---     2: The user has cancelled the input
---     3: The user has changed the input (only if realtime is true)
----@alias InputEvent integer
+---@alias Arguments table<string|number, string|number|boolean|Url>
 
 -- The type for the function to handle a command
 --
@@ -68,28 +59,6 @@
 -- The type for the state
 ---@class (exact) State
 ---@field config Configuration
-
--- The type for the Command output
----@class (exact) CommandOutput
----@field stdout string
----@field stderr string
----@field status { success: boolean, code: number }
-
---- The type for the Url object
----@class (exact) Url
----@field frag string
----@field is_regular boolean
----@field is_search boolean
----@field is_archive boolean
----@field is_absolute boolean
----@field has_root boolean
----@field name fun(self): string|nil
----@field stem fun(self): string|nil
----@field join fun(self, url: Url|string): Url
----@field parent fun(self): Url|nil
----@field starts_with fun(self, url: Url|string): boolean
----@field ends_with fun(self, url: Url|string): boolean
----@field strip_prefix fun(self, url: Url|string): boolean
 
 -- The type for the extraction results
 ---@class (exact) ExtractionResult
@@ -160,29 +129,17 @@ local DEFAULT_CONFIG = {
 }
 
 -- The default notification options for this plugin
----@class (exact) NotificationOptions
----@field title string
----@field timeout number
----@field content string
----@field level "info" | "warn" | "error"
 local DEFAULT_NOTIFICATION_OPTIONS = {
     title = "Augment Command Plugin",
     timeout = 5,
 }
 
 -- The default input options for this plugin
----@class (exact) InputOptions
----@field position { x: number, y: number, w: number, h: number }
----@field title string
 local DEFAULT_INPUT_OPTIONS = {
     position = { "top-center", x = 0, y = 2, w = 50, h = 3 },
 }
 
 -- The default confirm options for this plugin
----@class (exact) ConfirmOptions
----@field pos { x: number, y: number, w: number, h: number }
----@field title string
----@field content string
 local DEFAULT_CONFIRM_OPTIONS = {
     pos = { "center", x = 0, y = 0, w = 50, h = 15 },
 }
@@ -464,8 +421,8 @@ end
 -- Function to get the user's confirmation
 -- TODO: Remove the `ya.input` version once `ya.confirm` is stable
 ---@param prompt string The prompt to show to the user
----@param title string The title of the confirmation prompt
----@param content string The content of the confirmation prompt
+---@param title string|ui.Line The title of the confirmation prompt
+---@param content string|ui.Text The content of the confirmation prompt
 ---@return boolean confirmation Whether the user has confirmed or not
 local function get_user_confirmation(prompt, title, content)
     --
@@ -1042,6 +999,10 @@ local function skip_single_child_directories(config, initial_directory_url)
         -- Get the cha object of the directory item
         -- and don't follow symbolic links
         local directory_item_cha = fs.cha(directory_item_url, false)
+
+        -- If the cha object of the directory item is nil
+        -- then break the loop
+        if not directory_item_cha then break end
 
         -- If the directory item is not a directory,
         -- break the loop
@@ -1628,19 +1589,35 @@ local function move_extracted_items_to_archive_parent_directory(
         -- Set the only one item in archive variable to true
         only_one_item_in_archive = true
 
+        -- Get the name of the first extracted item
+        local first_extracted_item_name = first_extracted_item_url:name()
+
+        -- If the first extracted item name is nil,
+        -- then clean up the temporary directory
+        -- and exit the function
+        if not first_extracted_item_name then
+            return clean_up_temporary_directory(
+                temporary_directory_url,
+                "dir_all",
+                move_successful,
+                "Failed to get a name for the extracted item.",
+                extracted_items_path
+            )
+        end
+
         -- Set the target url to the parent directory of the archive
         -- joined with the file name of the extracted item
-        target_url = parent_directory_url:join(first_extracted_item_url:name())
+        target_url = parent_directory_url:join(first_extracted_item_name)
     end
 
     -- Get a unique name for the target url
-    target_url = fs.unique_name(target_url)
+    local unique_target_url = fs.unique_name(target_url)
 
-    -- If the target url is nil somehow,
+    -- If the unique target url is nil somehow,
     -- clean up the temporary directory and
     -- return the move successful variable,
     -- the error message and the extracted item path
-    if not target_url then
+    if not unique_target_url then
         return clean_up_temporary_directory(
             temporary_directory_url,
             "dir_all",
@@ -1649,6 +1626,9 @@ local function move_extracted_items_to_archive_parent_directory(
             extracted_items_path
         )
     end
+
+    -- Otherwise, set the target url to the unique target url
+    target_url = unique_target_url
 
     -- Set the extracted items path to the target path
     extracted_items_path = tostring(target_url)
@@ -2551,7 +2531,7 @@ local function handle_shell(args, _, _)
                 local item_cha = fs.cha(Url(item), false)
 
                 -- If the item isn't a directory
-                if not item_cha.is_dir then
+                if not (item_cha or {}).is_dir then
                     --
 
                     -- Increment the number of files
@@ -2632,6 +2612,9 @@ local execute_tab_create = ya.sync(function(state, args)
 
     -- Get the hovered item
     local hovered_item = cx.active.current.hovered
+
+    -- If the hovered item is nil, exit the function
+    if not hovered_item then return end
 
     -- Get if the hovered item is a directory
     local hovered_item_is_directory = hovered_item and hovered_item.cha.is_dir

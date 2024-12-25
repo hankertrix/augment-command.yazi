@@ -453,7 +453,10 @@
 ---@field stem fun(
 ---    self: Url,
 ---): string|nil Returns the file name without the file extension.
----@field join fun(self: Url, url: Url|string): Url Join with another Url.
+---@field join fun(
+---    self: Url,
+---    url: Url|string,    -- The Url or string to join with.
+---): Url Join with another Url or string.
 ---@field parent fun(self: Url): Url|nil Return the parent directory Url.
 ---@field starts_with fun(
 ---    self: Url,
@@ -529,7 +532,7 @@
 ---@field cursor integer The cursor position of the folder.
 ---@field window File[] A table of files in the visible area of the folder.
 ---@field files folder.Files The files of the folder.
----@field hovered File|nil The hovered file of the folder.
+---@field hovered folder.File|nil The hovered file of the folder.
 ---@field stage {
 ---    is_loading: boolean,
 ---    loaded: boolean,
@@ -655,9 +658,10 @@
 ---@field w integer The width of the component.
 ---@field h integer|nil The height of the component.
 
--- The type of the confirm position object
----@class (exact) ConfirmPosition: Position
----@field h integer The height of the component.
+-- The type of the input options
+---@class (exact) InputOptions
+---@field position Position The position of the input.
+---@field title string|ui.Line The title of the input.
 
 -- The type of the input event
 --
@@ -674,13 +678,30 @@
 ---    self: InputReceiver,
 ---): integer|nil, InputEvent Receive an input event.
 
+-- The type of the confirm position object
+---@class (exact) YaziConfirmPosition: Position
+---@field h integer The height of the component.
+
+-- The type of the confirm options
+---@class (exact) YaziConfirmOptions
+---@field pos YaziConfirmPosition The position of the confirmation prompt.
+---@field title string|ui.Line The title of the confirmation prompt.
+---@field content string|ui.Text The content of the confirmation prompt.
+
 -- The type of the notification level
 ---@alias NotificationLevel "info" Default notification level, informational.
 ---    |"warn" Warning notification.
 ---    |"error" Error notification.
 
+-- The type of the notification options
+---@class (exact) YaziNotificationOptions
+---@field title string The title of the notification.
+---@field timeout number The timeout in seconds.
+---@field content string The content of the notification.
+---@field level NotificationLevel The level of the notification.
+
 -- The type of a sync function
----@alias SyncFunction fun(...: any): SendableValue
+---@alias SyncFunction fun(...: any): any
 
 -- The type of the ya global
 ---@class (exact) Ya
@@ -723,7 +744,7 @@
 ---@field confirm fun(opts: {
 ---    title: string|ui.Line,    -- The title of the confirmation prompt.
 ---    content: string|ui.Text,    -- The content of the confirmation prompt.
----    pos: ConfirmPosition,    -- The position of the confirmation prompt.
+---    pos: YaziConfirmPosition,    -- The position of the confirmation prompt.
 ---}): boolean Show a confirmation prompt to the user.
 ---@field notify fun(opts: {
 ---    title: string,    -- The title of the notification.
@@ -984,6 +1005,9 @@
 ---@field status fun(
 ---    self: Command,
 ---): CommandStatus|nil, Error|nil Get the status of the command.
+---@field PIPED Command.PIPED Pipe the output.
+---@field NULL Command.NULL Discard the output, default.
+---@field INHERIT Command.INHERIT Inherit the output.
 
 -- The type of the child process
 ---@class (exact) Child
