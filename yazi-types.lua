@@ -777,9 +777,10 @@
 ---    window: Window,    -- The window to preview the file.
 ---}): string|nil, integer|nil
 ---@field preview_widgets fun(opts: {
+---    area: ui.Rect,    -- The ui.Rect of the available preview area.
 ---    file: File,    -- The file to preview.
+---    mime: string,    -- The mime type of the file.
 ---    skip: integer,    -- The number of units to skip.
----    window: Window,    -- The window to preview the file.
 ---},
 ---widgets: (ui.Text|ui.List|ui.Line|ui.Span)[],    -- The widgets to preview.
 ---): nil
