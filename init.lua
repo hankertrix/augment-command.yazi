@@ -172,10 +172,19 @@ local DEFAULT_NOTIFICATION_OPTIONS = {
 
 -- The default input options for this plugin
 ---@class (exact) InputOptions
----@field position { x: number, y: number, w: number }
+---@field position { x: number, y: number, w: number, h: number }
 ---@field title string
 local DEFAULT_INPUT_OPTIONS = {
-    position = { "top-center", y = 2, w = 50 },
+    position = { "top-center", x = 0, y = 2, w = 50, h = 3 },
+}
+
+-- The default confirm options for this plugin
+---@class (exact) ConfirmOptions
+---@field pos { x: number, y: number, w: number, h: number }
+---@field title string
+---@field content string
+local DEFAULT_CONFIRM_OPTIONS = {
+    pos = { "center", x = 0, y = 0, w = 50, h = 15 },
 }
 
 -- The table of input options for the prompt
@@ -453,11 +462,29 @@ local function get_user_input(prompt)
 end
 
 -- Function to get the user's confirmation
--- TODO: Switch to `ya.confirm()` when it's available
+-- TODO: Remove the `ya.input` version once `ya.confirm` is stable
 ---@param prompt string The prompt to show to the user
+---@param title string The title of the confirmation prompt
+---@param content string The content of the confirmation prompt
 ---@return boolean confirmation Whether the user has confirmed or not
-local function get_user_confirmation(prompt)
+local function get_user_confirmation(prompt, title, content)
     --
+
+    -- If the ya.confirm API exists, use it
+    if ya.confirm then
+        --
+
+        -- Get the user's confirmation
+        local confirmation = ya.confirm(merge_tables(DEFAULT_CONFIRM_OPTIONS, {
+            title = title,
+            content = content,
+        }))
+
+        -- Return the result of the confirmation
+        return confirmation
+    end
+
+    -- TODO: Remove everything after this when `ya.confirm` is stable
 
     -- Get the user's input
     local user_input, event = get_user_input(prompt)
@@ -2263,8 +2290,12 @@ end
 local function handle_create(args, config)
     --
 
+    -- Get the directory flag
+    local dir_flag = table_pop(args, "dir", false)
+
     -- Get the user's input for the item to create
-    local user_input, event = get_user_input("Create:")
+    local user_input, event =
+        get_user_input(dir_flag and "Create (dir):" or "Create:")
 
     -- If the user input is nil,
     -- or if the user did not confirm the input,
@@ -2280,8 +2311,7 @@ local function handle_create(args, config)
 
     -- Get the whether the given item is a directory or not based
     -- on the default conditions for a directory
-    local is_directory = ends_with_path_delimiter
-        or table_pop(args, "dir", false)
+    local is_directory = ends_with_path_delimiter or dir_flag
 
     -- Get the url from the user's input
     ---@type Url
@@ -2314,8 +2344,19 @@ local function handle_create(args, config)
 
         -- Get the user's confirmation for
         -- whether they want to overwrite the item
-        local user_confirmation =
-            get_user_confirmation("The item already exists, overwrite? (y/N)")
+        local user_confirmation = get_user_confirmation(
+
+            -- TODO: Remove the line below
+            "The item already exists, overwrite? (y/N)",
+            "Overwrite file?",
+            ui.Text({
+                ui.Line("Will overwrite the following file:")
+                    :align(ui.Line.CENTER),
+                ui.Line(string.rep("-", DEFAULT_CONFIRM_OPTIONS.pos.w))
+                    :align(ui.Line.LEFT),
+                ui.Line(tostring(full_url)):align(ui.Line.LEFT),
+            })
+        )
 
         -- If the user did not confirm the overwrite,
         -- then exit the function

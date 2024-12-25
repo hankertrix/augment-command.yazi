@@ -246,6 +246,13 @@ then it will operate on the selected items.
   component to prompt for a confirmation, like in Yazi v0.3.0 and below.
   This is not ideal, but it shouldn't happen that often and
   hopefully wouldn't be too annoying.
+  If you are using the latest version of Yazi from the main branch,
+  the `confirm` component is now exposed to plugin developers and
+  the plugin will use the `confirm` component instead.
+  However, the separator in the `confirm` component will be the text colour
+  instead of your configured border colour for the `confirm` component as
+  the `list` part of the `confirm` component has not been exposed to plugin
+  developers, so the separator is made using text.
 - The rationale for this behaviour is that creating a path without
   a file extension usually means you intend to create a directory instead
   of a file, as files usually have file extensions.
