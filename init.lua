@@ -2617,7 +2617,7 @@ local execute_tab_create = ya.sync(function(state, args)
     if not hovered_item then return end
 
     -- Get if the hovered item is a directory
-    local hovered_item_is_directory = hovered_item and hovered_item.cha.is_dir
+    local hovered_item_is_directory = hovered_item.cha.is_dir
 
     -- If the hovered item is a directory,
     -- and the user wants to create a tab
