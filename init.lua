@@ -163,17 +163,17 @@ local INPUT_OPTIONS_TABLE = {
     [ItemGroup.None] = "(h/s)",
 }
 
--- The list of archive mime types
----@type string[]
+-- The table of archive mime types
+---@type table<string, boolean>
 local ARCHIVE_MIME_TYPES = {
-    "application/zip",
-    "application/gzip",
-    "application/tar",
-    "application/bzip",
-    "application/bzip2",
-    "application/7z-compressed",
-    "application/rar",
-    "application/xz",
+    ["application/zip"] = true,
+    ["application/gzip"] = true,
+    ["application/tar"] = true,
+    ["application/bzip"] = true,
+    ["application/bzip2"] = true,
+    ["application/7z-compressed"] = true,
+    ["application/rar"] = true,
+    ["application/xz"] = true,
 
     -- Bug in file(1) that classifies
     -- some zip archives as a data stream,
@@ -181,33 +181,32 @@ local ARCHIVE_MIME_TYPES = {
     --
     -- Link to bug report:
     -- https://bugs.astron.com/view.php?id=571
-    "application/octet-stream",
+    ["application/octet-stream"] = true,
 }
 
 -- The list of archive file extensions
----@type string[]
+---@type table<string, boolean>
 local ARCHIVE_FILE_EXTENSIONS = {
-    "7z",
-    "boz",
-    "bz",
-    "bz2",
-    "bzip2",
-    "cb7",
-    "cbr",
-    "cbz",
-    "cbt",
-    "cbz",
-    "gz",
-    "gzip",
-    "rar",
-    "s7z",
-    "tar",
-    "tbz",
-    "tbz2",
-    "tgz",
-    "txz",
-    "xz",
-    "zip",
+    ["7z"] = true,
+    boz = true,
+    bz = true,
+    bz2 = true,
+    bzip2 = true,
+    cb7 = true,
+    cbr = true,
+    cbt = true,
+    cbz = true,
+    gz = true,
+    gzip = true,
+    rar = true,
+    s7z = true,
+    tar = true,
+    tbz = true,
+    tbz2 = true,
+    tgz = true,
+    txz = true,
+    xz = true,
+    zip = true,
 }
 
 -- The list of mime type prefixes to remove
@@ -297,26 +296,6 @@ local function merge_tables(...)
     return new_table
 end
 
--- Function to check if a list contains a given value
----@param list any[] The list to check
----@param value any The value to check for
----@return boolean value_is_in_list Whether the value is in the list
-local function list_contains(list, value)
-    --
-
-    -- Iterate over all of the items in the list
-    for _, item in ipairs(list) do
-        --
-
-        -- If the item is equal to the given value,
-        -- then return true
-        if item == value then return true end
-    end
-
-    -- Otherwise, return false if the item isn't in the list
-    return false
-end
-
 -- Function to split a string into a list
 ---@param given_string string The string to split
 ---@param separator string The character to split the string by
@@ -353,9 +332,16 @@ local function string_trim(string)
     return string:match("^%s*(.-)%s*$")
 end
 
+-- Function to get a value from a table
+-- and return the default value if the key doesn't exist
+---@param table table The table to get the value from
+---@param key string|number The key to get the value from
+---@param default any The default value to return if the key doesn't exist
+local function table_get(table, key, default) return table[key] or default end
+
 -- Function to pop a key from a table
 ---@param table table The table to pop from
----@param key string The key to pop
+---@param key string|number The key to pop
 ---@param default any The default value to return if the key doesn't exist
 ---@return any value The value of the key or the default value
 local function table_pop(table, key, default)
@@ -668,7 +654,8 @@ local function is_archive_mime_type(mime_type)
     local standardised_mime_type = standardise_mime_type(mime_type)
 
     -- Get if the mime type is an archive
-    local is_archive = list_contains(ARCHIVE_MIME_TYPES, standardised_mime_type)
+    local is_archive =
+        table_get(ARCHIVE_MIME_TYPES, standardised_mime_type, false)
 
     -- Return if the mime type is an archive
     return is_archive
@@ -691,7 +678,7 @@ local function is_archive_file_extension(file_extension)
     file_extension = string_trim(file_extension)
 
     -- Get if the file extension is an archive
-    local is_archive = list_contains(ARCHIVE_FILE_EXTENSIONS, file_extension)
+    local is_archive = table_get(ARCHIVE_FILE_EXTENSIONS, file_extension, false)
 
     -- Return if the file extension is an archive file extension
     return is_archive
