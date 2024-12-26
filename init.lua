@@ -1104,7 +1104,7 @@ local function retry_extractor(
         local output, err = extractor_function(password, config)
 
         -- If there is no output
-        -- then return false, the error code as a string,
+        -- then return false, the error as a string,
         -- nil for the output, and nil for the password
         if not output then return false, tostring(err), nil, nil end
 
