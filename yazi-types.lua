@@ -523,15 +523,15 @@
 ---@field found folder.File.found
 
 -- The type of the folder::Files object
----@class (exact) folder.Files
+---@class (exact) fs.Files
 
--- The type of the folder::Folder object
----@class (exact) folder.Folder
+-- The type of the tab::Folder object
+---@class (exact) tab.Folder
 ---@field cwd Url The current working directory of the folder as a Url.
 ---@field offset integer The offset of the folder.
 ---@field cursor integer The cursor position of the folder.
 ---@field window File[] A table of files in the visible area of the folder.
----@field files folder.Files The files of the folder.
+---@field files fs.Files The files of the folder.
 ---@field hovered folder.File|nil The hovered file of the folder.
 ---@field stage {
 ---    is_loading: boolean,
@@ -565,8 +565,8 @@
 ---    |"permissions" Display the permissions of the file, Unix only.
 ---    |"owner" Display the owner of the file, Unix only.
 
--- The type of the tab::Config object
----@class (exact) tab.Config
+-- The type of the tab::Preference object
+---@class (exact) tab.Preference
 ---@field sort_by SortMethod The sort method of the tab.
 ---@field sort_sensitive boolean Whether the sorting is case-sensitive.
 ---@field sort_reverse boolean Whether the sorting is reversed.
@@ -581,14 +581,14 @@
 -- The type of the tab::Preview object
 ---@class (exact) tab.Preview
 ---@field skip integer The number of units to skip.
----@field folder folder.Folder The folder of the preview.
+---@field folder tab.Folder The folder of the preview.
 
 -- The type of the tab::Tab object
 ---@class (exact) tab.Tab
 ---@field mode tab.Mode The mode of the tab.
----@field pref tab.Config The configuration of the tab.
----@field current folder.Folder The current folder of the tab.
----@field parent folder.Folder|nil The parent folder of the tab.
+---@field pref tab.Preference The configuration of the tab.
+---@field current tab.Folder The current folder of the tab.
+---@field parent tab.Folder|nil The parent folder of the tab.
 ---@field selected tab.Selected The selected files within the tab.
 ---@field preview tab.Preview The preview within the tab.
 
