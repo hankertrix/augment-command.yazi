@@ -4,7 +4,7 @@
 -- Type aliases
 
 -- The type for the arguments
----@alias Arguments table<string|number, string|number|boolean|Url>
+---@alias Arguments table<string|number, string|number|boolean>
 
 -- The type for the function to handle a command
 --
@@ -2650,27 +2650,26 @@ local execute_tab_create = ya.sync(function(state, args)
     -- Get the hovered item
     local hovered_item = cx.active.current.hovered
 
-    -- If the hovered item is nil, exit the function
-    if not hovered_item then return end
-
-    -- Get if the hovered item is a directory
-    local hovered_item_is_directory = hovered_item.cha.is_dir
-
-    -- If the hovered item is a directory,
-    -- and the user wants to create a tab
-    -- in the hovered directory
+    -- If the hovered item is nil,
+    -- or if the hovered item is not a directory,
+    -- or if the user doesn't want to smartly
+    -- create a tab in the hovered directory
     if
-        hovered_item_is_directory
-        and (state.config.smart_tab_create or table_pop(args, "smart", false))
+        not hovered_item
+        or not hovered_item.cha.is_dir
+        or not state.config.smart_tab_create
+        or not table_pop(args, "smart", false)
     then
         --
 
-        -- Set the arguments to the url of the hovered item
-        args = { hovered_item.url }
+        -- Emit the command to create a new tab with the arguments
+        -- and exit the function
+        return ya.manager_emit("tab_create", args)
     end
 
-    -- Emit the command to create a new tab with the arguments
-    ya.manager_emit("tab_create", args)
+    -- Otherwise, emit the command to create a new tab
+    -- with the hovered item's url
+    ya.manager_emit("tab_create", { hovered_item.url })
 end)
 
 -- Function to handle the tab create command
