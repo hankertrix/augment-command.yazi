@@ -144,7 +144,7 @@ local DEFAULT_NOTIFICATION_OPTIONS = {
 -- The values are just dummy values
 -- so that I don't have to maintain two
 -- different types for the same thing.
----@type tab.Config
+---@type tab.Preference
 local TAB_CONFIG_KEYS = {
     sort_by = "alphabetical",
     sort_sensitive = false,
@@ -786,7 +786,7 @@ local get_paths_of_selected_items = ya.sync(function(_, quote)
 end)
 
 -- Function to get the tab configuration
----@type fun(_): tab.Config
+---@type fun(_): tab.Preference
 local get_tab_config = ya.sync(function(_)
     --
 
@@ -2200,32 +2200,27 @@ local function enter_or_open_created_item(item_url, is_directory, args, config)
         end
 
         -- Otherwise, call the function change to the created directory
-        ya.manager_emit("cd", { tostring(item_url) })
+        return ya.manager_emit("cd", { tostring(item_url) })
+    end
 
     -- Otherwise, the item is a file
-    else
-        --
 
-        -- If the user does not want to open the file
-        -- after creating it, exit the function
-        if
-            not (
-                config.open_file_after_creation
-                or table_pop(args, "open", false)
-            )
-        then
-            return
-        end
-
-        -- Otherwise, call the function to reveal the created file
-        ya.manager_emit("reveal", { tostring(item_url) })
-
-        -- Wait for Yazi to finish loading
-        wait_until_yazi_is_loaded()
-
-        -- Call the function to open the file
-        ya.manager_emit("open", { hovered = true })
+    -- If the user does not want to open the file
+    -- after creating it, exit the function
+    if
+        not (config.open_file_after_creation or table_pop(args, "open", false))
+    then
+        return
     end
+
+    -- Otherwise, call the function to reveal the created file
+    ya.manager_emit("reveal", { tostring(item_url) })
+
+    -- Wait for Yazi to finish loading
+    wait_until_yazi_is_loaded()
+
+    -- Call the function to open the file
+    return ya.manager_emit("open", { hovered = true })
 end
 
 -- Function to execute the create command
