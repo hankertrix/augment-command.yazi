@@ -2988,14 +2988,6 @@ local function handle_pager(args, config, command_table)
     -- If the pager is not set, exit the function
     if not pager then return end
 
-    -- If the pager is the less command
-    if pager:find("^less") ~= nil then
-        --
-
-        -- Remove the F flag from the command
-        pager = pager:gsub("%-F", ""):gsub("(%a*)F(%a*)", "%1%2")
-    end
-
     -- Call the handle shell function
     -- with the pager command
     handle_shell(
