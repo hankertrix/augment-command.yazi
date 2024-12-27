@@ -358,6 +358,12 @@ local function table_pop(table, key, default)
     return value or default
 end
 
+-- Function to escape a percentage sign %
+-- in the string that is being replaced
+local function escape_replacement_string(replacement_string)
+    return replacement_string:gsub("%%", "%%%%")
+end
+
 -- Function to parse the number arguments to the number type
 ---@param args Arguments The arguments to parse
 ---@return Arguments parsed_args The parsed arguments
@@ -2431,7 +2437,7 @@ local function fix_shell_command_containing_less(command)
     -- Add the less environment variable flags to the less command
     fixed_command = fixed_command:gsub(
         "%f[%a]less%f[%A]",
-        less_command_with_modified_env_variables
+        escape_replacement_string(less_command_with_modified_env_variables)
     )
 
     -- Unset the LESS environment variable before calling the command
@@ -2581,7 +2587,9 @@ local function handle_shell(args, _, _)
         -- with the quoted paths of the selected items
         command = command:gsub(
             shell_variable_pattern,
-            table.concat(get_paths_of_selected_items(true), " ")
+            escape_replacement_string(
+                table.concat(get_paths_of_selected_items(true), " ")
+            )
         )
 
     -- If the item group is the hovered item
@@ -2595,8 +2603,10 @@ local function handle_shell(args, _, _)
 
         -- Replace the shell variable in the command
         -- with the quoted path of the hovered item
-        command =
-            command:gsub(shell_variable_pattern, get_path_of_hovered_item(true))
+        command = command:gsub(
+            shell_variable_pattern,
+            escape_replacement_string(get_path_of_hovered_item(true))
+        )
 
     -- Otherwise, exit the function
     else
