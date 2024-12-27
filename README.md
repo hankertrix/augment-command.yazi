@@ -13,7 +13,7 @@ plugin.
 - [Requirements](#requirements)
 - [Installation](#installation)
 - [Configuration](#configuration)
-- [What about the commands are augmented?](#what-about-the-commands-are-augmented)
+- [What about the commands are augmented?][augment-section]
 - [Augmented commands](#augmented-commands)
 - [New commands](#new-commands)
 - [Usage](#usage)
@@ -22,8 +22,8 @@ plugin.
 ## Requirements
 
 - [Yazi](https://github.com/sxyazi/yazi) v0.4.2+
-- [`7z` or `7zz` command](https://github.com/p7zip-project/p7zip)
-- [`file` command](https://www.darwinsys.com/file/)
+- [`7z` or `7zz` command][7z-link]
+- [`file` command][file-command-link]
 
 ## Installation
 
@@ -51,7 +51,7 @@ ya pack -u
 | `open_file_after_creation`          | `true` or `false`                     | `false`   | This option determines whether the plugin will open a file after it has been created. Setting this option to `true` will cause the plugin to open the created file. You can also enable this behaviour by passing the `--open` flag to the `create` command.                                                                                                                                                                                                                                     |
 | `enter_directory_after_creation`    | `true` or `false`                     | `false`   | This option determines whether the plugin will enter a directory after it has been created. Setting this option to `true` will cause the plugin to enter the created directory. You can also enable this behaviour by passing the `--enter` flag to the `create` command.                                                                                                                                                                                                                        |
 | `use_default_create_behaviour`      | `true` or `false`                     | `false`   | This option determines whether the plugin will use the behaviour of Yazi's `create` command. Setting this option to `true` will use the behaviour of Yazi's `create` command. You can also enable this behaviour by passing the `--default-behaviour` flag to the `create` command.                                                                                                                                                                                                              |
-| `enter_archives`                    | `true` or `false`                     | `true`    | Automatically extract and enter archive files. This option requires the [7z or 7zz command](https://github.com/p7zip-project/p7zip) to be present.                                                                                                                                                                                                                                                                                                                                               |
+| `enter_archives`                    | `true` or `false`                     | `true`    | Automatically extract and enter archive files. This option requires the [`7z` or `7zz` command][7z-link] to be present.                                                                                                                                                                                                                                                                                                                                               |
 | `extract_retries`                   | An integer, like `1`, `3`, `10`, etc. | `3`       | This option determines how many times the plugin will retry opening an encrypted or password-protected archive when a wrong password is given. This value plus 1 is the total number of times the plugin will try opening an encrypted or password-protected archive.                                                                                                                                                                                                                            |
 | `recursively_extract_archives`      | `true` or `false`                     | `true`    | This option determines whether the plugin will extract all archives inside an archive file recursively. If this option is set to `false`, archive files inside an archive will not be extracted, and you will have to manually extract them yourself.                                                                                                                                                                                                                                            |
 | `must_have_hovered_item`            | `true` or `false`                     | `true`    | This option stops the plugin from executing any commands when there is no hovered item.                                                                                                                                                                                                                                                                                                                                                                                                          |
@@ -137,6 +137,8 @@ then it will operate on the selected items.
 
 ### Open (`open`)
 
+- The `open` command is augmented as stated in
+  [this section above][augment-section].
 - When `smart_enter` is set to `true`,
   it calls the `enter` command when the hovered item is a directory.
 - `--smart` flag to use one command to `open` files and `enter` directories.
@@ -155,7 +157,7 @@ then it will operate on the selected items.
   This can be disabled by setting `enter_archives` to `false`
   in the configuration.
   This feature requires the
-  [`7z` or `7zz` command](https://github.com/p7zip-project/p7zip)
+  [`7z` or `7zz` command][7z-link]
   to be present to extract the archives.
 - If the extracted archive file contains other archive
   files in it, those archives will be automatically
@@ -163,7 +165,7 @@ then it will operate on the selected items.
   of the archive if the archive doesn't
   only contain a single archive file.
   This feature requires the
-  [`file` command](https://www.darwinsys.com/file/)
+  [`file` command][file-command-link]
   to detect the mime type of the extracted file,
   and to check whether it is an archive file or not.
   This makes extracting binaries from
@@ -211,12 +213,12 @@ then it will operate on the selected items.
 ### Rename (`rename`)
 
 - The `rename` command is augmented as stated in
-  [this section above](#what-about-the-commands-are-augmented).
+  [this section above][augment-section].
 
 ### Remove (`remove`)
 
 - The `remove` command is augmented as stated in
-  [this section above](#what-about-the-commands-are-augmented).
+  [this section above][augment-section].
 
 ### Create (`create`)
 
@@ -268,7 +270,7 @@ then it will operate on the selected items.
 ### Shell (`shell`)
 
 - This command runs the shell command given with the augment stated in
-  [this section above](#what-about-the-commands-are-augmented). You should
+  [this section above][augment-section]. You should
   only use this command if you need the plugin to determine a suitable
   item group for the command to operate on. Otherwise, you should just
   use the default `shell` command provided by Yazi.
@@ -452,14 +454,14 @@ then it will operate on the selected items.
 - The `editor` command opens the default editor set by the
   `$EDITOR` environment variable.
 - The command is also augmented as stated in
-  [this section above](#what-about-the-commands-are-augmented).
+  [this section above][augment-section].
 
 ### Pager (`pager`)
 
 - The `pager` command opens the default pager set by the
   `$PAGER` environment variable.
 - The command is also augmented as stated in
-  [this section above](#what-about-the-commands-are-augmented).
+  [this section above][augment-section].
 - The `pager` command will also skip opening directories, as the pager
   cannot open directories and will error out.
   Hence, the command will not do anything when the hovered item
@@ -521,7 +523,7 @@ desc = "Permanently delete the files"
 ```
 
 For the default descriptions of the commands, you can refer to
-[Yazi's default `keymap.toml` file](https://github.com/sxyazi/yazi/blob/main/yazi-config/preset/keymap-default.toml).
+[Yazi's default `keymap.toml` file][yazi-keymap-toml].
 
 Essentially, all you need to do to use this plugin
 is to wrap a Yazi command in single quotes,
@@ -533,10 +535,16 @@ in front of it, which results in
 ### Full configuration example
 
 For a full configuration example,
-you can take a look at
-[my `keymap.toml` file](https://github.com/hankertrix/Dotfiles/blob/main/.config/yazi/keymap.toml).
+you can take a look at [my `keymap.toml` file][my-keymap-toml].
 
-## [Licence](LICENSE)
+## [Licence]
 
-This plugin is licenced under the [GNU AGPL v3 licence](LICENSE).
-You can view the full licence in the [`LICENSE`](LICENSE) file.
+This plugin is licenced under the [GNU AGPL v3 licence][Licence].
+You can view the full licence in the [`LICENSE`][Licence] file.
+
+[augment-section]: #what-about-the-commands-are-augmented
+[7z-link]: https://www.7-zip.org/
+[file-command-link]: https://www.darwinsys.com/file/
+[my-keymap-toml]: https://github.com/hankertrix/Dotfiles/blob/main/.config/yazi/keymap.toml
+[yazi-keymap-toml]: https://github.com/sxyazi/yazi/blob/main/yazi-config/preset/keymap-default.toml
+[Licence]: LICENSE
