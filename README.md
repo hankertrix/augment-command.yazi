@@ -733,6 +733,9 @@ You can view the full licence in the [`LICENSE`][Licence] file.
 
 [shell-behaviour-video]: https://github.com/user-attachments/assets/5d898205-e5ca-487e-b731-4624ca0123ee
 [shell-prompt-video]: https://github.com/user-attachments/assets/d1790105-1e40-4639-bf65-d395a488ae94
+[shell-exit-if-directory-video]: https://github.com/user-attachments/assets/a992300a-2eed-40a1-97e4-d4efef57f7f0
+
+
 
 <!-- Paste command -->
 
