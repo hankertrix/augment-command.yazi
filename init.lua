@@ -2654,8 +2654,10 @@ local execute_tab_create = ya.sync(function(state, args)
     if
         not hovered_item
         or not hovered_item.cha.is_dir
-        or not state.config.smart_tab_create
-        or not table_pop(args, "smart", false)
+        or not (
+            state.config.smart_tab_create
+            or table_pop(args, "smart", false)
+        )
     then
         --
 
