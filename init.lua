@@ -2517,8 +2517,22 @@ local function handle_shell(args, _, _)
     -- and set it to the command variable
     local command = table.remove(args, 1)
 
-    -- If the command isn't a string, exit the function
-    if type(command) ~= "string" then return end
+    -- Get the type of the command variable
+    local command_type = type(command)
+
+    -- If the command isn't a string,
+    -- show an error message and exit the function
+    if command_type ~= "string" then
+        return show_error(
+            string.format(
+                "Shell command given is not a string, "
+                    .. "instead it is a '%s', "
+                    .. "with value '%s'",
+                command_type,
+                tostring(command)
+            )
+        )
+    end
 
     -- Fix the given command
     command = fix_shell_command(command)
@@ -2941,12 +2955,6 @@ end
 ---@type CommandFunction
 local function handle_editor(args, config, command_table)
     --
-
-    -- Call the function to get the item group
-    local item_group = get_item_group()
-
-    -- If no item group is returned, exit the function
-    if not item_group then return end
 
     -- Get the editor environment variable
     local editor = os.getenv("EDITOR")
