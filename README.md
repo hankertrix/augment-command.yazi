@@ -542,9 +542,40 @@ you can take a look at [my `keymap.toml` file][my-keymap-toml].
 This plugin is licenced under the [GNU AGPL v3 licence][Licence].
 You can view the full licence in the [`LICENSE`][Licence] file.
 
+<!-- Regular links -->
 [augment-section]: #what-about-the-commands-are-augmented
 [7z-link]: https://www.7-zip.org/
 [file-command-link]: https://www.darwinsys.com/file/
 [my-keymap-toml]: https://github.com/hankertrix/Dotfiles/blob/main/.config/yazi/keymap.toml
 [yazi-keymap-toml]: https://github.com/sxyazi/yazi/blob/main/yazi-config/preset/keymap-default.toml
 [Licence]: LICENSE
+
+<!-- Videos -->
+[create-and-open-directories-video]: https://github.com/user-attachments/assets/52b244db-50a8-4adc-912f-239e01a10cc6
+[create-and-open-files-video]: https://github.com/user-attachments/assets/8f2306ea-b795-4da4-9867-9a5ed34f7e12
+[create-and-open-files-and-directories-video]: https://github.com/user-attachments/assets/ed14e451-a8ca-4622-949f-1469e1d17643
+[create-behaviour-video]: https://github.com/user-attachments/assets/8604d1cc-423b-46e8-b464-ef3380435a28
+[create-default-behaviour-video]: https://github.com/user-attachments/assets/8c59f579-8f32-443c-8ae1-edd8d18e5ba0
+[editor-behaviour-video]: https://github.com/user-attachments/assets/af057282-8f75-4662-8b4b-29e594cf4163
+[editor-prompt-video]: https://github.com/user-attachments/assets/6c12380c-36fb-4a57-bd82-8452fdcad7e6
+[enter-skip-single-subdirectory-video]: https://github.com/user-attachments/assets/2cdb9289-ef41-454f-817b-81beb8a8d030
+[leave-skip-single-subdirectory-video]: https://github.com/user-attachments/assets/49acdddb-4d04-4624-8d29-057ada33fd01
+[open-auto-extract-archives-video]: https://github.com/user-attachments/assets/aeb3368b-4f7d-431e-9f7a-69a443af7153
+[open-behaviour-video]: https://github.com/user-attachments/assets/5636ffc0-fe24-4da3-9f0e-98de9cd74096
+[open-prompt-video]: https://github.com/user-attachments/assets/6bad5a20-e5d3-491d-9c7c-0f5962b77c1c
+[open-recursively-extract-archives-video]: https://github.com/user-attachments/assets/44228646-3e82-41e4-a445-f93ab5649309
+[pager-behaviour-video]: https://github.com/user-attachments/assets/d18aec12-8be3-483a-a24a-2929ad8fc6c2
+[pager-prompt-video]: https://github.com/user-attachments/assets/ac3cd3b3-2624-4ea2-b22d-5ab6a49a98c6
+[parent-arrow-video]: https://github.com/user-attachments/assets/d58a841d-0c05-4555-bf1b-f4d539b9d9c9
+[remove-behaviour-video]: https://github.com/user-attachments/assets/cc0617b1-fedf-45d3-b894-00524ba31434
+[remove-prompt-video]: https://github.com/user-attachments/assets/d23283fd-5068-429d-b06d-72b0c6a3bb36
+[rename-behaviour-video]: https://github.com/user-attachments/assets/ba6c79e0-9062-43ae-a76b-2782f28a9a18
+[rename-prompt-video]: https://github.com/user-attachments/assets/4d42653e-9595-4322-b0c9-451b112dc596
+[shell-behaviour-video]: https://github.com/user-attachments/assets/5d898205-e5ca-487e-b731-4624ca0123ee
+[shell-prompt-video]: https://github.com/user-attachments/assets/d1790105-1e40-4639-bf65-d395a488ae94
+[smart-enter-video]: https://github.com/user-attachments/assets/d3507110-1385-4029-bf64-da3225446d72
+[smart-paste-video]: https://github.com/user-attachments/assets/9796fbf1-6807-4f74-a0eb-a36c6306c761
+[smart-tab-create-video]: https://github.com/user-attachments/assets/2738598c-ccdf-49e4-9d57-90a6378f6155
+[smart-tab-switch-video]: https://github.com/user-attachments/assets/78240347-7d5e-4b45-85df-8446cfb61edf
+[wraparound-arrow-video]: https://github.com/user-attachments/assets/28d96bb3-276d-41c8-aa17-eebd7fde9390
+[wraparound-parent-arrow-video]: https://github.com/user-attachments/assets/72dcd01a-63f0-4193-9a23-cefa61142d73
