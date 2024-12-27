@@ -140,12 +140,12 @@ local DEFAULT_NOTIFICATION_OPTIONS = {
     timeout = 5,
 }
 
--- The tab configuration keys.
+-- The tab preference keys.
 -- The values are just dummy values
 -- so that I don't have to maintain two
 -- different types for the same thing.
 ---@type tab.Preference
-local TAB_CONFIG_KEYS = {
+local TAB_PREFERENCE_KEYS = {
     sort_by = "alphabetical",
     sort_sensitive = false,
     sort_reverse = false,
@@ -785,25 +785,26 @@ local get_paths_of_selected_items = ya.sync(function(_, quote)
     return paths_of_selected_items
 end)
 
--- Function to get the tab configuration
----@type fun(_): tab.Preference
-local get_tab_config = ya.sync(function(_)
+-- Function to get the tab preferences
+---@param _ State
+---@return tab.Preference
+local get_tab_preferences = ya.sync(function(_)
     --
 
-    -- Create the table to store the tab configuration
-    local tab_config = {}
+    -- Create the table to store the tab preferences
+    local tab_preferences = {}
 
-    -- Iterate over the tab configuration keys
-    for key, _ in pairs(TAB_CONFIG_KEYS) do
+    -- Iterate over the tab preference keys
+    for key, _ in pairs(TAB_PREFERENCE_KEYS) do
         --
 
         -- Set the key in the table to the value
         -- from the state
-        tab_config[key] = cx.active.pref[key]
+        tab_preferences[key] = cx.active.pref[key]
     end
 
-    -- Return the tab configuration
-    return tab_config
+    -- Return the tab preferences
+    return tab_preferences
 end)
 
 -- Function to get if Yazi is loading
@@ -998,8 +999,8 @@ local function skip_single_child_directories(initial_directory_url)
     -- Initialise the directory variable to the initial directory given
     local directory = initial_directory_url
 
-    -- Get the tab configuration
-    local tab_config = get_tab_config()
+    -- Get the tab preferences
+    local tab_preferences = get_tab_preferences()
 
     -- Start an infinite loop
     while true do
@@ -1007,7 +1008,7 @@ local function skip_single_child_directories(initial_directory_url)
 
         -- Get all the items in the current directory
         local directory_items =
-            get_directory_items(directory, tab_config.show_hidden)
+            get_directory_items(directory, tab_preferences.show_hidden)
 
         -- If the number of directory items is not 1,
         -- then break out of the loop.
@@ -2115,8 +2116,8 @@ local function handle_leave(args, config)
     ---@type Url
     local directory = get_current_directory_url()
 
-    -- Get the tab configuration
-    local tab_config = get_tab_config()
+    -- Get the tab preferences
+    local tab_preferences = get_tab_preferences()
 
     -- Start an infinite loop
     while true do
@@ -2124,7 +2125,7 @@ local function handle_leave(args, config)
 
         -- Get all the items in the current directory
         local directory_items =
-            get_directory_items(directory, tab_config.show_hidden)
+            get_directory_items(directory, tab_preferences.show_hidden)
 
         -- If the number of directory items is not 1,
         -- then break out of the loop.
