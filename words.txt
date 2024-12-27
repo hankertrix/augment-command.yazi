@@ -1,5 +1,7 @@
 Behaviour
 behaviour
+Behaviours
+behaviours
 Initialise
 initialise
 Initialised
@@ -14,6 +16,10 @@ licence
 licenced
 Keymap
 keymap
+Colour
+colour
+Colours
+colours
 Yazi
 yazi
 Hankertrix
@@ -24,7 +30,6 @@ nlink
 translit
 linemode
 succ
-colours
 lightred
 lightgreen
 lightyellow

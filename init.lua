@@ -41,7 +41,7 @@
 ---@field use_default_create_behaviour boolean Use Yazi's create behaviour?
 ---@field enter_archives boolean Whether to enter archives
 ---@field extract_retries number How many times to retry extracting
----@field extract_archives_recursively boolean Re-extract inner archives or not
+---@field recursively_extract_archives boolean Extract inner archives or not
 ---@field must_have_hovered_item boolean Whether to stop when no item is hovered
 ---@field skip_single_subdirectory_on_enter boolean Skip single subdir on enter
 ---@field skip_single_subdirectory_on_leave boolean Skip single subdir on leave
@@ -117,7 +117,7 @@ local DEFAULT_CONFIG = {
     use_default_create_behaviour = false,
     enter_archives = true,
     extract_retries = 3,
-    extract_archives_recursively = true,
+    recursively_extract_archives = true,
     must_have_hovered_item = true,
     skip_single_subdirectory_on_enter = true,
     skip_single_subdirectory_on_leave = true,
@@ -1862,7 +1862,7 @@ local function recursively_extract_archives(archive_path, config)
     if
         not extraction_results.successful
         or not extracted_items_path
-        or not config.extract_archives_recursively
+        or not config.recursively_extract_archives
     then
         return list_of_extraction_results, extracted_items_path
     end
