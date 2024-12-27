@@ -139,6 +139,17 @@ then it will operate on the selected items.
 
 - The `open` command is augmented as stated in
   [this section above][augment-section].
+
+  Videos:
+
+  - When `prompt` is set to `false`:
+
+    [open-behaviour-video]
+
+  - When `prompt` is set to `true`:
+
+    [open-prompt-video]
+
 - When `smart_enter` is set to `true`,
   it calls the `enter` command when the hovered item is a directory.
 - `--smart` flag to use one command to `open` files and `enter` directories.
@@ -147,6 +158,11 @@ then it will operate on the selected items.
   This allows you to set a key to use this behaviour
   with the `open` command instead of using it for
   every `open` command.
+
+  Video:
+
+  [smart-enter-video]
+
 - `--no-skip` flag, which only applies
   when `smart_enter` is used as it is passed to the `enter` command.
   More details about this flag can be found at the documentation
@@ -159,6 +175,11 @@ then it will operate on the selected items.
   This feature requires the
   [`7z` or `7zz` command][7z-link]
   to be present to extract the archives.
+
+  Video:
+
+  [open-auto-extract-archives-video]
+
 - If the extracted archive file contains other archive
   files in it, those archives will be automatically
   extracted, keeping the directory structure
@@ -176,14 +197,14 @@ then it will operate on the selected items.
   `recursively_extract_archives` to `false`
   in the configuration.
 
+  Video:
+
+  [open-recursively-extract-archives-video]
+
 ### Enter (`enter`)
 
 - When `smart_enter` is set to `true`,
   it calls the `open` command when the hovered item is a file.
-- Automatically skips directories that
-  contain only one subdirectory when entering directories.
-  This can be turned off by setting
-  `skip_single_subdirectory_on_enter` to `false` in the configuration.
 - `--smart` flag to use one command to `enter` directories and `open` files.
   This flag will cause the `enter` command to call the `open` command when
   the selected items or the hovered item is a file,
@@ -191,6 +212,20 @@ then it will operate on the selected items.
   This allows you to set a key to use this behaviour
   with the `enter` command instead of using it for
   every `enter` command.
+
+  Video:
+
+  [smart-enter-video]
+
+- Automatically skips directories that
+  contain only one subdirectory when entering directories.
+  This can be turned off by setting
+  `skip_single_subdirectory_on_enter` to `false` in the configuration.
+
+  Video:
+
+  [enter-skip-single-subdirectory-video]
+
 - `--no-skip` flag. It stops the plugin from skipping directories
   that contain only one subdirectory when entering directories,
   even when `skip_single_subdirectory_on_enter` is set to `true`.
@@ -204,6 +239,11 @@ then it will operate on the selected items.
   This can be turned off by
   setting `skip_single_subdirectory_on_leave` to `false`
   in the configuration.
+
+  Video:
+
+  [leave-skip-single-subdirectory-video]
+
 - `--no-skip` flag. It stops the plugin
   from skipping directories that contain only one subdirectory,
   even when `skip_single_subdirectory_on_leave` is set to `true`.
@@ -215,10 +255,30 @@ then it will operate on the selected items.
 - The `rename` command is augmented as stated in
   [this section above][augment-section].
 
+  Videos:
+
+  - When `prompt` is set to `false`:
+
+    [rename-behaviour-video]
+
+  - When `prompt` is set to `true`:
+
+    [rename-prompt-video]
+
 ### Remove (`remove`)
 
 - The `remove` command is augmented as stated in
   [this section above][augment-section].
+
+  Videos:
+
+  - When `prompt` is set to `false`:
+
+    [remove-behaviour-video]
+
+  - When `prompt` is set to `true`:
+
+    [rename-prompt-video]
 
 ### Create (`create`)
 
@@ -252,20 +312,44 @@ then it will operate on the selected items.
 - The rationale for this behaviour is that creating a path without
   a file extension usually means you intend to create a directory instead
   of a file, as files usually have file extensions.
+
+  Video:
+
+  [create-behaviour-video]
+
 - When `open_file_after_creation` is set to `true`, the `create` command
   will `open` the created file. This behaviour can also be enabled by
   passing the `--open` flag to the `create` command.
+
+  Video:
+
+  [create-and-open-files-video]
+
   Likewise, when `enter_directory_after_creation` is set to `true`,
   the `create` command will `enter` the created directory.
   This behaviour can also be enabled by passing the `--enter` flag
   to the `create` command.
+
+  Video:
+
+  [create-and-open-directories-video]
+
   To enable both behaviours with flags, just pass both the `--open` flag
   and the `--enter` flag to the `create` command.
+
+  Video:
+
+  [create-and-open-files-and-directories-video]
+
 - If you would like to use the behaviour of Yazi's `create` command,
   probably because you would like to automatically open and enter the created
   file and directory respectively, you can either set
   `use_default_create_behaviour` to `true`,
   or pass the `--default-behaviour` flag to the `create` command.
+
+  Video:
+
+  [create-default-behaviour-video]
 
 ### Shell (`shell`)
 
@@ -274,6 +358,17 @@ then it will operate on the selected items.
   only use this command if you need the plugin to determine a suitable
   item group for the command to operate on. Otherwise, you should just
   use the default `shell` command provided by Yazi.
+
+  Videos:
+
+  - When `prompt` is set to `false`:
+
+    [shell-behaviour-video]
+
+  - When `prompt` is set to `true`:
+
+    [shell-prompt-video]
+
 - To use this command, the syntax is exactly the same as the default
   `shell` command provided by Yazi. You just provide the command you want and
   provide any Yazi shell variable, which is documented
@@ -353,6 +448,10 @@ then it will operate on the selected items.
   with the `paste` command instead of using it for
   every `paste` command.
 
+  Video:
+
+  [smart-paste-video]
+
 ### Tab create (`tab_create`)
 
 - When `smart_tab_create` is set to `true`,
@@ -374,6 +473,10 @@ then it will operate on the selected items.
   This allows you to set a specific key to use this
   behaviour with the `tab_create` command instead
   of using it for every `tab_create` command.
+
+  Video:
+
+  [smart-tab-create-video]
 
 ### Tab switch (`tab_switch`)
 
@@ -409,11 +512,20 @@ then it will operate on the selected items.
   behaviour with the `tab_switch` command instead
   of using it for every `tab_switch` command.
 
+  Video:
+
+  [smart-tab-create-video]
+
 ### Arrow (`arrow`)
 
 - When `wraparound_file_navigation` is set to `true`,
   the arrow command will wrap around from the bottom to the top or
   from the top to the bottom when navigating.
+
+  Video:
+
+  [wraparound-arrow-video]
+
   Otherwise, it'll behave like the default `arrow` command.
 
 ## New commands
@@ -424,9 +536,19 @@ then it will operate on the selected items.
   but in the parent directory.
   It allows you to navigate in the parent directory
   without leaving the current directory.
+
+  Video:
+
+  [parent-arrow-video]
+
 - When `wraparound_file_navigation` is set to `true`,
   this command will also wrap around from the bottom to the top or
   from top to the bottom when navigating in the parent directory.
+
+  Video:
+
+  [wraparound-parent-arrow-video]
+
 - You can also replicate this using this series of commands below,
   but it doesn't work as well,
   and doesn't support wraparound navigation:
@@ -456,6 +578,16 @@ then it will operate on the selected items.
 - The command is also augmented as stated in
   [this section above][augment-section].
 
+  Videos:
+
+  - When `prompt` is set to `false`:
+
+    [editor-behaviour-video]
+
+  - When `prompt` is set to `true`:
+
+    [editor-prompt-video]
+
 ### Pager (`pager`)
 
 - The `pager` command opens the default pager set by the
@@ -469,6 +601,16 @@ then it will operate on the selected items.
   This makes the pager command less annoying as it will not
   try to open a directory and then immediately fail with an error,
   causing a flash and causing Yazi to send a notification.
+
+  Videos:
+
+  - When `prompt` is set to `false`:
+
+    [pager-behaviour-video]
+
+  - When `prompt` is set to `true`:
+
+    [pager-prompt-video]
 
 ## Usage
 
@@ -543,6 +685,7 @@ This plugin is licenced under the [GNU AGPL v3 licence][Licence].
 You can view the full licence in the [`LICENSE`][Licence] file.
 
 <!-- Regular links -->
+
 [augment-section]: #what-about-the-commands-are-augmented
 [7z-link]: https://www.7-zip.org/
 [file-command-link]: https://www.darwinsys.com/file/
@@ -551,31 +694,73 @@ You can view the full licence in the [`LICENSE`][Licence] file.
 [Licence]: LICENSE
 
 <!-- Videos -->
+
+<!-- Open command -->
+
+[open-behaviour-video]: https://github.com/user-attachments/assets/5636ffc0-fe24-4da3-9f0e-98de9cd74096
+[open-prompt-video]: https://github.com/user-attachments/assets/6bad5a20-e5d3-491d-9c7c-0f5962b77c1c
+[open-auto-extract-archives-video]: https://github.com/user-attachments/assets/aeb3368b-4f7d-431e-9f7a-69a443af7153
+[open-recursively-extract-archives-video]: https://github.com/user-attachments/assets/44228646-3e82-41e4-a445-f93ab5649309
+
+<!-- Enter command -->
+
+[smart-enter-video]: https://github.com/user-attachments/assets/d3507110-1385-4029-bf64-da3225446d72
+[enter-skip-single-subdirectory-video]: https://github.com/user-attachments/assets/2cdb9289-ef41-454f-817b-81beb8a8d030
+
+<!-- Leave command -->
+
+[leave-skip-single-subdirectory-video]: https://github.com/user-attachments/assets/49acdddb-4d04-4624-8d29-057ada33fd01
+
+<!-- Rename command -->
+
+[rename-behaviour-video]: https://github.com/user-attachments/assets/ba6c79e0-9062-43ae-a76b-2782f28a9a18
+[rename-prompt-video]: https://github.com/user-attachments/assets/4d42653e-9595-4322-b0c9-451b112dc596
+
+<!-- Remove command -->
+
+[remove-behaviour-video]: https://github.com/user-attachments/assets/cc0617b1-fedf-45d3-b894-00524ba31434
+[remove-prompt-video]: https://github.com/user-attachments/assets/d23283fd-5068-429d-b06d-72b0c6a3bb36
+
+<!-- Create command -->
+
 [create-and-open-directories-video]: https://github.com/user-attachments/assets/52b244db-50a8-4adc-912f-239e01a10cc6
 [create-and-open-files-video]: https://github.com/user-attachments/assets/8f2306ea-b795-4da4-9867-9a5ed34f7e12
 [create-and-open-files-and-directories-video]: https://github.com/user-attachments/assets/ed14e451-a8ca-4622-949f-1469e1d17643
 [create-behaviour-video]: https://github.com/user-attachments/assets/8604d1cc-423b-46e8-b464-ef3380435a28
 [create-default-behaviour-video]: https://github.com/user-attachments/assets/8c59f579-8f32-443c-8ae1-edd8d18e5ba0
-[editor-behaviour-video]: https://github.com/user-attachments/assets/af057282-8f75-4662-8b4b-29e594cf4163
-[editor-prompt-video]: https://github.com/user-attachments/assets/6c12380c-36fb-4a57-bd82-8452fdcad7e6
-[enter-skip-single-subdirectory-video]: https://github.com/user-attachments/assets/2cdb9289-ef41-454f-817b-81beb8a8d030
-[leave-skip-single-subdirectory-video]: https://github.com/user-attachments/assets/49acdddb-4d04-4624-8d29-057ada33fd01
-[open-auto-extract-archives-video]: https://github.com/user-attachments/assets/aeb3368b-4f7d-431e-9f7a-69a443af7153
-[open-behaviour-video]: https://github.com/user-attachments/assets/5636ffc0-fe24-4da3-9f0e-98de9cd74096
-[open-prompt-video]: https://github.com/user-attachments/assets/6bad5a20-e5d3-491d-9c7c-0f5962b77c1c
-[open-recursively-extract-archives-video]: https://github.com/user-attachments/assets/44228646-3e82-41e4-a445-f93ab5649309
-[pager-behaviour-video]: https://github.com/user-attachments/assets/d18aec12-8be3-483a-a24a-2929ad8fc6c2
-[pager-prompt-video]: https://github.com/user-attachments/assets/ac3cd3b3-2624-4ea2-b22d-5ab6a49a98c6
-[parent-arrow-video]: https://github.com/user-attachments/assets/d58a841d-0c05-4555-bf1b-f4d539b9d9c9
-[remove-behaviour-video]: https://github.com/user-attachments/assets/cc0617b1-fedf-45d3-b894-00524ba31434
-[remove-prompt-video]: https://github.com/user-attachments/assets/d23283fd-5068-429d-b06d-72b0c6a3bb36
-[rename-behaviour-video]: https://github.com/user-attachments/assets/ba6c79e0-9062-43ae-a76b-2782f28a9a18
-[rename-prompt-video]: https://github.com/user-attachments/assets/4d42653e-9595-4322-b0c9-451b112dc596
+
+<!-- Shell command -->
+
 [shell-behaviour-video]: https://github.com/user-attachments/assets/5d898205-e5ca-487e-b731-4624ca0123ee
 [shell-prompt-video]: https://github.com/user-attachments/assets/d1790105-1e40-4639-bf65-d395a488ae94
-[smart-enter-video]: https://github.com/user-attachments/assets/d3507110-1385-4029-bf64-da3225446d72
+
+<!-- Paste command -->
+
 [smart-paste-video]: https://github.com/user-attachments/assets/9796fbf1-6807-4f74-a0eb-a36c6306c761
+
+<!-- Tab create command -->
+
 [smart-tab-create-video]: https://github.com/user-attachments/assets/2738598c-ccdf-49e4-9d57-90a6378f6155
+
+<!-- Tab switch command -->
+
 [smart-tab-switch-video]: https://github.com/user-attachments/assets/78240347-7d5e-4b45-85df-8446cfb61edf
+
+<!-- Arrow command -->
+
 [wraparound-arrow-video]: https://github.com/user-attachments/assets/28d96bb3-276d-41c8-aa17-eebd7fde9390
+
+<!-- Parent arrow command -->
+
+[parent-arrow-video]: https://github.com/user-attachments/assets/d58a841d-0c05-4555-bf1b-f4d539b9d9c9
 [wraparound-parent-arrow-video]: https://github.com/user-attachments/assets/72dcd01a-63f0-4193-9a23-cefa61142d73
+
+<!-- Editor command -->
+
+[editor-behaviour-video]: https://github.com/user-attachments/assets/af057282-8f75-4662-8b4b-29e594cf4163
+[editor-prompt-video]: https://github.com/user-attachments/assets/6c12380c-36fb-4a57-bd82-8452fdcad7e6
+
+<!-- Pager command -->
+
+[pager-behaviour-video]: https://github.com/user-attachments/assets/d18aec12-8be3-483a-a24a-2929ad8fc6c2
+[pager-prompt-video]: https://github.com/user-attachments/assets/ac3cd3b3-2624-4ea2-b22d-5ab6a49a98c6
