@@ -141,13 +141,13 @@ then it will operate on the selected items.
 
   Videos:
 
-  - When `prompt` is set to `false`:
-
-    [open-behaviour-video]
-
   - When `prompt` is set to `true`:
 
     [open-prompt-video]
+
+  - When `prompt` is set to `false`:
+
+    [open-behaviour-video]
 
 - When `smart_enter` is set to `true`,
   it calls the `enter` command when the hovered item is a directory.
@@ -256,13 +256,21 @@ then it will operate on the selected items.
 
   Videos:
 
-  - When `prompt` is set to `false`:
+  - When `must_have_hovered_item` is `true`:
 
-    [rename-behaviour-video]
+    [rename-must-have-hovered-item-video]
+
+  - When `must_have_hovered_item` is `false`:
+
+    [rename-hovered-item-optional-video]
 
   - When `prompt` is set to `true`:
 
     [rename-prompt-video]
+
+  - When `prompt` is set to `false`:
+
+    [rename-behaviour-video]
 
 ### Remove (`remove`)
 
@@ -271,13 +279,21 @@ then it will operate on the selected items.
 
   Videos:
 
-  - When `prompt` is set to `false`:
+  - When `must_have_hovered_item` is `true`:
 
-    [remove-behaviour-video]
+    [remove-must-have-hovered-item-video]
+
+  - When `must_have_hovered_item` is `false`:
+
+    [remove-hovered-item-optional-video]
 
   - When `prompt` is set to `true`:
 
     [remove-prompt-video]
+
+  - When `prompt` is set to `false`:
+
+    [remove-behaviour-video]
 
 ### Create (`create`)
 
@@ -360,13 +376,21 @@ then it will operate on the selected items.
 
   Videos:
 
-  - When `prompt` is set to `false`:
+  - When `must_have_hovered_item` is `true`:
 
-    [shell-behaviour-video]
+    [shell-must-have-hovered-item-video]
+
+  - When `must_have_hovered_item` is `false`:
+
+    [shell-hovered-item-optional-video]
 
   - When `prompt` is set to `true`:
 
     [shell-prompt-video]
+
+  - When `prompt` is set to `false`:
+
+    [shell-behaviour-video]
 
 - To use this command, the syntax is exactly the same as the default
   `shell` command provided by Yazi. You just provide the command you want and
@@ -598,13 +622,21 @@ then it will operate on the selected items.
 
   Videos:
 
-  - When `prompt` is set to `false`:
+  - When `must_have_hovered_item` is `true`:
 
-    [editor-behaviour-video]
+    [editor-must-have-hovered-item-video]
+
+  - When `must_have_hovered_item` is `false`:
+
+    [editor-hovered-item-optional-video]
 
   - When `prompt` is set to `true`:
 
     [editor-prompt-video]
+
+  - When `prompt` is set to `false`:
+
+    [editor-behaviour-video]
 
 ### Pager (`pager`)
 
@@ -622,13 +654,21 @@ then it will operate on the selected items.
 
   Videos:
 
-  - When `prompt` is set to `false`:
+  - When `must_have_hovered_item` is `true`:
 
-    [pager-behaviour-video]
+    [pager-must-have-hovered-item-video]
+
+  - When `must_have_hovered_item` is `false`:
+
+    [pager-hovered-item-optional-video]
 
   - When `prompt` is set to `true`:
 
     [pager-prompt-video]
+
+  - When `prompt` is set to `false`:
+
+    [pager-behaviour-video]
 
 ## Usage
 
@@ -792,7 +832,6 @@ You can view the full licence in the [`LICENSE`][Licence] file.
 [editor-prompt-video]: https://github.com/user-attachments/assets/6c12380c-36fb-4a57-bd82-8452fdcad7e6
 
 <!-- Pager command -->
-
 
 [pager-hovered-item-optional-video]: https://github.com/user-attachments/assets/e63af138-b553-4598-b6da-c7e3de57f328
 [pager-must-have-hovered-item-video]: https://github.com/user-attachments/assets/aa9e27e0-39ed-466f-ae84-812c08d93293
