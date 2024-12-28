@@ -360,8 +360,16 @@ end
 
 -- Function to escape a percentage sign %
 -- in the string that is being replaced
+---@param replacement_string string The string to escape
+---@return string replacement_result The escaped string
 local function escape_replacement_string(replacement_string)
-    return replacement_string:gsub("%%", "%%%%")
+    --
+
+    -- Get the result of the replacement
+    local replacement_result = replacement_string:gsub("%%", "%%%%")
+
+    -- Return the result of the replacement
+    return replacement_result
 end
 
 -- Function to parse the number arguments to the number type
