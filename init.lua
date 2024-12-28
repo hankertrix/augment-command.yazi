@@ -2366,10 +2366,10 @@ local function handle_create(args, config)
             ui.Text({
                 ui.Line("Will overwrite the following file:")
                     :align(ui.Line.CENTER),
-                ui.Line(string.rep("-", DEFAULT_CONFIRM_OPTIONS.pos.w))
+                ui.Line(string.rep("-", DEFAULT_CONFIRM_OPTIONS.pos.w - 2))
                     :align(ui.Line.LEFT),
                 ui.Line(tostring(full_url)):align(ui.Line.LEFT),
-            })
+            }):wrap(ui.Text.WRAP_TRIM)
         )
 
         -- If the user did not confirm the overwrite,
