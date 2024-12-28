@@ -792,7 +792,7 @@ You can view the full licence in the [`LICENSE`][Licence] file.
 [create-and-open-directories-video]: https://github.com/user-attachments/assets/52b244db-50a8-4adc-912f-239e01a10cc6
 [create-and-open-files-video]: https://github.com/user-attachments/assets/8f2306ea-b795-4da4-9867-9a5ed34f7e12
 [create-and-open-files-and-directories-video]: https://github.com/user-attachments/assets/ed14e451-a8ca-4622-949f-1469e1d17643
-[create-behaviour-video]: https://github.com/user-attachments/assets/8604d1cc-423b-46e8-b464-ef3380435a28
+[create-behaviour-video]: https://github.com/user-attachments/assets/0bee02b7-f0c3-4b24-8e8d-43c9d3ada3d6
 [create-default-behaviour-video]: https://github.com/user-attachments/assets/8c59f579-8f32-443c-8ae1-edd8d18e5ba0
 
 <!-- Shell command -->
