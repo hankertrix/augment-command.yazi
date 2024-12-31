@@ -42,7 +42,6 @@
 ---    |"gray"
 ---    |"lightgray"
 
--- The type of the ui.Pad object
 -- The type of the Color object
 ---@alias Color SupportedColours|string
 
