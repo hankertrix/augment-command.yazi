@@ -1080,30 +1080,30 @@
 ---@diagnostic disable-next-line: lowercase-global
 ui = ui
 
--- Type the Url object
+-- Type the Url global
 ---@type Url
 Url = Url
 
--- Type the cx object
+-- Type the cx global
 ---@type AppData
 ---@diagnostic disable-next-line: lowercase-global
 cx = cx
 
--- Type the ya object
+-- Type the ya global
 ---@type Ya
 ---@diagnostic disable-next-line: lowercase-global
 ya = ya
 
--- Type the ps object
+-- Type the ps global
 ---@type Ps
 ---@diagnostic disable-next-line: lowercase-global
 ps = ps
 
--- Type the file system object
+-- Type the fs global
 ---@type FileSystem
 ---@diagnostic disable-next-line: lowercase-global
 fs = fs
 
--- Type the command object
+-- Type the Command global
 ---@type Command
 Command = Command
