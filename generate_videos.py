@@ -410,6 +410,44 @@ class VHSTape:
         )
 
     @staticmethod
+    def create_multiple_nested_archives(
+        number_of_archives: int, number_of_nested_archives: int
+    ) -> Script:
+        """
+        Returns a script object that contains the
+        setup commands, the clean up commands, and the required programs
+        to create multiple nested archives for the demo.
+        """
+
+        # Initialise the scripts for the setup
+        setup_scripts: list[str] = []
+
+        # Initialise the required programs
+        required_programs: list[str] = []
+
+        # Iterate over the number of archives to create
+        for number in range(number_of_archives):
+
+            # Create the nested archive
+            nested_archive = VHSTape.create_nested_archive(
+                number_of_nested_archives, "{" + str(number) + "}"
+            )
+
+            # If it is the first iteration,
+            # set the required programs
+            if number == 0:
+                required_programs = nested_archive.required_programs
+
+            # Add the setup script
+            setup_scripts.append(nested_archive.setup)
+
+        # Return the script object
+        return Script(
+            setup="\n".join(setup_scripts),
+            required_programs=required_programs,
+        )
+
+    @staticmethod
     def create_keymap_toml(contents: str) -> Script:
         """
         Returns a script object that contains the
@@ -635,26 +673,22 @@ VHS_TAPES: list[VHSTape] = [
         scripts=[
             VHSTape.edit_init_lua_config("recursively_extract_archives", False),
             VHSTape.create_extract_keymap_toml(DEFAULT_KEY),
-            VHSTape.create_nested_archive(4, "{0}"),
-            VHSTape.create_nested_archive(4, "{1}"),
-            VHSTape.create_nested_archive(4, "{2}"),
-            VHSTape.create_nested_archive(4, "{3}"),
+            VHSTape.create_multiple_nested_archives(4, 4),
             Script(
                 setup="\n".join(
                     [
-                        'Type `mv "{0}" "./.git/"` Enter',
-                        'Type `mv "{1}" "./.git/"` Enter',
-                        'Type `mv "{2}" "./.git/"` Enter',
-                        'Type `mv "{3}" "./.git/"` Enter',
+                        'Type `mv "{}" "./.git/"` Enter'.format(
+                            "{" + str(index) + "}"
+                        )
+                        for index in range(4)
                     ]
                 ),
                 clean_up="\n".join(
                     [
-                        'Type `mv "./.git/{0}" "./"` Enter',
-                        'Type `mv "./.git/{1}" "./"` Enter',
-                        'Type `mv "./.git/{2}" "./"` Enter',
-                        'Type `mv "./.git/{3}" "./"` Enter',
-                        'Type `mv "./.git/{4}" "./"` Enter',
+                        'Type `mv "./.git/{}" "./"` Enter'.format(
+                            "{" + str(index) + "}"
+                        )
+                        for index in range(5)
                     ]
                 ),
                 required_programs=["mv"],
@@ -701,29 +735,22 @@ VHS_TAPES: list[VHSTape] = [
             VHSTape.edit_init_lua_config("recursively_extract_archives", False),
             VHSTape.edit_init_lua_config("must_have_hovered_item", False),
             VHSTape.create_extract_keymap_toml(DEFAULT_KEY),
-            VHSTape.create_nested_archive(4, "{0}"),
-            VHSTape.create_nested_archive(4, "{1}"),
-            VHSTape.create_nested_archive(4, "{2}"),
-            VHSTape.create_nested_archive(4, "{3}"),
+            VHSTape.create_multiple_nested_archives(4, 4),
             Script(
                 setup="\n".join(
                     [
-                        'Type `mv "{0}" "./.git/"` Enter',
-                        'Type `mv "{1}" "./.git/"` Enter',
-                        'Type `mv "{2}" "./.git/"` Enter',
-                        'Type `mv "{3}" "./.git/"` Enter',
+                        'Type `mv "{}" "./.git/"` Enter'.format(
+                            "{" + str(index) + "}"
+                        )
+                        for index in range(4)
                     ]
                 ),
                 clean_up="\n".join(
                     [
-                        'Type `mv "./.git/{0}" "./"` Enter',
-                        'Type `mv "./.git/{1}" "./"` Enter',
-                        'Type `mv "./.git/{2}" "./"` Enter',
-                        'Type `mv "./.git/{3}" "./"` Enter',
-                        'Type `mv "./.git/{4}" "./"` Enter',
-                        'Type `mv "./.git/{5}" "./"` Enter',
-                        'Type `mv "./.git/{6}" "./"` Enter',
-                        'Type `mv "./.git/{7}" "./"` Enter',
+                        'Type `mv "./.git/{}" "./"` Enter'.format(
+                            "{" + str(index) + "}"
+                        )
+                        for index in range(8)
                     ]
                 ),
                 required_programs=["mv"],
@@ -772,10 +799,7 @@ VHS_TAPES: list[VHSTape] = [
         scripts=[
             VHSTape.edit_init_lua_config("prompt", True),
             VHSTape.create_extract_keymap_toml(DEFAULT_KEY),
-            VHSTape.create_nested_archive(4, "{0}"),
-            VHSTape.create_nested_archive(4, "{1}"),
-            VHSTape.create_nested_archive(4, "{2}"),
-            VHSTape.create_nested_archive(4, "{3}"),
+            VHSTape.create_multiple_nested_archives(4, 4),
         ],
         yazi_body=[
             'Type "/{0}" Enter',
@@ -810,11 +834,7 @@ VHS_TAPES: list[VHSTape] = [
         ],
         scripts=[
             VHSTape.create_extract_keymap_toml(DEFAULT_KEY),
-            VHSTape.create_nested_archive(4, "{0}"),
-            VHSTape.create_nested_archive(4, "{1}"),
-            VHSTape.create_nested_archive(4, "{2}"),
-            VHSTape.create_nested_archive(4, "{3}"),
-            VHSTape.create_nested_archive(4, "{4}"),
+            VHSTape.create_multiple_nested_archives(5, 4),
         ],
         yazi_body=[
             'Type "/{0}" Enter',
