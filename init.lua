@@ -2320,9 +2320,6 @@ local function handle_extract(args, config)
     ---@type string
     local archive_path = archive_paths
 
-    ya.dbg(archive_path)
-    ya.dbg(is_archive_file(archive_path))
-
     -- If the archive path isn't an archive, exit the function
     if not is_archive_file(archive_path) then return end
 
@@ -2379,11 +2376,11 @@ local function handle_extract(args, config)
             { extracted_items_url }
         )
 
-        -- If the user doesn't want to skip single subdirectories on enter,
-        -- or one of the arguments passed is no skip,
+        -- If the user wants to skip single subdirectories on enter,
+        -- and the no skip flag is not passed
         if
-            not config.skip_single_subdirectory_on_enter
-            or table_pop(args, "no_skip", false)
+            config.skip_single_subdirectory_on_enter
+            and not table_pop(args, "no_skip", false)
         then
             --
 
