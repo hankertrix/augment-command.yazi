@@ -895,7 +895,7 @@ You can view the full licence in the [`LICENSE`][Licence] file.
 [remove-must-have-hovered-item-video]: https://github.com/user-attachments/assets/18649ff1-ef0d-409a-8f01-29431dcc8f2e
 [remove-hovered-item-optional-video]: https://github.com/user-attachments/assets/6e9f5ca0-9b9f-47f8-8499-2b2c1db9f47c
 [remove-prompt-video]: https://github.com/user-attachments/assets/3f94c6f8-2ffd-4970-a5a4-5ac6b3a621c0
-[remove-behaviour-video]: https://github.com/user-attachments/assets/e837491e-b45b-4926-a072-44c5d0138b7f
+[remove-behaviour-video]: https://github.com/user-attachments/assets/37d3c059-84ff-4475-908b-2c167b23c488
 
 <!-- Create command -->
 
