@@ -195,6 +195,8 @@ then it will operate on the selected items.
   so this command is included in the
   [augmented commands section](#augmented-commands) instead of the
   [new commands section](#new-commands).
+- This command requires the [`7z` or `7zz` command][7z-link] to
+  be present to extract the archives.
 - You are not meant to use this command directly. However, you can do so
   if you like, as the extract command is also augmented as stated in
   [this section above][augment-section].
