@@ -658,7 +658,7 @@
 ---@field h integer|nil The height of the component.
 
 -- The type of the input options
----@class (exact) InputOptions
+---@class (exact) YaziInputOptions
 ---@field position Position The position of the input.
 ---@field title string|ui.Line The title of the input.
 
