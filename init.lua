@@ -1067,7 +1067,7 @@ end
 ---@param directory_path string The path to the directory
 ---@param get_hidden_items boolean Whether to get hidden items
 ---@param directories_only boolean|nil Whether to only get directories
----@return Url[] directory_items The list of urls to the directory items
+---@return string[] directory_items The list of urls to the directory items
 local function get_directory_items(
     directory_path,
     get_hidden_items,
@@ -1076,6 +1076,7 @@ local function get_directory_items(
     --
 
     -- Initialise the list of directory items
+    ---@type string[]
     local directory_items = {}
 
     -- Read the contents of the directory
@@ -1100,7 +1101,7 @@ local function get_directory_items(
         if directories_only and not item.cha.is_dir then goto continue end
 
         -- Otherwise, add the item url to the list of directory items
-        table.insert(directory_items, item.url)
+        table.insert(directory_items, tostring(item.url))
 
         -- The continue label to continue the loop
         ::continue::
@@ -1135,12 +1136,11 @@ local function skip_single_child_directories(initial_directory_path)
         if #directory_items ~= 1 then break end
 
         -- Otherwise, get the directory item
-        ---@type Url
-        local directory_item_url = table.unpack(directory_items)
+        local directory_item = table.unpack(directory_items)
 
         -- Get the cha object of the directory item
         -- and don't follow symbolic links
-        local directory_item_cha = fs.cha(directory_item_url, false)
+        local directory_item_cha = fs.cha(Url(directory_item), false)
 
         -- If the cha object of the directory item is nil
         -- then break the loop
@@ -1151,7 +1151,7 @@ local function skip_single_child_directories(initial_directory_path)
         if not directory_item_cha.is_dir then break end
 
         -- Otherwise, set the directory to the inner directory
-        directory = tostring(directory_item_url)
+        directory = directory_item
     end
 
     -- Emit the change directory command to change to the directory variable
