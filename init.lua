@@ -818,9 +818,9 @@ local get_config = ya.sync(function(state)
 end)
 
 -- Function to get the current working directory
----@type fun(): Url Returns the current working directory as a url
-local get_current_directory_url = ya.sync(
-    function(_) return cx.active.current.cwd end
+---@type fun(): string Returns the current working directory as a string
+local get_current_directory = ya.sync(
+    function(_) return tostring(cx.active.current.cwd) end
 )
 
 -- Function to get the path of the hovered item
@@ -1064,12 +1064,12 @@ local function get_item_group()
 end
 
 -- Function to get all the items in the given directory
----@param directory_url Url The url to the directory
+---@param directory_path string The path to the directory
 ---@param get_hidden_items boolean Whether to get hidden items
 ---@param directories_only boolean|nil Whether to only get directories
 ---@return Url[] directory_items The list of urls to the directory items
 local function get_directory_items(
-    directory_url,
+    directory_path,
     get_hidden_items,
     directories_only
 )
@@ -1079,7 +1079,7 @@ local function get_directory_items(
     local directory_items = {}
 
     -- Read the contents of the directory
-    local directory_contents, _ = fs.read_dir(directory_url, {})
+    local directory_contents, _ = fs.read_dir(Url(directory_path), {})
 
     -- If there are no directory contents,
     -- then return the empty list of directory items
@@ -1111,13 +1111,13 @@ local function get_directory_items(
 end
 
 -- Function to skip child directories with only one directory
----@param initial_directory_url Url The url of the initial directory
+---@param initial_directory_path string The path of the initial directory
 ---@return nil
-local function skip_single_child_directories(initial_directory_url)
+local function skip_single_child_directories(initial_directory_path)
     --
 
     -- Initialise the directory variable to the initial directory given
-    local directory = initial_directory_url
+    local directory = initial_directory_path
 
     -- Get the tab preferences
     local tab_preferences = get_tab_preferences()
@@ -1151,7 +1151,7 @@ local function skip_single_child_directories(initial_directory_url)
         if not directory_item_cha.is_dir then break end
 
         -- Otherwise, set the directory to the inner directory
-        directory = directory_item_url
+        directory = tostring(directory_item_url)
     end
 
     -- Emit the change directory command to change to the directory variable
@@ -2266,13 +2266,13 @@ local function get_archive_paths(args)
 end
 
 -- Function to either reveal or change directory based on the item
----@param item_url Url The url of the item to reveal or change directory to
+---@param item_path string The path of the item to reveal or change directory to
 ---@return "reveal" | "cd" yazi_command The Yazi command to execute
-local function reveal_or_cd(item_url)
+local function reveal_or_cd(item_path)
     --
 
     -- Otherwise, get the cha object of the item
-    local item_cha = fs.cha(item_url, false)
+    local item_cha = fs.cha(Url(item_path), false)
 
     -- Get if the item is a directory
     local is_directory = item_cha and item_cha.is_dir
@@ -2372,8 +2372,8 @@ local function handle_extract(args, config)
 
         -- Otherwise, reveal or change the directory to the extracted items
         ya.manager_emit(
-            reveal_or_cd(extracted_items_url),
-            { extracted_items_url }
+            reveal_or_cd(extracted_items_path),
+            { extracted_items_path }
         )
 
         -- If the user wants to skip single subdirectories on enter,
@@ -2385,7 +2385,7 @@ local function handle_extract(args, config)
             --
 
             -- Call the function to skip child directories
-            skip_single_child_directories(extracted_items_url)
+            skip_single_child_directories(extracted_items_path)
         end
     end
 end
@@ -2425,7 +2425,7 @@ local function handle_enter(args, config)
 
     -- Otherwise, call the function to skip child directories
     -- with only a single directory inside
-    skip_single_child_directories(get_current_directory_url())
+    skip_single_child_directories(get_current_directory())
 end
 
 -- Function to handle the leave command
@@ -2447,8 +2447,7 @@ local function handle_leave(args, config)
     end
 
     -- Otherwise, initialise the directory to the current directory
-    ---@type Url
-    local directory = get_current_directory_url()
+    local directory = get_current_directory()
 
     -- Get the tab preferences
     local tab_preferences = get_tab_preferences()
@@ -2467,14 +2466,14 @@ local function handle_leave(args, config)
 
         -- Get the parent directory of the current directory
         ---@type Url|nil
-        local parent_directory = directory:parent()
+        local parent_directory = Url(directory):parent()
 
         -- If the parent directory is nil,
         -- break the loop
         if not parent_directory then break end
 
         -- Otherwise, set the new directory to the parent directory
-        directory = parent_directory
+        directory = tostring(parent_directory)
     end
 
     -- Emit the change directory command to change to the directory variable
@@ -2638,7 +2637,7 @@ local function handle_create(args, config)
 
     -- Get the current working directory as a url
     ---@type Url
-    local current_working_directory = get_current_directory_url()
+    local current_working_directory = Url(get_current_directory())
 
     -- Get whether the url ends with a path delimiter
     local ends_with_path_delimiter = user_input:find("[/\\]$")
