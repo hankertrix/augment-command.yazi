@@ -1100,7 +1100,7 @@ local function get_directory_items(
         -- then continue the loop
         if directories_only and not item.cha.is_dir then goto continue end
 
-        -- Otherwise, add the item url to the list of directory items
+        -- Otherwise, add the item path to the list of directory items
         table.insert(directory_items, tostring(item.url))
 
         -- The continue label to continue the loop
