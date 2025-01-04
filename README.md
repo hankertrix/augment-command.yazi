@@ -858,89 +858,163 @@ You can view the full licence in the [`LICENSE`][Licence] file.
 
 <!-- Open command -->
 
-[open-prompt-video]: https://github.com/user-attachments/assets/6bad5a20-e5d3-491d-9c7c-0f5962b77c1c
-[open-behaviour-video]: https://github.com/user-attachments/assets/5636ffc0-fe24-4da3-9f0e-98de9cd74096
-[open-auto-extract-archives-video]: https://github.com/user-attachments/assets/aeb3368b-4f7d-431e-9f7a-69a443af7153
-[open-recursively-extract-archives-video]: https://github.com/user-attachments/assets/44228646-3e82-41e4-a445-f93ab5649309
+[open-prompt-video]: https://github.com/user-attachments/assets/82ddc67d-0b79-4487-8d29-6fd1eb754a8e
+
+
+[open-behaviour-video]: https://github.com/user-attachments/assets/3f8eec80-ae39-4071-b7ed-e9e9367f10fe
+
+
+[open-auto-extract-archives-video]: https://github.com/user-attachments/assets/35b356ed-9c3f-4093-ab59-f85ae64de757
+
+
+[open-recursively-extract-archives-video]: https://github.com/user-attachments/assets/dd1a5bd4-c7af-4d0a-9bf5-b087ee5a06f0
+
+
 
 <!-- Extract command -->
 
-[extract-must-have-hovered-item-video]: PLACEHOLDER
-[extract-hovered-item-optional-video]: PLACEHOLDER
-[extract-prompt-video]: PLACEHOLDER
-[extract-behaviour-video]: PLACEHOLDER
-[extract-recursively-extract-archives-video]: PLACEHOLDER
+[extract-must-have-hovered-item-video]: https://github.com/user-attachments/assets/7c0516ff-01fd-48c2-ba27-4449ffede933
+
+
+[extract-hovered-item-optional-video]: https://github.com/user-attachments/assets/07ef7d25-3284-4d93-9485-c8635519c57e
+
+[extract-prompt-video]: https://github.com/user-attachments/assets/be2cabc3-b47d-4aac-ac45-0f26957c606b
+
+[extract-behaviour-video]: https://github.com/user-attachments/assets/6ea90612-da8f-45ad-8310-9b38c9e5a6f9
+
+[extract-recursively-extract-archives-video]: https://github.com/user-attachments/assets/bbf7f670-f86d-4aa4-85c7-35b41170924e
+
 
 <!-- Enter command -->
 
-[smart-enter-video]: https://github.com/user-attachments/assets/d3507110-1385-4029-bf64-da3225446d72
-[enter-skip-single-subdirectory-video]: https://github.com/user-attachments/assets/2cdb9289-ef41-454f-817b-81beb8a8d030
+[smart-enter-video]: https://github.com/user-attachments/assets/a00da3f5-305a-4615-b55c-483a06dd56d7
+
+
+[enter-skip-single-subdirectory-video]: https://github.com/user-attachments/assets/25ca5fb5-68f9-45fe-bf32-369e9335505d
+
+
+
 
 <!-- Leave command -->
 
-[leave-skip-single-subdirectory-video]: https://github.com/user-attachments/assets/49acdddb-4d04-4624-8d29-057ada33fd01
+[leave-skip-single-subdirectory-video]: https://github.com/user-attachments/assets/4740fdae-2cd9-463d-b67b-7cdfd8d8b9a1
+
 
 <!-- Rename command -->
 
-[rename-must-have-hovered-item-video]: https://github.com/user-attachments/assets/074c6713-60e8-4249-867f-926ac6ee2bd6
-[rename-hovered-item-optional-video]: https://github.com/user-attachments/assets/3f592893-cda6-4759-ae32-3059f0c285f0
-[rename-prompt-video]: https://github.com/user-attachments/assets/4d42653e-9595-4322-b0c9-451b112dc596
-[rename-behaviour-video]: https://github.com/user-attachments/assets/ba6c79e0-9062-43ae-a76b-2782f28a9a18
+[rename-must-have-hovered-item-video]: https://github.com/user-attachments/assets/fd88a198-3de3-4d2b-8bcf-8d68142c965f
+
+[rename-hovered-item-optional-video]: https://github.com/user-attachments/assets/324dcd94-6f83-49a2-9390-5f41da520689
+
+[rename-prompt-video]: https://github.com/user-attachments/assets/5aba29ae-8b16-4b92-a99c-ff7f0ec925fa
+
+
+[rename-behaviour-video]: https://github.com/user-attachments/assets/280db6dd-10e4-4255-8c12-e13d23105e90
+
 
 <!-- Remove command -->
 
-[remove-must-have-hovered-item-video]: https://github.com/user-attachments/assets/5533b8b6-a966-4453-a86a-09d2ab2340e9
-[remove-hovered-item-optional-video]: https://github.com/user-attachments/assets/dd033b80-b8b0-46db-ab02-9fc1f1b7002d
-[remove-prompt-video]: https://github.com/user-attachments/assets/d23283fd-5068-429d-b06d-72b0c6a3bb36
-[remove-behaviour-video]: https://github.com/user-attachments/assets/cc0617b1-fedf-45d3-b894-00524ba31434
+[remove-must-have-hovered-item-video]: https://github.com/user-attachments/assets/18649ff1-ef0d-409a-8f01-29431dcc8f2e
+
+[remove-hovered-item-optional-video]: https://github.com/user-attachments/assets/6e9f5ca0-9b9f-47f8-8499-2b2c1db9f47c
+
+[remove-prompt-video]: https://github.com/user-attachments/assets/3f94c6f8-2ffd-4970-a5a4-5ac6b3a621c0
+
+[remove-behaviour-video]: https://github.com/user-attachments/assets/e837491e-b45b-4926-a072-44c5d0138b7f
+
 
 <!-- Create command -->
 
-[create-and-enter-directories-video]: https://github.com/user-attachments/assets/52b244db-50a8-4adc-912f-239e01a10cc6
-[create-and-open-files-video]: https://github.com/user-attachments/assets/8f2306ea-b795-4da4-9867-9a5ed34f7e12
-[create-and-open-files-and-directories-video]: https://github.com/user-attachments/assets/ed14e451-a8ca-4622-949f-1469e1d17643
-[create-behaviour-video]: https://github.com/user-attachments/assets/0bee02b7-f0c3-4b24-8e8d-43c9d3ada3d6
-[create-default-behaviour-video]: https://github.com/user-attachments/assets/8c59f579-8f32-443c-8ae1-edd8d18e5ba0
+[create-and-enter-directories-video]: https://github.com/user-attachments/assets/a102f918-8d99-491f-a6e3-fd8151f16f96
+
+
+[create-and-open-files-video]: https://github.com/user-attachments/assets/14341b9b-a048-4ea2-9322-e963293b6813
+
+[create-and-open-files-and-directories-video]: https://github.com/user-attachments/assets/dd05d84a-716b-4c4b-8e77-429bbfb4ea43
+
+
+[create-behaviour-video]: https://github.com/user-attachments/assets/2ee90aa4-1d2f-484c-86c6-2e65cd895080
+
+[create-default-behaviour-video]: https://github.com/user-attachments/assets/5e9305c0-e56c-4fc3-b36b-e86c43571b06
+
 
 <!-- Shell command -->
 
-[shell-must-have-hovered-item-video]: https://github.com/user-attachments/assets/f7699493-99e7-4926-92c7-8811d3428cd4
-[shell-hovered-item-optional-video]: https://github.com/user-attachments/assets/db4b0a30-0cbb-4747-9788-2fb2f8857449
-[shell-prompt-video]: https://github.com/user-attachments/assets/d1790105-1e40-4639-bf65-d395a488ae94
-[shell-behaviour-video]: https://github.com/user-attachments/assets/5d898205-e5ca-487e-b731-4624ca0123ee
-[shell-exit-if-directory-video]: https://github.com/user-attachments/assets/a992300a-2eed-40a1-97e4-d4efef57f7f0
+[shell-must-have-hovered-item-video]: 
+https://github.com/user-attachments/assets/43404049-1a4c-458c-b33f-c221dddf15c6
+
+[shell-hovered-item-optional-video]: 
+https://github.com/user-attachments/assets/b399450a-eec4-43d5-a75d-91c4f04a9d59
+
+[shell-prompt-video]: 
+https://github.com/user-attachments/assets/e83eb468-96fd-463f-a96a-54ac9ee2295f
+
+[shell-behaviour-video]: 
+https://github.com/user-attachments/assets/caa32923-9c3e-4ea4-a1b6-e0a2c7968e9d
+
+[shell-exit-if-directory-video]: 
+https://github.com/user-attachments/assets/a0feab97-b7fc-4d58-8611-60ccf5e794d5
+
 
 <!-- Paste command -->
 
-[smart-paste-video]: https://github.com/user-attachments/assets/9796fbf1-6807-4f74-a0eb-a36c6306c761
+[smart-paste-video]: 
+https://github.com/user-attachments/assets/d48c12a7-f652-4df7-90a5-271cbfa97683
+
 
 <!-- Tab create command -->
 
-[smart-tab-create-video]: https://github.com/user-attachments/assets/2738598c-ccdf-49e4-9d57-90a6378f6155
+[smart-tab-create-video]: 
+https://github.com/user-attachments/assets/2921df3d-b51d-4dbb-a42f-80e021feaaf6
+
 
 <!-- Tab switch command -->
 
-[smart-tab-switch-video]: https://github.com/user-attachments/assets/78240347-7d5e-4b45-85df-8446cfb61edf
+[smart-tab-switch-video]: 
+https://github.com/user-attachments/assets/1afb540d-47a9-4625-ae59-95d5cd91aa35
+
 
 <!-- Arrow command -->
 
-[wraparound-arrow-video]: https://github.com/user-attachments/assets/28d96bb3-276d-41c8-aa17-eebd7fde9390
+[wraparound-arrow-video]: 
+https://github.com/user-attachments/assets/41ea1fb0-a526-4549-95a2-547c3c4b0498
+
 
 <!-- Parent arrow command -->
 
-[parent-arrow-video]: https://github.com/user-attachments/assets/d58a841d-0c05-4555-bf1b-f4d539b9d9c9
-[wraparound-parent-arrow-video]: https://github.com/user-attachments/assets/72dcd01a-63f0-4193-9a23-cefa61142d73
+[parent-arrow-video]: 
+https://github.com/user-attachments/assets/f4dc492a-566b-4645-82e1-301713cff11f
+
+[wraparound-parent-arrow-video]: 
+https://github.com/user-attachments/assets/d19872f8-2851-47e6-8485-4e8e5be66871
+
 
 <!-- Editor command -->
 
-[editor-must-have-hovered-item-video]: https://github.com/user-attachments/assets/4fb901d2-9a86-44ec-9896-453f6df16ea1
-[editor-hovered-item-optional-video]: https://github.com/user-attachments/assets/97e7f313-afcd-4619-bdec-539ffa0ce9a4
-[editor-prompt-video]: https://github.com/user-attachments/assets/6c12380c-36fb-4a57-bd82-8452fdcad7e6
-[editor-behaviour-video]: https://github.com/user-attachments/assets/af057282-8f75-4662-8b4b-29e594cf4163
+[editor-must-have-hovered-item-video]: 
+https://github.com/user-attachments/assets/c2811b90-e164-4a6d-9f3d-aefe8aec1d95
+
+[editor-hovered-item-optional-video]: 
+https://github.com/user-attachments/assets/adad538a-fbe8-4ad3-8f6d-5600618a0673
+
+[editor-prompt-video]: 
+https://github.com/user-attachments/assets/cccb8a3c-6afa-49a6-8808-04b0f235b391
+
+[editor-behaviour-video]: 
+https://github.com/user-attachments/assets/b6821220-8530-4fd1-a40f-53d191a3fe1b
+
 
 <!-- Pager command -->
 
-[pager-must-have-hovered-item-video]: https://github.com/user-attachments/assets/aa9e27e0-39ed-466f-ae84-812c08d93293
-[pager-hovered-item-optional-video]: https://github.com/user-attachments/assets/e63af138-b553-4598-b6da-c7e3de57f328
-[pager-prompt-video]: https://github.com/user-attachments/assets/ac3cd3b3-2624-4ea2-b22d-5ab6a49a98c6
-[pager-behaviour-video]: https://github.com/user-attachments/assets/d18aec12-8be3-483a-a24a-2929ad8fc6c2
+[pager-must-have-hovered-item-video]: 
+https://github.com/user-attachments/assets/22a5211a-89cc-4c36-aadb-eb9e6ab1d578
+
+[pager-hovered-item-optional-video]: 
+https://github.com/user-attachments/assets/6eaed3c9-91f4-4414-8d26-5eaf955a2861
+
+[pager-prompt-video]: 
+https://github.com/user-attachments/assets/1ee621f4-704e-4cc3-a2ff-ba06e4eaf5a3
+
+[pager-behaviour-video]: 
+https://github.com/user-attachments/assets/9ed0d520-4e73-44c3-82f7-18378994e0f4
+
