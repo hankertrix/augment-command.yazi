@@ -117,7 +117,7 @@ require("augment-command"):setup({
 
 All commands that can operate on multiple files and directories,
 like `open`, `rename`, `remove` and `shell`,
-as well as the new commands `editor` and `pager`,
+as well as the new commands `extract`, `editor` and `pager`,
 now determine an item group to operate on.
 By default, the command will operate on the hovered item,
 unless the hovered item is also selected,
@@ -179,7 +179,95 @@ then it will operate on the selected items.
 
   [open-auto-extract-archives-video]
 
-- If the extracted archive file contains other archive
+- The `open` command makes use of the `extract` command,
+  so recursively extracting archives is also supported.
+  For more information, look at the section about the
+  [`extract` command](#extract-extract).
+
+  Video:
+
+  [open-recursively-extract-archives-video]
+
+### Extract (`extract`)
+
+- Technically this is a new command, as Yazi does not provide an `extract`
+  command. However, Yazi does provide a built-in plugin called `extract`,
+  so this command is included in the
+  [augmented commands section](#augmented-commands) instead of the
+  [new commands section](#new-commands).
+- You are not meant to use this command directly. However, you can do so
+  if you like, as the extract command is also augmented as stated in
+  [this section above][augment-section].
+
+  Videos:
+
+  - When `must_have_hovered_item` is `true`:
+
+    [extract-must-have-hovered-item-video]
+
+  - When `must_have_hovered_item` is `false`:
+
+    [extract-hovered-item-optional-video]
+
+  - When `prompt` is set to `true`:
+
+    [extract-prompt-video]
+
+  - When `prompt` is set to `false`:
+
+    [extract-behaviour-video]
+
+- Instead, this command is intended to replace the built-in `extract` plugin,
+  which is used for the `extract` opener. This way, you can use the
+  features that come with the augmented `extract` command, like
+  recursively extracting archives, with the `open` command.
+  This is the intended way to use this command, as the `open` command is
+  meant to be the command that opens everything, so it is a bit
+  counterintuitive to have to use a special key bind to extract archives.
+
+  To replace the built-in `extract` plugin, copy the
+  [`extract` openers section][yazi-yazi-toml-extract-openers]
+  in [Yazi's default `yazi.toml`][yazi-yazi-toml] into your `yazi.toml`,
+  which is located at `~/.config/yazi/yazi.toml` for Linux and macOS, and
+  `C:\Users\USERNAME\AppData\Roaming\yazi\config\yazi.toml`
+  file on Windows, where `USERNAME` is your Windows username.
+  Make sure that the `extract` openers are under the `opener` key in your
+  `yazi.toml`. Then replace `extract` with `augmented-extract`,
+  and you will be using the plugin's `extract` command instead of
+  Yazi's built-in `extract` plugin.
+
+  Here is an example configuration:
+
+  ```toml
+  # ~/.config/yazi/yazi.toml for Linux and macOS
+  # C:\Users\USERNAME\AppData\Roaming\yazi\config\yazi.toml for Windows
+
+  [opener]
+  extract = [
+      { run = 'ya pub augmented-extract --list "$@"', desc = "Extract here", for = "unix" },
+      { run = 'ya pub augmented-extract --list %*',   desc = "Extract here", for = "windows" },
+  ]
+  ```
+
+  If that exceeds your editor's line length limit, another way to do it is:
+
+  ```toml
+  # ~/.config/yazi/yazi.toml for Linux and macOS
+  # C:\Users\USERNAME\AppData\Roaming\yazi\config\yazi.toml for Windows
+
+  [[opener.extract]]
+  run = 'ya pub augmented-extract --list "$@"'
+  desc = "Extract here"
+  for = "unix"
+
+  [[opener.extract]]
+  run = 'ya pub augmented-extract --list %*'
+  desc = "Extract here"
+  for = "windows"
+  ```
+
+- The `extract` command also supports recursively extracting archives,
+  which means if the extracted archive file contains other archive
   files in it, those archives will be automatically
   extracted, keeping the directory structure
   of the archive if the archive doesn't
@@ -198,7 +286,7 @@ then it will operate on the selected items.
 
   Video:
 
-  [open-recursively-extract-archives-video]
+  [extract-recursively-extract-archives-video]
 
 ### Enter (`enter`)
 
@@ -347,7 +435,7 @@ then it will operate on the selected items.
 
   Video:
 
-  [create-and-open-directories-video]
+  [create-and-enter-directories-video]
 
   To enable both behaviours with flags, just pass both the `--open` flag
   and the `--enter` flag to the `create` command.
@@ -732,10 +820,18 @@ then add `plugin augment-command --args=`
 in front of it, which results in
 `plugin augment-command --args='enter'`.
 
+### Using the `extract` command as an opener
+
+This is the intended way to use the `extract` command instead of binding
+the `extract` command to a key in your `keymap.toml` file.
+Look at the [`extract` command section](#extract-extract)
+for details on how to do so.
+
 ### Full configuration example
 
 For a full configuration example,
-you can take a look at [my `keymap.toml` file][my-keymap-toml].
+you can take a look at [my `keymap.toml` file][my-keymap-toml]
+and [my `yazi.toml` file][my-yazi-toml].
 
 ## [Licence]
 
@@ -751,18 +847,29 @@ You can view the full licence in the [`LICENSE`][Licence] file.
 [augment-section]: #what-about-the-commands-are-augmented
 [7z-link]: https://www.7-zip.org/
 [file-command-link]: https://www.darwinsys.com/file/
-[my-keymap-toml]: https://github.com/hankertrix/Dotfiles/blob/main/.config/yazi/keymap.toml
+[yazi-yazi-toml-extract-openers]: https://github.com/sxyazi/yazi/blob/main/yazi-config/preset/yazi-default.toml#L51-L54
+[yazi-yazi-toml]: https://github.com/sxyazi/yazi/blob/main/yazi-config/preset/yazi-default.toml
 [yazi-keymap-toml]: https://github.com/sxyazi/yazi/blob/main/yazi-config/preset/keymap-default.toml
+[my-keymap-toml]: https://github.com/hankertrix/Dotfiles/blob/main/.config/yazi/keymap.toml
+[my-yazi-toml]: https://github.com/hankertrix/Dotfiles/blob/main/.config/yazi/yazi.toml
 [Licence]: LICENSE
 
 <!-- Videos -->
 
 <!-- Open command -->
 
-[open-behaviour-video]: https://github.com/user-attachments/assets/5636ffc0-fe24-4da3-9f0e-98de9cd74096
 [open-prompt-video]: https://github.com/user-attachments/assets/6bad5a20-e5d3-491d-9c7c-0f5962b77c1c
+[open-behaviour-video]: https://github.com/user-attachments/assets/5636ffc0-fe24-4da3-9f0e-98de9cd74096
 [open-auto-extract-archives-video]: https://github.com/user-attachments/assets/aeb3368b-4f7d-431e-9f7a-69a443af7153
 [open-recursively-extract-archives-video]: https://github.com/user-attachments/assets/44228646-3e82-41e4-a445-f93ab5649309
+
+<!-- Extract command -->
+
+[extract-must-have-hovered-item-video]: PLACEHOLDER
+[extract-hovered-item-optional-video]: PLACEHOLDER
+[extract-prompt-video]: PLACEHOLDER
+[extract-behaviour-video]: PLACEHOLDER
+[extract-recursively-extract-archives-video]: PLACEHOLDER
 
 <!-- Enter command -->
 
@@ -775,21 +882,21 @@ You can view the full licence in the [`LICENSE`][Licence] file.
 
 <!-- Rename command -->
 
-[rename-hovered-item-optional-video]: https://github.com/user-attachments/assets/3f592893-cda6-4759-ae32-3059f0c285f0
 [rename-must-have-hovered-item-video]: https://github.com/user-attachments/assets/074c6713-60e8-4249-867f-926ac6ee2bd6
-[rename-behaviour-video]: https://github.com/user-attachments/assets/ba6c79e0-9062-43ae-a76b-2782f28a9a18
+[rename-hovered-item-optional-video]: https://github.com/user-attachments/assets/3f592893-cda6-4759-ae32-3059f0c285f0
 [rename-prompt-video]: https://github.com/user-attachments/assets/4d42653e-9595-4322-b0c9-451b112dc596
+[rename-behaviour-video]: https://github.com/user-attachments/assets/ba6c79e0-9062-43ae-a76b-2782f28a9a18
 
 <!-- Remove command -->
 
-[remove-hovered-item-optional-video]: https://github.com/user-attachments/assets/dd033b80-b8b0-46db-ab02-9fc1f1b7002d
 [remove-must-have-hovered-item-video]: https://github.com/user-attachments/assets/5533b8b6-a966-4453-a86a-09d2ab2340e9
-[remove-behaviour-video]: https://github.com/user-attachments/assets/cc0617b1-fedf-45d3-b894-00524ba31434
+[remove-hovered-item-optional-video]: https://github.com/user-attachments/assets/dd033b80-b8b0-46db-ab02-9fc1f1b7002d
 [remove-prompt-video]: https://github.com/user-attachments/assets/d23283fd-5068-429d-b06d-72b0c6a3bb36
+[remove-behaviour-video]: https://github.com/user-attachments/assets/cc0617b1-fedf-45d3-b894-00524ba31434
 
 <!-- Create command -->
 
-[create-and-open-directories-video]: https://github.com/user-attachments/assets/52b244db-50a8-4adc-912f-239e01a10cc6
+[create-and-enter-directories-video]: https://github.com/user-attachments/assets/52b244db-50a8-4adc-912f-239e01a10cc6
 [create-and-open-files-video]: https://github.com/user-attachments/assets/8f2306ea-b795-4da4-9867-9a5ed34f7e12
 [create-and-open-files-and-directories-video]: https://github.com/user-attachments/assets/ed14e451-a8ca-4622-949f-1469e1d17643
 [create-behaviour-video]: https://github.com/user-attachments/assets/0bee02b7-f0c3-4b24-8e8d-43c9d3ada3d6
@@ -797,10 +904,10 @@ You can view the full licence in the [`LICENSE`][Licence] file.
 
 <!-- Shell command -->
 
-[shell-hovered-item-optional-video]: https://github.com/user-attachments/assets/db4b0a30-0cbb-4747-9788-2fb2f8857449
 [shell-must-have-hovered-item-video]: https://github.com/user-attachments/assets/f7699493-99e7-4926-92c7-8811d3428cd4
-[shell-behaviour-video]: https://github.com/user-attachments/assets/5d898205-e5ca-487e-b731-4624ca0123ee
+[shell-hovered-item-optional-video]: https://github.com/user-attachments/assets/db4b0a30-0cbb-4747-9788-2fb2f8857449
 [shell-prompt-video]: https://github.com/user-attachments/assets/d1790105-1e40-4639-bf65-d395a488ae94
+[shell-behaviour-video]: https://github.com/user-attachments/assets/5d898205-e5ca-487e-b731-4624ca0123ee
 [shell-exit-if-directory-video]: https://github.com/user-attachments/assets/a992300a-2eed-40a1-97e4-d4efef57f7f0
 
 <!-- Paste command -->
@@ -826,14 +933,14 @@ You can view the full licence in the [`LICENSE`][Licence] file.
 
 <!-- Editor command -->
 
-[editor-hovered-item-optional-video]: https://github.com/user-attachments/assets/97e7f313-afcd-4619-bdec-539ffa0ce9a4
 [editor-must-have-hovered-item-video]: https://github.com/user-attachments/assets/4fb901d2-9a86-44ec-9896-453f6df16ea1
-[editor-behaviour-video]: https://github.com/user-attachments/assets/af057282-8f75-4662-8b4b-29e594cf4163
+[editor-hovered-item-optional-video]: https://github.com/user-attachments/assets/97e7f313-afcd-4619-bdec-539ffa0ce9a4
 [editor-prompt-video]: https://github.com/user-attachments/assets/6c12380c-36fb-4a57-bd82-8452fdcad7e6
+[editor-behaviour-video]: https://github.com/user-attachments/assets/af057282-8f75-4662-8b4b-29e594cf4163
 
 <!-- Pager command -->
 
-[pager-hovered-item-optional-video]: https://github.com/user-attachments/assets/e63af138-b553-4598-b6da-c7e3de57f328
 [pager-must-have-hovered-item-video]: https://github.com/user-attachments/assets/aa9e27e0-39ed-466f-ae84-812c08d93293
-[pager-behaviour-video]: https://github.com/user-attachments/assets/d18aec12-8be3-483a-a24a-2929ad8fc6c2
+[pager-hovered-item-optional-video]: https://github.com/user-attachments/assets/e63af138-b553-4598-b6da-c7e3de57f328
 [pager-prompt-video]: https://github.com/user-attachments/assets/ac3cd3b3-2624-4ea2-b22d-5ab6a49a98c6
+[pager-behaviour-video]: https://github.com/user-attachments/assets/d18aec12-8be3-483a-a24a-2929ad8fc6c2
