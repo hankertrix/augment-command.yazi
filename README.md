@@ -926,7 +926,7 @@ You can view the full licence in the [`LICENSE`][Licence] file.
 [extract-prompt-video]: https://github.com/user-attachments/assets/be2cabc3-b47d-4aac-ac45-0f26957c606b
 [extract-behaviour-video]: https://github.com/user-attachments/assets/6ea90612-da8f-45ad-8310-9b38c9e5a6f9
 [extract-recursively-extract-archives-video]: https://github.com/user-attachments/assets/bbf7f670-f86d-4aa4-85c7-35b41170924e
-[extract-encrypted-archive]: PLACEHOLDER
+[extract-encrypted-archive]: https://github.com/user-attachments/assets/58645691-3559-44ad-918e-8c2cd127252f
 
 <!-- Enter command -->
 
