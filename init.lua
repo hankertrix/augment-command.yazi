@@ -18,11 +18,24 @@
 -- The type of the command table
 ---@alias CommandTable table<SupportedCommands, CommandFunction>
 
--- The type for the extractor command
----@alias ExtractorFunction fun(
----    password: string|nil,    -- The password to the archive
----    configuration: Configuration,    -- The configuration object
----): CommandOutput|nil, Error|string|nil
+-- The type for the extractor list items command
+---@alias ExtractorListItemsCommand fun(
+---    self: Extractor,
+---): output: CommandOutput|nil, error: Error|nil
+
+-- The type for the extractor get items function
+---@alias ExtractorGetItems fun(
+---    self: Extractor,
+---): files: string[], directories: string[], error: string|nil
+
+-- The type for the extractor extract function.
+---@alias ExtractorExtract fun(
+---    self: Extractor,
+---    has_only_one_file: boolean|nil,
+---): ExtractionResult
+
+-- The type for the extractor function
+---@alias ExtractorCommand fun(): output: CommandOutput|nil, error: Error|nil
 
 -- Custom types
 
@@ -41,46 +54,32 @@
 ---@field enter_archives boolean Whether to enter archives
 ---@field extract_retries number How many times to retry extracting
 ---@field recursively_extract_archives boolean Extract inner archives or not
+---@field preserve_file_permissions boolean Whether to preserve file permissions
 ---@field must_have_hovered_item boolean Whether to stop when no item is hovered
 ---@field skip_single_subdirectory_on_enter boolean Skip single subdir on enter
 ---@field skip_single_subdirectory_on_leave boolean Skip single subdir on leave
 ---@field wraparound_file_navigation boolean Have wraparound navigation or not
 
--- The additional data passed to the function to initialise the configuration
----@class (exact) AdditionalData
----@field extractor_command string The extractor shell command, like 7z
-
 -- The full configuration for the plugin
----@class (exact) Configuration: UserConfiguration, AdditionalData
+---@class (exact) Configuration: UserConfiguration
 
 -- The type for the state
 ---@class (exact) State
 ---@field config Configuration The configuration object
 
--- The type for the extraction results
+-- The type for the extractor function result
 ---@class (exact) ExtractionResult
----@field archive_path string The path to the archive
----@field destination_path string|nil The destination path if given
----@field successful boolean Whether the extraction was successful
----@field extracted_items_path string|nil The path to the extracted items
----@field error string|nil The error message
-
--- The type for the result of the retry extractor function
----@class (exact) ExtractorResult
----@field archive_path string The path to the archive
 ---@field successful boolean Whether the extractor function was successful
----@field error string|nil The error message
 ---@field output string|nil The output of the extractor function
----@field correct_password string|nil The correct password to the archive
+---@field cancelled boolean|nil boolean Whether the extraction was cancelled
+---@field error string|nil The error message
+---@field archive_path string|nil The path to the archive
+---@field destination_path string|nil The path to the destination
+---@field extracted_items_path string|nil The path to the extracted items
 
--- The enum for which group of items to operate on
----@enum ItemGroup
-local ItemGroup = {
-    Hovered = "hovered",
-    Selected = "selected",
-    None = "none",
-    Prompt = "prompt",
-}
+-- The name of the plugin
+---@type string
+local PLUGIN_NAME = "augment-command"
 
 -- The enum for the supported commands
 ---@enum SupportedCommands
@@ -102,19 +101,14 @@ local Commands = {
     Pager = "pager",
 }
 
--- The extract behaviour flags
--- https://documentation.help/7-Zip/overwrite.htm
----@enum ExtractBehaviour
-local ExtractBehaviour = {
-    Overwrite = "-aoa",
-    Skip = "-aos",
-    Rename = "-aou",
-    RenameExisting = "-aot",
+-- The enum for which group of items to operate on
+---@enum ItemGroup
+local ItemGroup = {
+    Hovered = "hovered",
+    Selected = "selected",
+    None = "none",
+    Prompt = "prompt",
 }
-
--- The name of the plugin
----@type string
-local PLUGIN_NAME = "augment-command"
 
 -- The default configuration for the plugin
 ---@type UserConfiguration
@@ -131,6 +125,7 @@ local DEFAULT_CONFIG = {
     enter_archives = true,
     extract_retries = 3,
     recursively_extract_archives = true,
+    preserve_file_permissions = false,
     must_have_hovered_item = true,
     skip_single_subdirectory_on_enter = true,
     skip_single_subdirectory_on_leave = true,
@@ -169,32 +164,25 @@ local TAB_PREFERENCE_KEYS = {
 }
 
 -- The table of input options for the prompt
----@enum InputOptionsTable
+---@type table<ItemGroup, string>
 local INPUT_OPTIONS_TABLE = {
     [ItemGroup.Hovered] = "(H/s)",
     [ItemGroup.Selected] = "(h/S)",
     [ItemGroup.None] = "(h/s)",
 }
 
--- The table of archive mime types
----@type table<string, boolean>
-local ARCHIVE_MIME_TYPES = {
-    ["application/zip"] = true,
-    ["application/gzip"] = true,
-    ["application/tar"] = true,
-    ["application/bzip"] = true,
-    ["application/bzip2"] = true,
-    ["application/7z-compressed"] = true,
-    ["application/rar"] = true,
-    ["application/xz"] = true,
+-- The extractor names
+---@enum ExtractorName
+local ExtractorName = {
+    SevenZip = "7z",
+    Tar = "tar",
+}
 
-    -- Bug in file(1) that classifies
-    -- some zip archives as a data stream,
-    -- hopefully this can be removed in the future.
-    --
-    -- Link to bug report:
-    -- https://bugs.astron.com/view.php?id=571
-    ["application/octet-stream"] = true,
+-- The extract behaviour flags
+---@enum ExtractBehaviour
+local ExtractBehaviour = {
+    Overwrite = "overwrite",
+    Rename = "rename",
 }
 
 -- The list of archive file extensions
@@ -222,6 +210,125 @@ local ARCHIVE_FILE_EXTENSIONS = {
     zip = true,
 }
 
+-- The error for the base extractor class
+-- which is an abstract base class that
+-- does not implement any functionality
+---@type string
+local BASE_EXTRACTOR_ERROR = table.concat({
+    "The Extractor class is does not implement any functionality.",
+    "How did you even manage to get here?",
+}, "\n")
+
+-- Class definitions
+
+-- The base extractor that all extractors inherit from
+---@class Extractor
+---@field name string The name of the extractor
+---@field command string The shell command for the extractor
+---@field commands string[] The possible extractor commands
+---
+--- Whether the extractor supports preserving file permissions
+---@field supports_file_permissions boolean
+---
+--- The map of the extract behaviour strings to the command flags
+---@field extract_behaviour_map table<ExtractBehaviour, string>
+local Extractor = {
+    name = "BaseExtractor",
+    command = "",
+    commands = {},
+    supports_file_permissions = false,
+    extract_behaviour_map = {},
+}
+
+-- The function to create a subclass of the abstract base extractor
+---@param subclass table The subclass to create
+---@return Extractor subclass Subclass of the base extractor
+function Extractor:subclass(subclass)
+    --
+
+    -- Create a new instance
+    local instance = setmetatable(subclass or {}, self)
+
+    -- Set where to find the object's methods or properties
+    self.__index = self
+
+    -- Return the instance
+    return instance
+end
+
+-- The method to get the archive items
+---@type ExtractorGetItems
+function Extractor:get_items() return {}, {}, BASE_EXTRACTOR_ERROR end
+
+-- The method to extract the archive
+---@type ExtractorExtract
+function Extractor:extract(_)
+    return {
+        successful = false,
+        error = BASE_EXTRACTOR_ERROR,
+    }
+end
+
+-- The 7z extractor
+---@class SevenZip: Extractor
+---@field password string The password to the archive
+local SevenZip = Extractor:subclass({
+    name = ExtractorName.SevenZip,
+    commands = { "7z", "7zz" },
+
+    -- https://documentation.help/7-Zip/overwrite.htm
+    extract_behaviour_map = {
+        [ExtractBehaviour.Overwrite] = "-aoa",
+        [ExtractBehaviour.Rename] = "-aou",
+    },
+
+    password = "",
+})
+
+-- The tar extractor
+---@class Tar: Extractor
+local Tar = Extractor:subclass({
+    name = ExtractorName.Tar,
+    commands = { "gtar", "tar" },
+    supports_file_permissions = true,
+
+    -- https://www.man7.org/linux/man-pages/man1/tar.1.html
+    -- https://ss64.com/mac/tar.html
+    extract_behaviour_map = {
+
+        -- Tar overwrites by default
+        [ExtractBehaviour.Overwrite] = "",
+        [ExtractBehaviour.Rename] = "-k",
+    },
+})
+
+-- The default extractor, which is set to 7zip
+---@class DefaultExtractor: SevenZip
+local DefaultExtractor = SevenZip:subclass({})
+
+-- The table of archive mime types
+---@type table<string, Extractor>
+local ARCHIVE_MIME_TYPE_TO_EXTRACTOR_MAP = {
+    ["application/zip"] = DefaultExtractor,
+    ["application/gzip"] = DefaultExtractor,
+    ["application/tar"] = Tar,
+    ["application/bzip"] = DefaultExtractor,
+    ["application/bzip2"] = DefaultExtractor,
+    ["application/7z-compressed"] = DefaultExtractor,
+    ["application/rar"] = DefaultExtractor,
+    ["application/xz"] = DefaultExtractor,
+
+    -- Bug in file(1) that classifies
+    -- some zip archives as a data stream,
+    -- hopefully this can be removed in the future.
+    --
+    -- Link to bug report:
+    -- https://bugs.astron.com/view.php?id=571
+    ["application/octet-stream"] = DefaultExtractor,
+}
+
+-- Patterns
+
 -- The list of mime type prefixes to remove
 --
 -- The prefixes are used in a lua pattern
@@ -238,10 +345,6 @@ local MIME_TYPE_PREFIXES_TO_REMOVE = {
 local get_mime_type_without_prefix_template_pattern =
     "^(%%a-)/%s([%%-%%d%%a]-)$"
 
--- The pattern to get the information from an archive item
----@type string
-local archive_item_info_pattern = "%s+([%.%a]+)%s+(%d+)%s+(%d+)%s+(.+)$"
-
 -- The pattern to get the file extension
 ---@type string
 local file_extension_pattern = "%.([%a]+)$"
@@ -253,6 +356,8 @@ local shell_variable_pattern = "[%$%%][%*@0]"
 -- The pattern to match the bat command with the pager option passed
 ---@type string
 local bat_command_with_pager_pattern = "%f[%a]bat%f[%A].*%-%-pager%s+"
+
+-- Utility functions
 
 -- Function to merge tables.
 --
@@ -311,13 +416,13 @@ end
 
 -- Function to split a string into a list
 ---@param given_string string The string to split
----@param separator string The character to split the string by
+---@param separator string|nil The character to split the string by
 ---@return string[] splitted_strings The list of strings split by the character
 local function string_split(given_string, separator)
     --
 
     -- If the separator isn't given, set it to the whitespace character
-    if separator == nil then separator = "%s" end
+    separator = separator or "%s"
 
     -- Initialise the list of splitted strings
     local splitted_strings = {}
@@ -603,16 +708,14 @@ end
 -- Function to initialise the configuration
 ---@type fun(
 ---     user_config: Configuration|nil,    -- The configuration object
----     additional_data: AdditionalData,    -- The additional data
 ---): Configuration The initialised configuration object
-local initialise_config = ya.sync(function(state, user_config, additional_data)
+local initialise_config = ya.sync(function(state, user_config)
     --
 
     -- Merge the default configuration with the user given one,
     -- as well as the additional data given,
     -- and set it to the state.
-    state.config =
-        merge_tables(merge_configuration(user_config), additional_data)
+    state.config = merge_configuration(user_config)
 
     -- Return the configuration object for async functions
     return state.config
@@ -620,50 +723,20 @@ end)
 
 -- Function to try if a shell command exists
 ---@param shell_command string The shell command to check
+---@param args string[]|nil The arguments to the shell command
 ---@return boolean shell_command_exists Whether the shell command exists
-local function shell_command_exists(shell_command)
+local function async_shell_command_exists(shell_command, args)
     --
 
-    -- Initialise the null output
-    local null_output = "/dev/null"
+    -- Get the output of the shell command with the given arguments
+    local output = Command(shell_command)
+        :args(args or {})
+        :stdout(Command.PIPED)
+        :stderr(Command.PIPED)
+        :output()
 
-    -- If the OS is Windows
-    if ya.target_family() == "windows" then
-        --
-
-        -- Set the null output to the NUL device
-        null_output = "NUL"
-    end
-
-    -- Get whether the shell command is successfully executed
-    --
-    -- "1> /dev/null" redirects the standard output
-    -- of the shell command to /dev/null, which accepts
-    -- and discards all input and produces no output.
-    --
-    -- "2>&1" redirects the standard error to the file
-    -- descriptor of the standard output, which is the
-    -- /dev/null file or the NUL device on Windows,
-    -- which accepts and discards
-    -- all input and produces no output.
-    --
-    -- The full thing, "1> /dev/null 2>&1" just makes sure
-    -- the shell command doesn't produce any output when executed.
-    --
-    -- The equivalent command on Windows is "1> NUL 2>&1".
-    --
-    -- https://stackoverflow.com/questions/10508843/what-is-dev-null-21
-    -- https://stackoverflow.com/questions/818255/what-does-21-mean
-    -- https://www.gnu.org/software/bash/manual/html_node/Redirections.html
-    local successfully_executed =
-        os.execute(shell_command .. " 1> " .. null_output .. " 2>&1")
-
-    -- If the command was not successfully executed,
-    -- set the successfully executed variable to false
-    if not successfully_executed then successfully_executed = false end
-
-    -- Return the result of the os.execute command
-    return successfully_executed
+    -- Return true if there's an output and false otherwise
+    return output ~= nil
 end
 
 -- Function to emit a plugin command
@@ -713,21 +786,8 @@ local function initialise_plugin(opts)
     -- Subscribe to the augmented extract event
     subscribe_to_augmented_extract_event()
 
-    -- Initialise the extractor command
-    local extractor_command = "7z"
-
-    -- If the 7zz command exists
-    if shell_command_exists("7zz") then
-        --
-
-        -- Set the 7z command to the 7zz command
-        extractor_command = "7zz"
-    end
-
     -- Initialise the configuration object
-    local config = initialise_config(opts, {
-        extractor_command = extractor_command,
-    })
+    local config = initialise_config(opts)
 
     -- Return the configuration object
     return config
@@ -778,8 +838,11 @@ local function is_archive_mime_type(mime_type)
     local standardised_mime_type = standardise_mime_type(mime_type)
 
     -- Get if the mime type is an archive
-    local is_archive =
-        table_get(ARCHIVE_MIME_TYPES, standardised_mime_type, false)
+    local is_archive = table_get(
+        ARCHIVE_MIME_TYPE_TO_EXTRACTOR_MAP,
+        standardised_mime_type,
+        false
+    )
 
     -- Return if the mime type is an archive
     return is_archive
@@ -806,6 +869,86 @@ local function is_archive_file_extension(file_extension)
 
     -- Return if the file extension is an archive file extension
     return is_archive
+end
+
+-- Function to get the mime type of a file
+---@param file_path string The path to the file
+---@return string mime_type The mime type of the file
+local function get_mime_type(file_path)
+    --
+
+    -- Get the output of the file command
+    local output, _ = Command("file")
+        :args({
+
+            -- Don't prepend file names to the output
+            "-b",
+
+            -- Print the mime type of the file
+            "--mime-type",
+
+            -- The file path to get the mime type of
+            file_path,
+        })
+        :stdout(Command.PIPED)
+        :stderr(Command.PIPED)
+        :output()
+
+    -- If there is no output, then return an empty string
+    if not output then return "" end
+
+    -- Otherwise, get the mime type from the standard output
+    local mime_type = string_trim(output.stdout)
+
+    -- Standardise the mime type
+    local standardised_mime_type = standardise_mime_type(mime_type)
+
+    -- Return the standardised mime type
+    return standardised_mime_type
+end
+
+-- Function to get a temporary name.
+-- The code is taken from Yazi's source code.
+---@param path string The path to the item to create a temporary name
+---@return string temporary_name The temporary name for the item
+local function get_temporary_name(path)
+    return ".tmp_"
+        .. ya.hash(string.format("extract//%s//%.10f", path, ya.time()))
+end
+
+-- Function to get a temporary directory url
+-- for the given file path
+---@param path string The path to the item to create a temporary directory
+---@param destination_given boolean|nil Whether the destination was given
+---@return Url|nil url The url of the temporary directory
+local function get_temporary_directory_url(path, destination_given)
+    --
+
+    -- Get the url of the path given
+    ---@type Url
+    local path_url = Url(path)
+
+    -- Initialise the parent directory to be the path given
+    ---@type Url
+    local parent_directory_url = path_url
+
+    -- If the destination is not given
+    if not destination_given then
+        --
+
+        -- Get the parent directory of the given path
+        parent_directory_url = Url(path):parent()
+
+        -- If the parent directory doesn't exist, return nil
+        if not parent_directory_url then return nil end
+    end
+
+    -- Create the temporary directory path
+    local temporary_directory_url =
+        fs.unique_name(parent_directory_url:join(get_temporary_name(path)))
+
+    -- Return the temporary directory path
+    return temporary_directory_url
 end
 
 -- Function to get the configuration from an async function
@@ -1158,53 +1301,76 @@ local function skip_single_child_directories(initial_directory_path)
     ya.manager_emit("cd", { directory })
 end
 
--- Function to check if an archive is password protected
----@param command_error_string string The error string from the extractor
----@return boolean is_encrypted Whether the archive is password protected
-local function archive_is_encrypted(command_error_string)
+-- Class implementations
+
+-- The function to create a new instance of the extractor
+---@param archive_path string The path to the archive
+---@param destination_path string|nil The path to extract to
+---@param config Configuration The configuration object
+---@return Extractor|nil instance An instance of the extractor if available
+function Extractor:new(archive_path, destination_path, config)
     --
 
-    -- Return true if the string contains the word "wrong password",
-    -- and false otherwise
-    if command_error_string:lower():find("wrong password", 1, true) then
-        return true
-    else
-        return false
+    -- Initialise whether the extractor is available
+    local available = false
+
+    -- Iterate over the commands
+    for _, command in ipairs(self.commands) do
+        --
+
+        -- Call the shell command exists function
+        -- on the command
+        local exists = async_shell_command_exists(command)
+
+        -- If the command exists
+        if exists then
+            --
+
+            -- Save the command
+            self.command = command
+
+            -- Set the available variable to true
+            available = true
+
+            -- Break out of the loop
+            break
+        end
     end
+
+    -- If none of the commands for the extractor are available,
+    -- then return nil
+    if not available then return nil end
+
+    -- Otherwise, create a new instance
+    local instance = setmetatable({}, self)
+
+    -- Set where to find the object's methods or properties
+    self.__index = self
+
+    -- Save the parameters given
+    self.archive_path = archive_path
+    self.destination_path = destination_path
+    self.config = config
+
+    -- Return the instance
+    return instance
 end
 
--- Function to handle retrying the extractor command
---
--- The initial password is the password given to the extractor command
--- and the test encryption is to test the archive password without
--- actually executing the given extractor command.
----@param archive_path string The path to the archive file
----@param extractor_function ExtractorFunction Function to run the extractor
----@param config Configuration The configuration object
----@param initial_password string|nil The initial password to try
----@return ExtractorResult result Result of the extractor command
-local function retry_extractor(
-    archive_path,
-    extractor_function,
-    config,
-    initial_password
-)
+-- Function to retry the extractor
+---@private
+---@param extractor_function ExtractorCommand Extractor command to retry
+---@param clean_up_wanted boolean|nil Whether to clean up the destination path
+---@return ExtractionResult result Result of the extractor function
+function SevenZip:retry_extractor(extractor_function, clean_up_wanted)
     --
-
-    -- Initialise the password to the initial password
-    -- or an empty string if it's not given
-    local password = initial_password or ""
-
-    -- Initialise the error message from the archive extractor
-    local error_message = ""
 
     -- Initialise the number of tries
     -- to the number of retries plus 1
-    local total_number_of_tries = config.extract_retries + 1
+    local total_number_of_tries = self.config.extract_retries + 1
 
     -- Get the url of the archive
     ---@type Url
-    local archive_url = Url(archive_path)
+    local archive_url = Url(self.archive_path)
 
     -- Get the archive name
     local archive_name = archive_url:name()
@@ -1212,11 +1378,9 @@ local function retry_extractor(
     -- If the archive name is nil,
     -- return the result of the extractor function
     if not archive_name then
-        ---@type ExtractorResult
         return {
-            archive_path = archive_path,
             successful = false,
-            error = "The archive does not have a name",
+            error = string.format("%s does not have a name", self.archive_path),
         }
     end
 
@@ -1227,154 +1391,132 @@ local function retry_extractor(
     local wrong_password_prompt =
         string.format("Wrong password, %s password:", archive_name)
 
+    -- Initialise the clean up function
+    local clean_up = clean_up_wanted
+            and function() fs.remove("dir_all", Url(self.destination_path)) end
+        or function() end
+
+    -- Initialise the error message
+    local error_message = nil
+
     -- Iterate over the number of times to try the extraction
     for tries = 0, total_number_of_tries do
         --
 
-        -- Execute the extractor command
-        local output, err = extractor_function(password, config)
+        -- Execute the extractor function
+        local output, error = extractor_function()
 
         -- If there is no output
-        -- return the result of the extractor function
         if not output then
-            ---@type ExtractorResult
+            --
+
+            -- Clean up the extracted files
+            clean_up()
+
+            -- Return the result of the extractor function
             return {
-                archive_path = archive_path,
                 successful = false,
-                error = tostring(err),
+                error = tostring(error),
             }
         end
 
-        -- If the output was 0, which means the extractor command was successful
+        -- If the output status code is 0,
+        -- which means the command was successful,
+        -- return the result of the extractor function
         if output.status.code == 0 then
-            --
-
-            -- Initialise the correct password to nil
-            local correct_password = nil
-
-            -- If the password is not empty,
-            -- then set the correct password to the password
-            if string.len(string_trim(password)) > 0 then
-                correct_password = password
-            end
-
-            -- Return the result of the extractor function
-            ---@type ExtractorResult
             return {
-                archive_path = archive_path,
                 successful = true,
                 output = output.stdout,
-                correct_password = correct_password,
             }
         end
 
         -- Set the error message to the standard error
-        -- from the archive extractor
         error_message = output.stderr
 
-        -- If the command failed for some other reason other
-        -- than the archive being encrypted, then return false,
-        -- the error message, the standard output of the output,
-        -- and nil for the password to the archive
+        -- If the command failed for a reason other
+        -- than the archive being encrypted,
+        -- or if the current try count
+        -- is the same as the total number of tries
         if
             not (
-                output.status.code == 2 and archive_is_encrypted(output.stderr)
-            )
+                output.status.code == 2
+                and error_message:lower():find("wrong password")
+            ) or tries == total_number_of_tries
         then
-            ---@type ExtractorResult
+            --
+
+            -- Clean up the extracted files
+            clean_up()
+
+            -- Return the extractor function result
             return {
-                archive_path = archive_path,
                 successful = false,
                 error = error_message,
-                output = output.stdout,
             }
         end
 
-        -- If it is the last try, then return false
-        -- and the error message, the standard output of the output,
-        -- and nil for the password to the archive.
-        if tries == total_number_of_tries then
-            ---@type ExtractorResult
-            return {
-                archive_path = archive_path,
-                successful = false,
-                error = error_message,
-                output = output.stdout,
-            }
-        end
-
-        -- Get the prompt for the password
+        -- Otherwise, get the prompt for the password
         local password_prompt = tries == 0 and initial_password_prompt
             or wrong_password_prompt
 
-        -- Get the length of the input element
-        local input_length = #password_prompt < DEFAULT_INPUT_OPTIONS.position.w
-                and DEFAULT_INPUT_OPTIONS.position.w
-            or #password_prompt + 1
+        -- Initialise the width of the input element
+        local input_width = DEFAULT_INPUT_OPTIONS.position.w
+
+        -- If the length of the password prompt is larger
+        -- than the default input with, set the input width
+        -- to the length of the password prompt + 1
+        if #password_prompt > input_width then
+            input_width = #password_prompt + 1
+        end
+
+        -- Get the new position object
+        -- for the new input element
+        ---@type Position
+        local new_position =
+            merge_tables(DEFAULT_INPUT_OPTIONS.position, { w = input_width })
 
         -- Ask the user for the password
         local user_input, event =
             ---@diagnostic disable-next-line: missing-fields
-            get_user_input(password_prompt, { position = { w = input_length } })
+            get_user_input(password_prompt, { position = new_position })
 
         -- If the user has confirmed the input,
         -- and the user input is not nil,
         -- set the password to the user's input
         if event == 1 and user_input ~= nil then
-            password = user_input
+            self.password = user_input
 
-        -- Otherwise, return false, the error message,
-        -- the standard output of the output,
-        -- and nil for the password to the archive
-        -- as the user has cancelled the prompt,
-        -- or an unknown error has occurred
+        -- Otherwise
         else
-            ---@type ExtractorResult
+            --
+
+            -- Call the clean up function
+            clean_up()
+
+            -- Return the result of the extractor command
             return {
-                archive_path = archive_path,
                 successful = false,
+                cancelled = true,
                 error = error_message,
-                output = output.stdout,
             }
         end
     end
 
     -- If all the tries have been exhausted,
-    -- then return false, the error message
-    -- and nil
-    ---@type ExtractorResult
+    -- call the clean up function
+    clean_up()
+
+    -- Return the result of the extractor command
     return {
-        archive_path = archive_path,
         successful = false,
         error = error_message,
     }
 end
 
--- The command to list the items in an archive
----@param archive_path string The path to the archive
----@param config Configuration The configuration object
----@param password string|nil The password to the archive
----@param remove_headers boolean|nil Whether to remove the headers
----@param show_details boolean|nil Whether to show the details
----@return CommandOutput|nil output The output of the command
----@return Error|nil error The error if any
-local function list_archive_items_command(
-    archive_path,
-    config,
-    password,
-    remove_headers,
-    show_details
-)
+-- Function to list the archive items with the command
+---@type ExtractorListItemsCommand
+function SevenZip:list_items_command()
     --
-
-    -- Initialise the password to an empty string if it's not given
-    password = password or ""
-
-    -- Initialise the remove headers flag to false if it's not given
-    remove_headers = remove_headers or false
-
-    -- Initialise the show details flag to false if it's not given
-    show_details = show_details or false
 
     -- Initialise the arguments for the command
     local arguments = {
@@ -1386,57 +1528,27 @@ local function list_archive_items_command(
         "-sccUTF-8",
 
         -- Pass the password to the command
-        "-p" .. password,
+        "-p" .. self.password,
+
+        -- Remove the headers (undocumented switch)
+        "-ba",
+
+        -- The archive path
+        self.archive_path,
     }
 
-    -- If the remove headers flag is passed
-    if remove_headers then
-        --
-
-        -- Add the switch to remove the headers (undocumented switch)
-        table.insert(arguments, "-ba")
-    end
-
-    -- If the show details flag is passed
-    if show_details then
-        --
-
-        -- Add the switch to show the details
-        table.insert(arguments, "-slt")
-    end
-
-    -- Add the archive path to the arguments
-    table.insert(arguments, archive_path)
-
     -- Return the result of the command to list the items in the archive
-    return Command(config.extractor_command)
+    return Command(self.command)
         :args(arguments)
         :stdout(Command.PIPED)
         :stderr(Command.PIPED)
         :output()
 end
 
--- Function to get if the archive
--- file has more than one file in it.
----@param archive_path string The path to the archive file
----@param config Configuration The configuration object
----@return table<string> files The list of files in the archive
----@return table<string> directories The list of directories in the archive
----@return string|nil error_message The error message for an incorrect password
----@return string|nil correct_password The correct password to the archive
-local function get_archive_items(archive_path, config)
+-- Function to get the items in the archive
+---@type ExtractorGetItems
+function SevenZip:get_items()
     --
-
-    -- Function to list the items in the archive
-    ---@type ExtractorFunction
-    local function list_items_in_archive(password, configuration)
-        return list_archive_items_command(
-            archive_path,
-            configuration,
-            password,
-            true
-        )
-    end
 
     -- Initialise the list of files in the archive
     ---@type string[]
@@ -1448,19 +1560,30 @@ local function get_archive_items(archive_path, config)
 
     -- Call the function to retry the extractor command
     -- with the list items in the archive function
-    local extractor_result =
-        retry_extractor(archive_path, list_items_in_archive, config)
+    local extractor_result = self:retry_extractor(
+        function() return self:list_items_command() end
+    )
+
+    -- Get the output
+    local output = extractor_result.output
+
+    -- Get the error
+    local error = extractor_result.error
 
     -- If the extractor command was not successful,
     -- or the output was nil,
     -- then return nil the error message,
     -- and nil as the correct password
-    if not extractor_result.successful or not extractor_result.output then
-        return files, directories, extractor_result.error, nil
+    if not extractor_result.successful or not output then
+        return files, directories, error
     end
 
     -- Otherwise, split the output at the newline character
-    local output_lines = string_split(extractor_result.output, "\n")
+    local output_lines = string_split(output, "\n")
+
+    -- The pattern to get the information from an archive item
+    ---@type string
+    local archive_item_info_pattern = "%s+([%.%a]+)%s+(%d+)%s+(%d+)%s+(.+)$"
 
     -- Iterate over the lines of the output
     for _, line in ipairs(output_lines) do
@@ -1496,70 +1619,23 @@ local function get_archive_items(archive_path, config)
 
     -- Return the list of files, the list of directories,
     -- the error message, and the password
-    return files,
-        directories,
-        extractor_result.error,
-        extractor_result.correct_password
+    return files, directories, error
 end
 
--- Function to get a temporary name.
--- The code is taken from Yazi's source code.
----@param path string The path to the item to create a temporary name
----@return string temporary_name The temporary name for the item
-local function get_temporary_name(path)
-    return ".tmp_"
-        .. ya.hash(string.format("extract//%s//%.10f", path, ya.time()))
-end
-
--- Function to get a temporary directory url
--- for the given file path
----@param path string The path to the item to create a temporary directory
----@return Url|nil url The url of the temporary directory
-local function get_temporary_directory_url(path)
-    --
-
-    -- Get the parent directory of the file path
-    ---@type Url
-    local parent_directory = Url(path):parent()
-
-    -- If the parent directory doesn't exist, then return nil
-    if not parent_directory then return nil end
-
-    -- Otherwise, create the temporary directory path
-    local temporary_directory_url =
-        fs.unique_name(parent_directory:join(get_temporary_name(path)))
-
-    -- Return the temporary directory path
-    return temporary_directory_url
-end
-
--- The extract command to extract an archive
----@param archive_path string The path to the archive
----@param destination_directory_path string The destination folder
----@param config Configuration The configuration object
----@param password string|nil The password to the archive
+-- Function to extract an archive using the command
 ---@param extract_files_only boolean|nil Extract the files only or not
 ---@param extract_behaviour ExtractBehaviour|nil The extraction behaviour
 ---@return CommandOutput|nil output The output of the command
 ---@return Error|nil error The error if any
-local function extract_command(
-    archive_path,
-    destination_directory_path,
-    config,
-    password,
-    extract_files_only,
-    extract_behaviour
-)
+function SevenZip:extract_command(extract_files_only, extract_behaviour)
     --
-
-    -- Initialise the password to an empty string if it's not given
-    password = password or ""
 
     -- Initialise the extract files only flag to false if it's not given
     extract_files_only = extract_files_only or false
 
     -- Initialise the extract behaviour to rename if it's not given
-    extract_behaviour = extract_behaviour or ExtractBehaviour.Rename
+    extract_behaviour =
+        self.extract_behaviour_map[extract_behaviour or ExtractBehaviour.Rename]
 
     -- Initialise the extraction mode to use.
     -- By default, it extracts the archive with
@@ -1593,399 +1669,444 @@ local function extract_command(
         extract_behaviour,
 
         -- Pass the password to the command
-        "-p" .. password,
+        "-p" .. self.password,
 
         -- The archive file to extract
-        archive_path,
+        self.archive_path,
 
         -- The destination directory path
-        "-o" .. destination_directory_path,
+        "-o" .. self.destination_path,
     }
 
     -- Return the command to extract the archive
-    return Command(config.extractor_command)
+    return Command(self.command)
         :args(arguments)
         :stdout(Command.PIPED)
         :stderr(Command.PIPED)
         :output()
 end
 
--- Function to get the mime type of a file
----@param file_path string The path to the file
----@return string mime_type The mime type of the file
-local function get_mime_type(file_path)
+-- Function to extract the archive
+---@type ExtractorExtract
+function SevenZip:extract(has_only_one_file)
     --
 
-    -- Get the output of the file command
-    local output, _ = Command("file")
-        :args({
+    -- Extract the archive with the extractor command
+    local result = self:retry_extractor(
+        function() return self:extract_command(has_only_one_file) end,
+        true
+    )
 
-            -- Don't prepend file names to the output
-            "-b",
+    -- Return the extractor result
+    return result
+end
 
-            -- Print the mime type of the file
-            "--mime-type",
+-- Function to list the archive items with the command
+---@type ExtractorListItemsCommand
+function Tar:list_items_command()
+    --
 
-            -- The file path to get the mime type of
-            file_path,
-        })
+    -- Initialise the arguments for the command
+    local arguments = {
+
+        -- List the items in the archive
+        "-t",
+
+        -- Pass the file
+        "-f",
+
+        -- The archive file path
+        self.archive_path,
+    }
+
+    -- Return the result of the command
+    return Command(self.command)
+        :args(arguments)
         :stdout(Command.PIPED)
         :stderr(Command.PIPED)
         :output()
-
-    -- If there is no output, then return an empty string
-    if not output then return "" end
-
-    -- Otherwise, get the mime type from the standard output
-    local mime_type = string_trim(output.stdout)
-
-    -- Return the mime type
-    return mime_type
 end
 
--- Function to check if a file is an archive
----@param file_path string The path to the file
----@return boolean is_archive Whether the file is an archive
-local function is_archive_file(file_path)
+-- Function to get the items in the archive
+---@type ExtractorGetItems
+function Tar:get_items()
     --
 
-    -- Initialise the is archive variable to false
-    local is_archive = false
+    -- Call the function to get the list of items in the archive
+    local output, error = self:list_items_command()
 
-    -- Call the function to get the mime type of the file
-    local mime_type = get_mime_type(file_path)
+    -- Initialise the list of files
+    ---@type string[]
+    local files = {}
 
-    -- Set the is archive variable
-    is_archive = is_archive_mime_type(mime_type)
+    -- Initialise the list of directories
+    ---@type string[]
+    local directories = {}
 
-    -- Return the is archive variable
-    return is_archive
+    -- If there is no output, return the empty lists and the error
+    if not output then return files, directories, tostring(error) end
+
+    -- Otherwise, split the output into lines and iterate over it
+    for _, line in ipairs(string_split(output.stdout, "\n")) do
+        --
+
+        -- If the line ends with a slash, it's a directory
+        if line:sub(-1) == "/" then
+            --
+
+            -- Add the directory without the trailing slash
+            -- to the list of directories
+            table.insert(directories, line:sub(1, -2))
+
+            -- Continue the loop
+            goto continue
+        end
+
+        -- Otherwise, the item is a file, so add it to the list of files
+        table.insert(files, line)
+
+        -- The label to continue the loop
+        ::continue::
+    end
+
+    -- Return the list of files and directories and the error
+    return files, directories, output.stderr
 end
 
--- Function to clean up the temporary directory
--- after extracting an archive.
----@param temporary_directory_url Url The url of the temporary directory
----@param removal_mode "dir" | "dir_all" | "dir_clean" The removal mode
----@param ... any Return values
----@return ... Returns the given return values
-local function clean_up_temporary_directory(
-    temporary_directory_url,
-    removal_mode,
-    ...
-)
+-- Function to extract an archive using the command
+---@param extract_behaviour ExtractBehaviour|nil The extract behaviour to use
+function Tar:extract_command(extract_behaviour)
     --
 
-    -- Remove the temporary directory
-    fs.remove(removal_mode, temporary_directory_url)
+    -- Initialise the extract behaviour to rename if it is not given
+    extract_behaviour =
+        self.extract_behaviour_map[extract_behaviour or ExtractBehaviour.Rename]
 
-    -- Return the given return values
-    return ...
+    -- Initialise the arguments for the command
+    local arguments = {
+
+        -- Extract the archive
+        "-x",
+
+        -- Verbose
+        "-v",
+
+        -- The extract behaviour flag
+        extract_behaviour,
+
+        -- Specify the destination directory
+        "-C",
+
+        -- The destination directory path
+        self.destination_path,
+    }
+
+    -- If keeping permissions is wanted, add the -p flag
+    if self.config.preserve_file_permissions then
+        table.insert(arguments, "-p")
+    end
+
+    -- Add the -f flag and the archive path to the arguments
+    table.insert(arguments, "-f")
+    table.insert(arguments, self.archive_path)
+
+    -- Create the destination path first.
+    --
+    -- This is required because tar does not
+    -- automatically create the directory
+    -- pointed to by the -C flag.
+    -- Instead, tar just tries to change
+    -- the working directory to the directory
+    -- pointed to by the -C flag, which can
+    -- fail if the directory does not exist.
+    --
+    -- GNU tar has a --one-top-level=[DIR] option,
+    -- which will automatically create the directory
+    -- given, but macOS tar does not have this option.
+    --
+    -- The error here is ignored because if there
+    -- is an error creating the directory,
+    -- then the extractor will fail anyway.
+    fs.create("dir_all", Url(self.destination_path))
+
+    -- Return the output of the command
+    return Command(self.command)
+        :args(arguments)
+        :stdout(Command.PIPED)
+        :stderr(Command.PIPED)
+        :output()
 end
 
--- Function to move extracted items out of the temporary directory
+-- Function to extract the archive.
+--
+-- Tar automatically decompresses and extracts the archive
+-- in one command, so there's no need to run it twice to
+-- extract compressed tarballs.
+---@type ExtractorExtract
+function Tar:extract(_)
+    --
+
+    -- Call the command to extract the archive
+    local output, error = self:extract_command()
+
+    -- If there is no output, return the result
+    if not output then
+        return {
+            successful = false,
+            error = tostring(error),
+        }
+    end
+
+    -- Otherwise, if the status code is not 0,
+    -- which means the extraction was not successful,
+    -- return the result
+    if output.status.code ~= 0 then
+        return {
+            successful = false,
+            output = output.stdout,
+            error = output.stderr,
+        }
+    end
+
+    -- Otherwise, return the successful result
+    return {
+        successful = true,
+        output = output.stdout,
+    }
+end
+
+-- Functions for the commands
+
+-- Function to get the extractor for the file type
+---@param archive_path string The path to the archive file
+---@param destination_path string The path to the destination directory
+---@param config Configuration The configuration for the plugin
+---@return ExtractionResult result The results of getting the extractor
+---@return Extractor|nil extractor The extractor for the file type
+local function get_extractor(archive_path, destination_path, config)
+    --
+
+    -- Get the mime type of the archive file
+    local mime_type = get_mime_type(archive_path)
+
+    -- Get the extractor for the mime type
+    local extractor = ARCHIVE_MIME_TYPE_TO_EXTRACTOR_MAP[mime_type]
+
+    -- If there is no extractor,
+    -- return that it is not successful,
+    -- but that it has been cancelled
+    -- as the mime type is not an archive
+    if not extractor then
+        return {
+            successful = false,
+            cancelled = true,
+        }
+    end
+
+    -- Instantiate an instance of the extractor
+    local extractor_instance =
+        extractor:new(archive_path, destination_path, config)
+
+    -- While the extractor instance failed to be created
+    while not extractor_instance do
+        --
+
+        -- If the extractor instance is the default extractor,
+        -- then return an error telling the user to install the
+        -- default extractor
+        if extractor.name == DefaultExtractor.name then
+            return {
+                successful = false,
+                error = table.concat({
+                    string.format(
+                        "%s is not installed,",
+                        DefaultExtractor.name
+                    ),
+                    "please install it before using the 'extract' command",
+                }, " "),
+            }
+        end
+
+        -- Try instantiating the default extractor
+        extractor_instance =
+            DefaultExtractor:new(archive_path, destination_path, config)
+    end
+
+    -- If the user wants to preserve file permissions,
+    -- and the target extractor for the mime type supports
+    -- preserving file permissions, but the extractor
+    -- instantiated does not, show a warning to the user
+    if
+        config.preserve_file_permissions
+        and extractor.supports_file_permissions
+        and not extractor_instance.supports_file_permissions
+    then
+        --
+
+        -- The warning to show the user
+        local warning = table.concat({
+            string.format(
+                "%s is not installed, defaulting to %s.",
+                extractor.name,
+                extractor_instance.name
+            ),
+            string.format(
+                "However, %s does not support preserving file permissions.",
+                extractor_instance.name
+            ),
+        }, "\n")
+
+        -- Show the warning to the user
+        show_warning(warning)
+    end
+
+    -- Return the extractor instance
+    return { successful = true }, extractor_instance
+end
+
+-- Function to move the extracted items out of the temporary directory
 ---@param archive_url Url The url of the archive
----@param temporary_directory_url Url The url of the temporary directory
----@return boolean move_successful Whether the move was successful
----@return string|nil error_message An error message for unsuccessful extracts
----@return string|nil extracted_items_path The path of the extracted item
-local function move_extracted_items_to_archive_parent_directory(
-    archive_url,
-    temporary_directory_url
-)
+---@param destination_url Url The url of the destination
+---@return ExtractionResult result The result of the move
+local function move_extracted_items(archive_url, destination_url)
     --
 
-    -- Initialise whether or not the move is successful to false
-    local move_successful = false
+    -- The function to clean up the destination directory
+    -- and return the extractor result in the event of an error
+    ---@param error string The error message to return
+    ---@param empty_dir_only boolean|nil Whether to remove the empty dir only
+    ---@return ExtractionResult
+    local function fail(error, empty_dir_only)
+        --
 
-    -- Initialise the path of the extracted items
-    local extracted_items_path = nil
+        -- Clean up the destination path
+        fs.remove(empty_dir_only and "dir" or "dir_all", destination_url)
 
-    -- Get the extracted items in the directory
-    -- containing the extracted items.
-    -- There is a limit of 2 as there should only be
-    -- a single item in the directory.
-    local extracted_items = fs.read_dir(temporary_directory_url, { limit = 2 })
+        -- Return the extractor result
+        ---@type ExtractionResult
+        return {
+            successful = false,
+            error = error,
+        }
+    end
+
+    -- Get the extracted items in the destination.
+    -- There is a limit of 2 as we just need to
+    -- know if the destination contains only
+    -- a single item or not.
+    local extracted_items = fs.read_dir(destination_url, { limit = 2 })
 
     -- If the extracted items doesn't exist,
-    -- clean up the temporary directory and
-    -- return that the move successful variable
-    -- the error message, and the extracted item path
+    -- clean up and return the error
     if not extracted_items then
-        return clean_up_temporary_directory(
-            temporary_directory_url,
-            "dir_all",
-            move_successful,
-            "Failed to read the temporary directory",
-            extracted_items_path
+        return fail(
+            string.format(
+                "Failed to read the destination directory: %s",
+                tostring(destination_url)
+            )
         )
     end
 
     -- If there are no extracted items,
-    -- clean up the temporary directory and
-    -- return that the move successful variable
-    -- the error message, and the extracted item path
+    -- clean up and return the error
     if #extracted_items == 0 then
-        return clean_up_temporary_directory(
-            temporary_directory_url,
-            "dir",
-            move_successful,
-            "No files extracted from the archive",
-            extracted_items_path
-        )
+        return fail("No files extracted from the archive", true)
     end
 
-    -- Get the parent directory url of the archive
-    local parent_directory_url = archive_url:parent()
+    -- Get the parent directory of the destination
+    local parent_directory_url = destination_url:parent()
 
-    -- If the parent directory url is nil,
-    -- then return the move successful variable,
-    -- the error message, and the extracted item path
+    -- If the parent directory doesn't exist,
+    -- clean up and return the error
     if not parent_directory_url then
-        return clean_up_temporary_directory(
-            temporary_directory_url,
-            "dir_all",
-            move_successful,
-            "Parent directory doesn't exist",
-            extracted_items_path
-        )
+        return fail("Destination path has no parent directory")
     end
 
-    -- Get the file name of the archive without the extension
-    local archive_file_name = archive_url:stem()
+    -- Get the name of the archive without the extension
+    local archive_name = archive_url:stem()
 
-    -- If the archive file name is nil,
-    -- then return the move successful variable,
-    -- the error message, and the extracted item path
-    if not archive_file_name then
-        return clean_up_temporary_directory(
-            temporary_directory_url,
-            "dir_all",
-            move_successful,
-            "Archive's file name is empty",
-            extracted_items_path
-        )
+    -- If the name of the archive doesn't exist,
+    -- clean up and return the error
+    if not archive_name then
+        return fail("Archive has no name without its extension")
     end
 
     -- Get the first extracted item
     local first_extracted_item = table.unpack(extracted_items)
 
-    -- Get the url of the first extracted item
-    local first_extracted_item_url = first_extracted_item.url
-
-    -- Initialise the variable to
-    -- store whether there is only
-    -- a single file in the archive
-    local only_one_item_in_archive = false
+    -- Initialise the variable to indicate whether the archive has only one item
+    local only_one_item = false
 
     -- Initialise the target directory url to move the extracted items to,
     -- which is the parent directory of the archive
     -- joined with the file name of the archive without the extension
-    local target_url = parent_directory_url:join(archive_file_name)
+    local target_url = parent_directory_url:join(archive_name)
 
     -- If there is only one item in the archive
     if #extracted_items == 1 then
         --
 
-        -- Set the only one item in archive variable to true
-        only_one_item_in_archive = true
+        -- Set the only one item variable to true
+        only_one_item = true
 
         -- Get the name of the first extracted item
-        local first_extracted_item_name = first_extracted_item_url:name()
+        local first_extracted_item_name = first_extracted_item.url:name()
 
-        -- If the first extracted item name is nil,
-        -- then clean up the temporary directory
-        -- and exit the function
+        -- If the first extracted item has no name,
+        -- then clean up and return the error
         if not first_extracted_item_name then
-            return clean_up_temporary_directory(
-                temporary_directory_url,
-                "dir_all",
-                move_successful,
-                "Failed to get a name for the extracted item.",
-                extracted_items_path
-            )
+            return fail("The only extracted item has no name")
         end
 
-        -- Set the target url to the parent directory of the archive
-        -- joined with the file name of the extracted item
+        -- Otherwise, set the target url to the parent directory
+        -- of the destination joined with the file name of the extracted item
         target_url = parent_directory_url:join(first_extracted_item_name)
     end
 
     -- Get a unique name for the target url
     local unique_target_url = fs.unique_name(target_url)
 
-    -- If the unique target url is nil somehow,
-    -- clean up the temporary directory and
-    -- return the move successful variable,
-    -- the error message and the extracted item path
+    -- If the unique target url is nil,
+    -- clean up and return the error
     if not unique_target_url then
-        return clean_up_temporary_directory(
-            temporary_directory_url,
-            "dir_all",
-            move_successful,
-            "Failed to get a unique name to move the extracted items to",
-            extracted_items_path
+        return fail(
+            "Failed to get a unique name to move the extracted items to"
         )
     end
 
-    -- Otherwise, set the target url to the unique target url
-    target_url = unique_target_url
+    -- Set the target path to the string of the target url
+    local target_path = tostring(unique_target_url)
 
-    -- Set the extracted items path to the target path
-    extracted_items_path = tostring(target_url)
-
-    -- Initialise the error message to nil
-    local error_message = nil
+    -- Initialise the move successful variable and the error message
+    local error_message, move_successful = nil, false
 
     -- If there is only one item in the archive
-    if only_one_item_in_archive then
+    if only_one_item then
         --
 
         -- Move the item to the target path
         move_successful, error_message =
-            os.rename(tostring(first_extracted_item_url), extracted_items_path)
+            os.rename(tostring(first_extracted_item.url), target_path)
 
     -- Otherwise
     else
         --
 
-        -- Rename the temporary directory itself to the target path
+        -- Rename the destination directory itself to the target path
         move_successful, error_message =
-            os.rename(tostring(temporary_directory_url), extracted_items_path)
+            os.rename(tostring(destination_url), target_path)
     end
 
-    -- Clean up the temporary directory
-    -- and return if the move was successful
-    -- the error message and the extracted item path
-    return clean_up_temporary_directory(
-        temporary_directory_url,
-        move_successful and "dir" or "dir_all",
-        move_successful,
-        error_message,
-        extracted_items_path
-    )
-end
+    -- Clean up the destination directory
+    fs.remove(move_successful and "dir" or "dir_all", destination_url)
 
---- Function to extract an archive.
----@param archive_path string The path to the archive
----@param config Configuration The configuration object
----@param has_only_one_file boolean Whether the archive has only one file
----@param initial_password string|nil The initial password to try
----@param destination_path string|nil The destination path to extract to
----@return ExtractionResult extraction_result The result of the extraction
-local function extract_archive(
-    archive_path,
-    config,
-    has_only_one_file,
-    initial_password,
-    destination_path
-)
-    --
-
-    -- Initialise the successful variable to false
-    local successful = false
-
-    -- Initialise the error message to nil
-    local error_message = nil
-
-    -- Initialise the extracted items path to nil
-    local extracted_items_path = nil
-
-    -- Get the url of the archive
-    ---@type Url
-    local archive_url = Url(archive_path)
-
-    -- Initialise the temporary directory url
-    local temporary_directory_url = nil
-
-    -- If the destination path isn't given
-    if destination_path == nil then
-        --
-
-        -- Get the temporary directory url
-        temporary_directory_url = get_temporary_directory_url(archive_path)
-    end
-
-    -- Set the destination to extract the archive to
-    local destination = destination_path or tostring(temporary_directory_url)
-
-    -- Create the extractor command
-    ---@type ExtractorFunction
-    local function extractor_command(password, configuration)
-        return extract_command(
-            archive_path,
-            destination,
-            configuration,
-            password,
-            has_only_one_file
-        )
-    end
-
-    -- Call the function to retry the extractor command
-    local extractor_result = retry_extractor(
-        archive_path,
-        extractor_command,
-        config,
-        initial_password
-    )
-
-    -- Set the successful variable to the result of the extractor command
-    successful = extractor_result.successful
-
-    -- Set the error message variable to the result of the extractor command
-    error_message = extractor_result.error
-
-    -- If a temporary directory was not created,
-    -- return the extraction result
-    if not temporary_directory_url then
-        ---@type ExtractionResult
-        return {
-            archive_path = archive_path,
-            destination_path = destination_path,
-            successful = successful,
-            extracted_items_path = extracted_items_path,
-            error = error_message,
-        }
-    end
-
-    -- Otherwise, if the extraction was not successful,
-    -- and a temporary directory was created
-    if not successful then
-        --
-
-        -- Clean up the temporary directory
-        clean_up_temporary_directory(temporary_directory_url, "dir_all")
-
-        -- Return the extraction results
-        ---@type ExtractionResult
-        return {
-            archive_path = archive_path,
-            destination_path = destination_path,
-            successful = successful,
-            extracted_items_path = extracted_items_path,
-            error = error_message,
-        }
-    end
-
-    -- Otherwise, move the extracted items
-    -- to the parent directory of the archive
-    successful, error_message, extracted_items_path =
-        move_extracted_items_to_archive_parent_directory(
-            archive_url,
-            temporary_directory_url
-        )
-
-    -- Create the extraction result
-    ---@type ExtractionResult
-    local extraction_result = {
-        archive_path = archive_path,
-        destination_path = destination_path,
-        successful = successful,
-        extracted_items_path = extracted_items_path,
+    -- Return the extractor result with the target path as the
+    -- path to the extracted items
+    return {
+        successful = move_successful,
         error = error_message,
+        extracted_items_path = target_path,
     }
-
-    -- Return the result of the extraction
-    return extraction_result
 end
 
 -- Function to recursively extract archives
@@ -1994,7 +2115,6 @@ end
 ---@param config Configuration The configuration object
 ---@param destination_path string|nil The destination path to extract to
 ---@return ExtractionResult extraction_result The extraction results
----@return string|nil extracted_items_path The path to the extracted items
 local function recursively_extract_archive(
     archive_path,
     args,
@@ -2003,10 +2123,52 @@ local function recursively_extract_archive(
 )
     --
 
+    -- Get whether the destination path is given
+    local destination_path_given = destination_path ~= nil
+
+    -- Initialise the destination path to the archive path if it is not given
+    local destination = destination_path or archive_path
+
+    -- Get the temporary directory url
+    local temporary_directory_url =
+        get_temporary_directory_url(destination, destination_path_given)
+
+    -- If the temporary directory can't be created
+    -- then return the result
+    if not temporary_directory_url then
+        return {
+            successful = false,
+            error = "Failed to create a temporary directory",
+            archive_path = archive_path,
+            destination_path = destination_path,
+        }
+    end
+
+    -- Get an extractor for the archive
+    local get_extractor_result, extractor =
+        get_extractor(archive_path, tostring(temporary_directory_url), config)
+
+    -- Function to add the archive and destination path to the result
+    ---@param result ExtractionResult The result to add the paths to
+    ---@return ExtractionResult modified_result The result with the paths added
+    local function add_paths_to_result(result)
+        return merge_tables(result, {
+            archive_path = archive_path,
+            destination_path = destination_path,
+        })
+    end
+
+    -- If there is no extractor, return the result
+    if not extractor then
+        return merge_tables(get_extractor_result, {
+            archive_path = archive_path,
+            destination_path = destination_path,
+        })
+    end
+
     -- Get the list of archive files and directories,
     -- the error message and the password
-    local archive_files, archive_directories, err, password =
-        get_archive_items(archive_path, config)
+    local archive_files, archive_directories, error = extractor:get_items()
 
     -- If there are no are no archive files and directories
     if #archive_files == 0 and #archive_directories == 0 then
@@ -2015,14 +2177,12 @@ local function recursively_extract_archive(
         -- The extraction result
         ---@type ExtractionResult
         local extraction_result = {
-            archive_path = archive_path,
-            destination_path = destination_path,
             successful = false,
-            error = err or "Archive is empty",
+            error = error or "Archive is empty",
         }
 
         -- Return the extraction result
-        return extraction_result
+        return add_paths_to_result(extraction_result)
     end
 
     -- Get if the archive has only one file
@@ -2030,27 +2190,30 @@ local function recursively_extract_archive(
         and #archive_directories == 0
 
     -- Extract the given archive
-    local extraction_result = extract_archive(
-        archive_path,
-        config,
-        archive_has_only_one_file,
-        password,
-        destination_path
-    )
+    local extraction_result = extractor:extract(archive_has_only_one_file)
+
+    -- If the extraction result is not successful, return it
+    if not extraction_result.successful then
+        return add_paths_to_result(extraction_result)
+    end
+
+    -- Get the result of moving the extracted items
+    local move_result =
+        move_extracted_items(Url(archive_path), temporary_directory_url)
 
     -- Get the extracted items path
-    local extracted_items_path = extraction_result.extracted_items_path
+    local extracted_items_path = move_result.extracted_items_path
 
-    -- If the extraction of the archive isn't successful,
+    -- If moving the extracted items isn't successful,
     -- or if the extracted items path is nil,
     -- or if the user does not want to extract archives recursively,
-    -- return the list of extraction results
+    -- return the move results
     if
-        not extraction_result.successful
+        not move_result.successful
         or not extracted_items_path
         or not config.recursively_extract_archives
     then
-        return extraction_result, extracted_items_path
+        return add_paths_to_result(move_result)
     end
 
     -- Get the url of the extracted items path
@@ -2063,22 +2226,20 @@ local function recursively_extract_archive(
     -- Get the parent directory of the extracted items path
     local parent_directory_url = extracted_items_url:parent()
 
-    -- If the parent directory doesn't exist,
-    -- then extraction results with an error message
-    -- about the missing parent directory
+    -- If the parent directory doesn't exist
     if not parent_directory_url then
         --
 
-        -- Modify the extraction result with a custom error
+        -- Modify the move result with a custom error
         ---@type ExtractionResult
-        local modified_extraction_result = merge_tables(
-            extraction_result,
-            { error = "Archive has no parent directory" }
-        )
+        local modified_move_result = merge_tables(move_result, {
+            error = "Archive has no parent directory",
+            archive_path = archive_path,
+            destination_path = destination_path,
+        })
 
-        -- Return the modified extraction result
-        -- and the extracted items path
-        return modified_extraction_result, extracted_items_path
+        -- Return the modified move result
+        return modified_move_result
     end
 
     -- If the archive has only one file
@@ -2121,8 +2282,8 @@ local function recursively_extract_archive(
         ::continue::
     end
 
-    -- Return the extraction result and the extracted items path
-    return extraction_result, extracted_items_path
+    -- Return the move result
+    return add_paths_to_result(move_result)
 end
 
 -- Function to show an extraction error
@@ -2265,23 +2426,6 @@ local function get_archive_paths(args)
     end
 end
 
--- Function to either reveal or change directory based on the item
----@param item_path string The path of the item to reveal or change directory to
----@return "reveal" | "cd" yazi_command The Yazi command to execute
-local function reveal_or_cd(item_path)
-    --
-
-    -- Otherwise, get the cha object of the item
-    local item_cha = fs.cha(Url(item_path), false)
-
-    -- Get if the item is a directory
-    local is_directory = item_cha and item_cha.is_dir
-
-    -- If the item is a directory, return "cd"
-    -- otherwise, return "reveal"
-    return is_directory and "cd" or "reveal"
-end
-
 -- Function to handle the extract command
 ---@type CommandFunction
 local function handle_extract(args, config)
@@ -2320,16 +2464,19 @@ local function handle_extract(args, config)
     ---@type string
     local archive_path = archive_paths
 
-    -- If the archive path isn't an archive, exit the function
-    if not is_archive_file(archive_path) then return end
-
     -- Call the function to recursively extract the archive
-    local extraction_result, extracted_items_path = recursively_extract_archive(
+    local extraction_result = recursively_extract_archive(
         archive_path,
         args,
         config,
         destination_path
     )
+
+    -- If the extraction is cancelled, then just exit the function
+    if extraction_result.cancelled then return end
+
+    -- Get the extracted items path
+    local extracted_items_path = extraction_result.extracted_items_path
 
     -- If the extraction is not successful, notify the user
     if not extraction_result.successful or not extracted_items_path then
@@ -2370,11 +2517,24 @@ local function handle_extract(args, config)
             return
         end
 
-        -- Otherwise, reveal or change the directory to the extracted items
-        ya.manager_emit(
-            reveal_or_cd(extracted_items_path),
-            { extracted_items_path }
-        )
+        -- Get the cha of the extracted item
+        local extracted_items_cha = fs.cha(extracted_items_url, false)
+
+        -- If the cha of the extracted item doesn't exist,
+        -- exit the function
+        if not extracted_items_cha then return end
+
+        -- If the extracted item is not a directory
+        if not extracted_items_cha.is_dir then
+            --
+
+            -- Reveal the item and exit the function
+            return ya.manager_emit("reveal", { extracted_items_url })
+        end
+
+        -- Otherwise, change the directory to the extracted item.
+        -- Note that extracted_items_url is destroyed here.
+        ya.manager_emit("cd", { extracted_items_url })
 
         -- If the user wants to skip single subdirectories on enter,
         -- and the no skip flag is not passed

@@ -21,6 +21,9 @@ PLUGIN_COMMAND_TEMPLATE = "plugin augment-command --args='{}'"
 # The default key to use for a command
 DEFAULT_KEY = "e"
 
+# The default text file content
+DEFAULT_TEXT_FILE_CONTENT = "Hello, world!"
+
 # The settings for all demos
 CONFIG: str = "\n".join(
     [
@@ -357,6 +360,7 @@ class VHSTape:
         archive_file_name: str = "demo.zip",
         nested_archive_file_name: str = "nested",
         text_file_name: str = "demo.txt",
+        text_file_content: str = DEFAULT_TEXT_FILE_CONTENT,
     ) -> Script:
         """
         Returns a script object that contains the
@@ -381,9 +385,9 @@ class VHSTape:
         # Join the list of nested archive names with a space
         nested_archive_names = " ".join(nested_archive_names_list)
 
-        # The command to create the test archive
-        create_test_archive_command = 'Type "7z a {} {}" Enter'.format(
-            f"{archive_file_name}",
+        # The command to create the archive
+        create_archive_command = 'Type "7z a {} {}" Enter'.format(
+            archive_file_name,
             nested_archive_names,
         )
 
@@ -396,9 +400,11 @@ class VHSTape:
         # The command to create the nested archive
         create_nested_archive_command = "\n".join(
             [
-                f'Type `echo "test" > {text_file_name}` Enter',
+                "Type `echo '{}' > {}` Enter".format(
+                    text_file_content, text_file_name
+                ),
                 nested_archive_commands,
-                create_test_archive_command,
+                create_archive_command,
                 clean_up_commands,
             ]
         )
@@ -406,7 +412,7 @@ class VHSTape:
         # Return the script object
         return Script(
             setup=create_nested_archive_command,
-            required_programs=["7z", "echo", "rm"],
+            required_programs=["echo", "7z", "rm"],
         )
 
     @staticmethod
@@ -445,6 +451,40 @@ class VHSTape:
         return Script(
             setup="\n".join(setup_scripts),
             required_programs=required_programs,
+        )
+
+    @staticmethod
+    def create_encrypted_archive(
+        archive_file_name: str = "demo.7z",
+        archive_password: str = "password",
+        encrypt_headers: bool = False,
+        text_file_name: str = "demo.txt",
+        text_file_content: str = DEFAULT_TEXT_FILE_CONTENT,
+    ) -> Script:
+        """
+        Returns a script object that contains the
+        setup commands, the clean up commands, and the required programs
+        to create an encrypted archive.
+        """
+
+        # The commands to create the encrypted archive
+        create_encrypted_archive_commands = [
+            "Type `echo '{}' > {}` Enter".format(
+                text_file_content, text_file_name
+            ),
+            "Type '7z a {} -p{} {} {}' Enter".format(
+                "-mhe=on" if encrypt_headers else "",
+                archive_password,
+                archive_file_name,
+                text_file_name,
+            ),
+            f"Type `rm {text_file_name}` Enter",
+        ]
+
+        # Return the script object
+        return Script(
+            setup="\n".join(create_encrypted_archive_commands),
+            required_programs=["echo", "7z", "rm"],
         )
 
     @staticmethod
@@ -873,6 +913,36 @@ VHS_TAPES: list[VHSTape] = [
             'Type "/{1}" Enter',
             SLEEP_TIME,
             'Type "l"',
+        ],
+    ),
+    VHSTape(
+        name="Extract encrypted archive",
+        files_and_directories=["demo.7z", "demo.txt"],
+        scripts=[
+            VHSTape.create_extract_keymap_toml(DEFAULT_KEY),
+            VHSTape.create_encrypted_archive(
+                archive_file_name="{0}",
+                archive_password="{0}",
+            ),
+        ],
+        yazi_body=[
+            'Type "/{0}" Enter',
+            SLEEP_TIME,
+            f'Type "{DEFAULT_KEY}"',
+            SLEEP_TIME,
+            'Type "password" Enter',
+            SLEEP_TIME,
+            'Type "wrong password" Enter',
+            SLEEP_TIME,
+            'Type "still wrong password" Enter',
+            SLEEP_TIME,
+            'Type "LET ME IN!1!1!1!" Enter',
+            SLEEP_TIME,
+            f'Type "{DEFAULT_KEY}"',
+            SLEEP_TIME,
+            'Type "{0}" Enter',
+            SLEEP_TIME,
+            'Type "/{1}" Enter',
         ],
     ),
     VHSTape(
@@ -1501,11 +1571,12 @@ VHS_TAPES: list[VHSTape] = [
     ),
     VHSTape(
         name="Smart paste",
-        files_and_directories=["test.txt"],
+        files_and_directories=["demo.txt"],
         scripts=[
             VHSTape.edit_init_lua_config("smart_paste", True),
             Script(
-                setup='Type `echo "test" > {0}` Enter',
+                setup="Type `echo '{}' ".format(DEFAULT_TEXT_FILE_CONTENT)
+                + "> {0}` Enter",
                 clean_up="Type `rm {}` Enter".format(
                     " ".join(
                         [
@@ -1954,7 +2025,11 @@ async def main():
     threads = []
 
     # Initialise the list of VHS tapes
-    vhs_tapes = VHS_TAPES
+    vhs_tapes = [
+        vhs_tape
+        for vhs_tape in VHS_TAPES
+        if vhs_tape.name == "Extract encrypted archive"
+    ]
 
     # Create the VHS tapes
     for vhs_tape in vhs_tapes:

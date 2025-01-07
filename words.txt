@@ -26,6 +26,10 @@ Keybind
 keybind
 Keybinds
 keybinds
+Subclass
+subclass
+Subclassing
+subclassing
 Yazi
 yazi
 Hankertrix
@@ -34,6 +38,7 @@ Caskaydia
 caskaydia
 Bluloco
 bluloco
+SevenZip
 EDITMSG
 btime
 drwxr
@@ -49,3 +54,4 @@ lightcyan
 lightgray
 cands
 unsub
+gtar
