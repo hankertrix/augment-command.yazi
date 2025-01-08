@@ -317,14 +317,6 @@ local ARCHIVE_MIME_TYPE_TO_EXTRACTOR_MAP = {
     ["application/7z-compressed"] = DefaultExtractor,
     ["application/rar"] = DefaultExtractor,
     ["application/xz"] = DefaultExtractor,
-
-    -- Bug in file(1) that classifies
-    -- some zip archives as a data stream,
-    -- hopefully this can be removed in the future.
-    --
-    -- Link to bug report:
-    -- https://bugs.astron.com/view.php?id=571
-    ["application/octet-stream"] = DefaultExtractor,
 }
 
 -- Patterns
@@ -837,15 +829,12 @@ local function is_archive_mime_type(mime_type)
     -- Standardise the mime type
     local standardised_mime_type = standardise_mime_type(mime_type)
 
-    -- Get if the mime type is an archive
-    local is_archive = table_get(
-        ARCHIVE_MIME_TYPE_TO_EXTRACTOR_MAP,
-        standardised_mime_type,
-        false
-    )
+    -- Get the archive extractor for the mime type
+    local archive_extractor =
+        ARCHIVE_MIME_TYPE_TO_EXTRACTOR_MAP[standardised_mime_type]
 
-    -- Return if the mime type is an archive
-    return is_archive
+    -- Return if an extractor exists for the mime type
+    return archive_extractor ~= nil
 end
 
 -- Function to check if a given file extension
