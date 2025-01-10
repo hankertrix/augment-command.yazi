@@ -232,7 +232,7 @@ then it will operate on the selected items.
   recursively extracting archives, with the `open` command.
   This is the intended way to use this command, as the `open` command is
   meant to be the command that opens everything, so it is a bit
-  counterintuitive to have to use a special key bind to extract archives.
+  counterintuitive to have to use a separate key to extract archives.
 
   To replace the built-in `extract` plugin, copy the
   [`extract` openers section][yazi-yazi-toml-extract-openers]
