@@ -956,7 +956,7 @@ You can view the full licence in the [`LICENSE`][Licence] file.
 [create-and-enter-directories-video]: https://github.com/user-attachments/assets/a102f918-8d99-491f-a6e3-fd8151f16f96
 [create-and-open-files-video]: https://github.com/user-attachments/assets/14341b9b-a048-4ea2-9322-e963293b6813
 [create-and-open-files-and-directories-video]: https://github.com/user-attachments/assets/dd05d84a-716b-4c4b-8e77-429bbfb4ea43
-[create-behaviour-video]: https://github.com/user-attachments/assets/2ee90aa4-1d2f-484c-86c6-2e65cd895080
+[create-behaviour-video]: https://github.com/user-attachments/assets/a13745a5-a2cc-4c25-a3ff-0f10ac98b6f9
 [create-default-behaviour-video]: https://github.com/user-attachments/assets/5e9305c0-e56c-4fc3-b36b-e86c43571b06
 
 <!-- Shell command -->
