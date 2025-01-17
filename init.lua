@@ -76,6 +76,7 @@
 ---@field archive_path string|nil The path to the archive
 ---@field destination_path string|nil The path to the destination
 ---@field extracted_items_path string|nil The path to the extracted items
+---@field extractor_name string|nil The name of the extractor
 
 -- The name of the plugin
 ---@type string
@@ -2137,21 +2138,26 @@ local function recursively_extract_archive(
     local get_extractor_result, extractor =
         get_extractor(archive_path, tostring(temporary_directory_url), config)
 
-    -- Function to add the archive and destination path to the result
-    ---@param result ExtractionResult The result to add the paths to
-    ---@return ExtractionResult modified_result The result with the paths added
-    local function add_paths_to_result(result)
-        return merge_tables(result, {
-            archive_path = archive_path,
-            destination_path = destination_path,
-        })
-    end
-
     -- If there is no extractor, return the result
     if not extractor then
         return merge_tables(get_extractor_result, {
             archive_path = archive_path,
             destination_path = destination_path,
+        })
+    end
+
+    -- Function to add additional information to the extraction result
+    -- The additional information are:
+    --      - The archive path
+    --      - The destination path
+    --      - The name of the extractor
+    ---@param result ExtractionResult The result to add the paths to
+    ---@return ExtractionResult modified_result The result with the paths added
+    local function add_additional_info(result)
+        return merge_tables(result, {
+            archive_path = archive_path,
+            destination_path = destination_path,
+            extractor_name = extractor.name,
         })
     end
 
@@ -2171,7 +2177,7 @@ local function recursively_extract_archive(
         }
 
         -- Return the extraction result
-        return add_paths_to_result(extraction_result)
+        return add_additional_info(extraction_result)
     end
 
     -- Get if the archive has only one file
@@ -2183,7 +2189,7 @@ local function recursively_extract_archive(
 
     -- If the extraction result is not successful, return it
     if not extraction_result.successful then
-        return add_paths_to_result(extraction_result)
+        return add_additional_info(extraction_result)
     end
 
     -- Get the result of moving the extracted items
@@ -2202,7 +2208,7 @@ local function recursively_extract_archive(
         or not extracted_items_path
         or not config.recursively_extract_archives
     then
-        return add_paths_to_result(move_result)
+        return add_additional_info(move_result)
     end
 
     -- Get the url of the extracted items path
@@ -2272,20 +2278,38 @@ local function recursively_extract_archive(
     end
 
     -- Return the move result
-    return add_paths_to_result(move_result)
+    return add_additional_info(move_result)
 end
 
 -- Function to show an extraction error
 ---@param extraction_result ExtractionResult The extraction result
 ---@return nil
 local function show_extraction_error(extraction_result)
+    --
+
+    -- The line for the error
+    local error_line = string.format("Error: %s", extraction_result.error)
+
+    -- If the extractor name exists
+    if extraction_result.extractor_name then
+        --
+
+        -- Add the extractor's name to the error
+        error_line = string.format(
+            "%s error: %s",
+            extraction_result.extractor_name,
+            extraction_result.error
+        )
+    end
+
+    -- Show the extraction error
     return show_error(table.concat({
         string.format(
             "Failed to extract archive at: %s",
             extraction_result.archive_path
         ),
         string.format("Destination: %s", extraction_result.destination_path),
-        string.format("Extractor error: %s", extraction_result.error),
+        error_line,
     }, "\n"))
 end
 
