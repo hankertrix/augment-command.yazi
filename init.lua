@@ -2285,7 +2285,7 @@ local function show_extraction_error(extraction_result)
             extraction_result.archive_path
         ),
         string.format("Destination: %s", extraction_result.destination_path),
-        string.format("Error: %s", extraction_result.error),
+        string.format("Extractor error: %s", extraction_result.error),
     }, "\n"))
 end
 
