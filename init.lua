@@ -175,8 +175,8 @@ local INPUT_OPTIONS_TABLE = {
 -- The extractor names
 ---@enum ExtractorName
 local ExtractorName = {
-    SevenZip = "7z",
-    Tar = "tar",
+    SevenZip = "7-Zip",
+    Tar = "Tar",
 }
 
 -- The extract behaviour flags
@@ -270,7 +270,7 @@ function Extractor:extract(_)
     }
 end
 
--- The 7z extractor
+-- The 7-Zip extractor
 ---@class SevenZip: Extractor
 ---@field password string The password to the archive
 local SevenZip = Extractor:subclass({
@@ -286,7 +286,7 @@ local SevenZip = Extractor:subclass({
     password = "",
 })
 
--- The tar extractor
+-- The Tar extractor
 ---@class Tar: Extractor
 local Tar = Extractor:subclass({
     name = ExtractorName.Tar,
@@ -303,7 +303,7 @@ local Tar = Extractor:subclass({
     },
 })
 
--- The default extractor, which is set to 7zip
+-- The default extractor, which is set to 7-Zip
 ---@class DefaultExtractor: SevenZip
 local DefaultExtractor = SevenZip:subclass({})
 
