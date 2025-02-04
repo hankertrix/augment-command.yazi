@@ -48,6 +48,7 @@
 ---@field smart_paste boolean Whether to use smart paste
 ---@field smart_tab_create boolean Whether to use smart tab create
 ---@field smart_tab_switch boolean Whether to use smart tab switch
+---@field confirm_on_quit boolean Whether to show a confirmation when quitting
 ---@field open_file_after_creation boolean Whether to open after creation
 ---@field enter_directory_after_creation boolean Whether to enter after creation
 ---@field use_default_create_behaviour boolean Use Yazi's create behaviour?
@@ -96,6 +97,7 @@ local Commands = {
     Paste = "paste",
     TabCreate = "tab_create",
     TabSwitch = "tab_switch",
+    Quit = "quit",
     Arrow = "arrow",
     ParentArrow = "parent_arrow",
     Editor = "editor",
@@ -120,6 +122,7 @@ local DEFAULT_CONFIG = {
     smart_paste = false,
     smart_tab_create = false,
     smart_tab_switch = false,
+    confirm_on_quit = true,
     open_file_after_creation = false,
     enter_directory_after_creation = false,
     use_default_create_behaviour = false,
@@ -1038,6 +1041,10 @@ local get_paths_of_selected_items = ya.sync(function(_, quote)
     -- Return the list of paths of the selected items
     return paths_of_selected_items
 end)
+
+-- Function to get the number of tabs currently open
+---@type fun(): number
+local get_number_of_tabs = ya.sync(function() return #cx.tabs end)
 
 -- Function to get the tab preferences
 ---@type fun(): tab.Preference
@@ -3260,6 +3267,38 @@ local function handle_tab_switch(args)
     execute_tab_switch(args)
 end
 
+-- Function to execute the quit command
+---@type CommandFunction
+local function handle_quit(args, config)
+    --
+
+    -- Get the number of tabs
+    local number_of_tabs = get_number_of_tabs()
+
+    -- If the user doesn't want the confirm on quit functionality,
+    -- or if the number of tabs is 1 or less,
+    -- then emit the quit command
+    if not (config.confirm_on_quit or args.confirm) or number_of_tabs <= 1 then
+        return ya.manager_emit("quit", args)
+    end
+
+    -- Otherwise, get the user's confirmation for quitting
+    local user_confirmation = get_user_confirmation(
+        "Multiple tabs open, really quit?",
+        "Quit?",
+        ui.Text({
+            "There are multiple tabs open.",
+            "Are you sure you want to quit?",
+        }):wrap(ui.Text.WRAP_TRIM)
+    )
+
+    -- If the user didn't confirm, then exit the function
+    if not user_confirmation then return end
+
+    -- Otherwise, emit the quit command
+    ya.manager_emit("quit", args)
+end
+
 -- Function to do the wraparound for the arrow command
 ---@type fun(
 ---    args: Arguments,    -- The arguments passed to the plugin
@@ -3552,6 +3591,7 @@ local function run_command_func(command, args, config)
         [Commands.Paste] = handle_paste,
         [Commands.TabCreate] = handle_tab_create,
         [Commands.TabSwitch] = handle_tab_switch,
+        [Commands.Quit] = handle_quit,
         [Commands.Arrow] = handle_arrow,
         [Commands.ParentArrow] = handle_parent_arrow,
         [Commands.Editor] = handle_editor,

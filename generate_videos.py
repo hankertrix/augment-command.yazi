@@ -4,13 +4,18 @@ import asyncio
 import os
 import shutil
 import subprocess
+from collections.abc import Coroutine
 from pathlib import Path
+from typing import final, override
 
 # The absolute path to run the script from
 WORKING_DIRECTORY = Path(__file__).parent
 
 # The path to the VHS tapes directory
 VHS_TAPES_DIRECTORY: str = "./vhs_tapes"
+
+# The plugin file name
+PLUGIN_FILE_NAME: str = "main.lua"
 
 # The set of archive file extensions
 ARCHIVE_FILE_EXTENSIONS: set[str] = {".zip", ".7z"}
@@ -60,6 +65,7 @@ CHANGE_TO_WORKING_DIRECTORY: str = f'Type "cd {WORKING_DIRECTORY}" Enter'
 CLEAR_SCREEN: str = "Type 'clear' Enter"
 
 
+@final
 class Script:
     "A class to represent a script for a VHS tape"
 
@@ -82,6 +88,7 @@ class Script:
         )
 
 
+@final
 class VHSTape:
     "A class to represent a VHS tape"
 
@@ -136,6 +143,7 @@ class VHSTape:
 
         # Iterate over the scripts
         for script in scripts:
+            #
 
             # Add the setup script
             self.setup.append(script.setup)
@@ -159,6 +167,7 @@ class VHSTape:
         if self.editor:
             self.required_programs.add(self.editor)
 
+    @override
     def __str__(self) -> str:
         "Return the VHS tape as a string"
 
@@ -167,6 +176,7 @@ class VHSTape:
 
         # Iterate over the files and directories
         for item in self.files_and_directories:
+            #
 
             # Add the item with the trailing slashes removed
             files_and_directories_to_clean_up.add(item.strip("/"))
@@ -179,12 +189,14 @@ class VHSTape:
 
             # If the file extension is an archive file extension
             if file_extension in ARCHIVE_FILE_EXTENSIONS:
+                #
 
                 # Add the item without the file extension
                 files_and_directories_to_clean_up.add(file_name)
 
         # If the list of files and directories to clean up is not empty
         if files_and_directories_to_clean_up:
+            #
 
             # Append the rm command to the required programs
             self.required_programs.add("rm")
@@ -233,6 +245,7 @@ class VHSTape:
 
         # If quitting yazi is not skipped
         if not self.skip_quitting_yazi:
+            #
 
             # The commands to quit yazi
             quit_yazi_commands = [
@@ -247,6 +260,7 @@ class VHSTape:
         # If there are clean up commands,
         # or there are files and directories to clean up
         if self.clean_up or files_and_directories_to_clean_up:
+            #
 
             # Set the clean up section
             clean_up_section = [
@@ -284,12 +298,13 @@ class VHSTape:
 
         # Open the file for writing
         with open(self.get_file_path(), "w") as file:
+            #
 
             # Write the VHS tape to the file
-            file.write(self.to_string())
+            _ = file.write(self.to_string())
 
     @staticmethod
-    def edit_init_lua_config(
+    def edit_plugin_config(
         config_option: str,
         value: int | float | str | bool,
         original_value: int | float | str | None = None,
@@ -297,7 +312,7 @@ class VHSTape:
         """
         Return a script object that contains the
         setup commands, the clean up commands, and the required programs
-        to edit the init.lua file for the demo.
+        to edit the plugin configuration.
         """
 
         # Initialise the stringified value
@@ -308,6 +323,7 @@ class VHSTape:
 
         # If the value given is a boolean
         if isinstance(value, bool):
+            #
 
             # Lower case the stringified value
             stringified_value = stringified_value.lower()
@@ -320,7 +336,9 @@ class VHSTape:
             raise ValueError("Original value not given for non-boolean value")
 
         # The template for the set command
-        sed_command_template = r"sed -i 's/\({} = \)\w\+,/\1{},/' init.lua"
+        sed_command_template = (
+            r"sed -i 's/\({} = \)\w\+,/\1{},/' " + PLUGIN_FILE_NAME
+        )
 
         # The command to edit the configuration
         edit_config_command = rf"Type `{sed_command_template}` Enter".format(
@@ -433,6 +451,7 @@ class VHSTape:
 
         # Iterate over the number of archives to create
         for number in range(number_of_archives):
+            #
 
             # Create the nested archive
             nested_archive = VHSTape.create_nested_archive(
@@ -543,14 +562,43 @@ class VHSTape:
         return keybind
 
     @staticmethod
-    def create_extract_keymap_toml(key: str) -> Script:
-        "Create the keymap.toml file for the extract demo"
+    def create_keymap_toml_with_keymap(
+        keymap: dict[str | int, str],
+    ) -> Script:
+        """
+        Create a keymap.toml file with the given keymaps.
 
-        # The contents of the keymap.toml file
-        contents = VHSTape.create_keymap_toml_keybind(key, "extract")
+        The keymap argument is a dictionary with the key
+        being the dictionary, and the value being the plugin command.
 
-        # Return the script to create and clean up the keymap.toml file
-        return VHSTape.create_keymap_toml(contents)
+        For example:
+        ```python
+        {
+            "e": "extract",
+            1: "tab_switch 1",
+            ...
+        }
+        ```
+        """
+
+        # The keybinds in the keymap.toml file
+        keybinds: list[str] = []
+
+        # Iterate over the keymap
+        for key, command in keymap.items():
+            #
+
+            # Create the keybind for the key
+            keybind = VHSTape.create_keymap_toml_keybind(key, command)
+
+            # Add the keybind to the list
+            keybinds.append(keybind)
+
+        # Combine all the keybinds into a single string
+        keybinds_str = "\n".join(keybinds)
+
+        # Create and return the keymap.toml file
+        return VHSTape.create_keymap_toml(keybinds_str)
 
     @staticmethod
     def create_shell_keymap_toml(
@@ -580,25 +628,14 @@ class VHSTape:
     def create_tab_switch_keymap_toml() -> Script:
         "Create the keymap.toml file for the tab switch demo"
 
-        # Initialise the list containing the keybinds
-        keybinds: list[str] = []
-
-        # Iterate from 0 to 8
-        for number in range(9):
-
-            # Create the keybind
-            keybind = VHSTape.create_keymap_toml_keybind(
-                number + 1, f"tab_switch {number}"
-            )
-
-            # Add the keymap to the list
-            keybinds.append(keybind)
-
-        # Get the contents of the keymap.toml file
-        contents = "\n".join(keybinds)
+        # Create the dictionary for the keybinds
+        # by iterating from 1 to 9
+        keymap: dict[int | str, str] = {
+            number: f"tab_switch {number}" for number in range(1, 10)
+        }
 
         # Return the script to create and clean up the keymap.toml file
-        return VHSTape.create_keymap_toml(contents)
+        return VHSTape.create_keymap_toml_with_keymap(keymap)
 
     @staticmethod
     def press_key_repeatedly(
@@ -615,7 +652,7 @@ VHS_TAPES: list[VHSTape] = [
     VHSTape(
         name="Open prompt",
         scripts=[
-            VHSTape.edit_init_lua_config("prompt", True),
+            VHSTape.edit_plugin_config("prompt", True),
         ],
         yazi_body=[
             'Type "/cspell.json" Enter',
@@ -672,7 +709,7 @@ VHS_TAPES: list[VHSTape] = [
         name="Open auto extract archives",
         files_and_directories=["demo.zip"],
         scripts=[
-            VHSTape.edit_init_lua_config("recursively_extract_archives", False),
+            VHSTape.edit_plugin_config("recursively_extract_archives", False),
             VHSTape.create_nested_archive(4, "{0}"),
         ],
         yazi_body=[
@@ -711,8 +748,8 @@ VHS_TAPES: list[VHSTape] = [
             "demo-1",
         ],
         scripts=[
-            VHSTape.edit_init_lua_config("recursively_extract_archives", False),
-            VHSTape.create_extract_keymap_toml(DEFAULT_KEY),
+            VHSTape.edit_plugin_config("recursively_extract_archives", False),
+            VHSTape.create_keymap_toml_with_keymap({DEFAULT_KEY: "extract"}),
             VHSTape.create_multiple_nested_archives(4, 4),
             Script(
                 setup="\n".join(
@@ -772,9 +809,9 @@ VHS_TAPES: list[VHSTape] = [
             "demo-1",
         ],
         scripts=[
-            VHSTape.edit_init_lua_config("recursively_extract_archives", False),
-            VHSTape.edit_init_lua_config("must_have_hovered_item", False),
-            VHSTape.create_extract_keymap_toml(DEFAULT_KEY),
+            VHSTape.edit_plugin_config("recursively_extract_archives", False),
+            VHSTape.edit_plugin_config("must_have_hovered_item", False),
+            VHSTape.create_keymap_toml_with_keymap({DEFAULT_KEY: "extract"}),
             VHSTape.create_multiple_nested_archives(4, 4),
             Script(
                 setup="\n".join(
@@ -837,8 +874,8 @@ VHS_TAPES: list[VHSTape] = [
             "demo-4_1",
         ],
         scripts=[
-            VHSTape.edit_init_lua_config("prompt", True),
-            VHSTape.create_extract_keymap_toml(DEFAULT_KEY),
+            VHSTape.edit_plugin_config("prompt", True),
+            VHSTape.create_keymap_toml_with_keymap({DEFAULT_KEY: "extract"}),
             VHSTape.create_multiple_nested_archives(4, 4),
         ],
         yazi_body=[
@@ -873,7 +910,7 @@ VHS_TAPES: list[VHSTape] = [
             "demo-5.zip",
         ],
         scripts=[
-            VHSTape.create_extract_keymap_toml(DEFAULT_KEY),
+            VHSTape.create_keymap_toml_with_keymap({DEFAULT_KEY: "extract"}),
             VHSTape.create_multiple_nested_archives(5, 4),
         ],
         yazi_body=[
@@ -896,7 +933,7 @@ VHS_TAPES: list[VHSTape] = [
         name="Extract recursively extract archives",
         files_and_directories=["demo.zip", "demo"],
         scripts=[
-            VHSTape.create_extract_keymap_toml(DEFAULT_KEY),
+            VHSTape.create_keymap_toml_with_keymap({DEFAULT_KEY: "extract"}),
             VHSTape.create_nested_archive(4, "{0}"),
         ],
         shell_body=[
@@ -919,7 +956,7 @@ VHS_TAPES: list[VHSTape] = [
         name="Extract encrypted archive",
         files_and_directories=["demo.7z", "demo.txt"],
         scripts=[
-            VHSTape.create_extract_keymap_toml(DEFAULT_KEY),
+            VHSTape.create_keymap_toml_with_keymap({DEFAULT_KEY: "extract"}),
             VHSTape.create_encrypted_archive(
                 archive_file_name="{0}",
                 archive_password="{0}",
@@ -1030,7 +1067,7 @@ VHS_TAPES: list[VHSTape] = [
     VHSTape(
         name="Rename hovered item optional",
         scripts=[
-            VHSTape.edit_init_lua_config("must_have_hovered_item", False),
+            VHSTape.edit_plugin_config("must_have_hovered_item", False),
         ],
         yazi_body=[
             'Type "l"',
@@ -1052,7 +1089,7 @@ VHS_TAPES: list[VHSTape] = [
     VHSTape(
         name="Rename prompt",
         scripts=[
-            VHSTape.edit_init_lua_config("prompt", True),
+            VHSTape.edit_plugin_config("prompt", True),
         ],
         yazi_body=[
             'Type "/cspell.json" Enter',
@@ -1137,7 +1174,7 @@ VHS_TAPES: list[VHSTape] = [
     VHSTape(
         name="Remove hovered item optional",
         scripts=[
-            VHSTape.edit_init_lua_config("must_have_hovered_item", False),
+            VHSTape.edit_plugin_config("must_have_hovered_item", False),
         ],
         yazi_body=[
             'Type "l"',
@@ -1159,7 +1196,7 @@ VHS_TAPES: list[VHSTape] = [
     VHSTape(
         name="Remove prompt",
         scripts=[
-            VHSTape.edit_init_lua_config("prompt", True),
+            VHSTape.edit_plugin_config("prompt", True),
         ],
         yazi_body=[
             'Type "/cspell.json" Enter',
@@ -1270,7 +1307,7 @@ VHS_TAPES: list[VHSTape] = [
             "test_dir",
         ],
         scripts=[
-            VHSTape.edit_init_lua_config("open_file_after_creation", True),
+            VHSTape.edit_plugin_config("open_file_after_creation", True),
         ],
         yazi_body=[
             'Type "_{0}" Enter',
@@ -1299,9 +1336,7 @@ VHS_TAPES: list[VHSTape] = [
             "test_file.txt",
         ],
         scripts=[
-            VHSTape.edit_init_lua_config(
-                "enter_directory_after_creation", True
-            ),
+            VHSTape.edit_plugin_config("enter_directory_after_creation", True),
         ],
         yazi_body=[
             'Type "_{0}" Enter',
@@ -1332,10 +1367,8 @@ VHS_TAPES: list[VHSTape] = [
             "test_dir",
         ],
         scripts=[
-            VHSTape.edit_init_lua_config("open_file_after_creation", True),
-            VHSTape.edit_init_lua_config(
-                "enter_directory_after_creation", True
-            ),
+            VHSTape.edit_plugin_config("open_file_after_creation", True),
+            VHSTape.edit_plugin_config("enter_directory_after_creation", True),
         ],
         yazi_body=[
             'Type "_{0}" Enter',
@@ -1364,7 +1397,7 @@ VHS_TAPES: list[VHSTape] = [
             "test_dir",
         ],
         scripts=[
-            VHSTape.edit_init_lua_config("use_default_create_behaviour", True)
+            VHSTape.edit_plugin_config("use_default_create_behaviour", True)
         ],
         yazi_body=[
             'Type "_{0}" Enter',
@@ -1412,7 +1445,7 @@ VHS_TAPES: list[VHSTape] = [
     VHSTape(
         name="Shell hovered item optional",
         scripts=[
-            VHSTape.edit_init_lua_config("must_have_hovered_item", False),
+            VHSTape.edit_plugin_config("must_have_hovered_item", False),
             VHSTape.create_shell_keymap_toml(
                 DEFAULT_KEY, r"\$SHELL", ["block"]
             ),
@@ -1442,7 +1475,7 @@ VHS_TAPES: list[VHSTape] = [
         name="Shell prompt",
         skip_quitting_yazi=True,
         scripts=[
-            VHSTape.edit_init_lua_config("prompt", True),
+            VHSTape.edit_plugin_config("prompt", True),
             VHSTape.create_shell_keymap_toml(
                 DEFAULT_KEY, r"echo \$0", ["block"]
             ),
@@ -1573,7 +1606,7 @@ VHS_TAPES: list[VHSTape] = [
         name="Smart paste",
         files_and_directories=["demo.txt"],
         scripts=[
-            VHSTape.edit_init_lua_config("smart_paste", True),
+            VHSTape.edit_plugin_config("smart_paste", True),
             Script(
                 setup="Type `echo '{}' ".format(DEFAULT_TEXT_FILE_CONTENT)
                 + "> {0}` Enter",
@@ -1631,7 +1664,7 @@ VHS_TAPES: list[VHSTape] = [
     VHSTape(
         name="Smart tab create",
         scripts=[
-            VHSTape.edit_init_lua_config("smart_tab_create", True),
+            VHSTape.edit_plugin_config("smart_tab_create", True),
         ],
         yazi_body=[
             'Type "/cspell.json" Enter',
@@ -1660,7 +1693,7 @@ VHS_TAPES: list[VHSTape] = [
     VHSTape(
         name="Smart tab switch",
         scripts=[
-            VHSTape.edit_init_lua_config("smart_tab_switch", True),
+            VHSTape.edit_plugin_config("smart_tab_switch", True),
             VHSTape.create_tab_switch_keymap_toml(),
         ],
         yazi_body=[
@@ -1682,9 +1715,32 @@ VHS_TAPES: list[VHSTape] = [
         ],
     ),
     VHSTape(
+        name="Quit with confirmation",
+        skip_quitting_yazi=True,
+        scripts=[
+            VHSTape.create_keymap_toml_with_keymap({"q": "quit"}),
+        ],
+        yazi_body=[
+            SLEEP_TIME,
+            'Type "q"',
+            'Type "yazi" Enter',
+            SLEEP_TIME,
+            'Type "t"',
+            SLEEP_TIME,
+            'Type "q"',
+            SLEEP_TIME,
+            'Type "n"',
+            SLEEP_TIME,
+            'Type "q"',
+            SLEEP_TIME,
+            'Type "y"',
+            SLEEP_TIME,
+        ],
+    ),
+    VHSTape(
         name="Wraparound arrow",
         scripts=[
-            VHSTape.edit_init_lua_config("wraparound_file_navigation", True),
+            VHSTape.edit_plugin_config("wraparound_file_navigation", True),
         ],
         yazi_body=[
             VHSTape.press_key_repeatedly("j", 20),
@@ -1711,7 +1767,7 @@ VHS_TAPES: list[VHSTape] = [
     VHSTape(
         name="Wraparound parent arrow",
         scripts=[
-            VHSTape.edit_init_lua_config("wraparound_file_navigation", True),
+            VHSTape.edit_plugin_config("wraparound_file_navigation", True),
         ],
         yazi_body=[
             'Type "l"',
@@ -1752,7 +1808,7 @@ VHS_TAPES: list[VHSTape] = [
         name="Editor hovered item optional",
         editor="nano",
         scripts=[
-            VHSTape.edit_init_lua_config("must_have_hovered_item", False),
+            VHSTape.edit_plugin_config("must_have_hovered_item", False),
         ],
         yazi_body=[
             'Type "l"',
@@ -1787,7 +1843,7 @@ VHS_TAPES: list[VHSTape] = [
         name="Editor prompt",
         editor="nano",
         scripts=[
-            VHSTape.edit_init_lua_config("prompt", True),
+            VHSTape.edit_plugin_config("prompt", True),
         ],
         yazi_body=[
             'Type "/cspell.json" Enter',
@@ -1876,7 +1932,7 @@ VHS_TAPES: list[VHSTape] = [
     VHSTape(
         name="Pager hovered item optional",
         scripts=[
-            VHSTape.edit_init_lua_config("must_have_hovered_item", False),
+            VHSTape.edit_plugin_config("must_have_hovered_item", False),
         ],
         yazi_body=[
             'Type "l"',
@@ -1914,7 +1970,7 @@ VHS_TAPES: list[VHSTape] = [
     VHSTape(
         name="Pager prompt",
         scripts=[
-            VHSTape.edit_init_lua_config("prompt", True),
+            VHSTape.edit_plugin_config("prompt", True),
         ],
         yazi_body=[
             'Type "/cspell.json" Enter',
@@ -2022,13 +2078,13 @@ async def main():
         os.mkdir(VHS_TAPES_DIRECTORY)
 
     # Initialise the list of threads
-    threads = []
+    threads: list[Coroutine[None, None, None]] = []
 
     # Initialise the list of VHS tapes
     vhs_tapes = [
         vhs_tape
         for vhs_tape in VHS_TAPES
-        if vhs_tape.name == "Create behaviour"
+        if vhs_tape.name == "Quit with confirmation"
     ]
 
     # Create the VHS tapes
@@ -2036,16 +2092,17 @@ async def main():
         threads.append(asyncio.to_thread(vhs_tape.write_to_file))
 
     # Wait for all the threads to complete
-    await asyncio.gather(*threads)
+    _ = await asyncio.gather(*threads)
 
     # Iterate over the VHS tapes
     for vhs_tape in vhs_tapes:
+        #
 
         # Get the file path for the VHS tape
         file_path = vhs_tape.get_file_path()
 
         # Create the video for the VHS tape
-        subprocess.run(["vhs", file_path])
+        _ = subprocess.run(["vhs", file_path])
 
     # Remove the VHS tapes directory
     shutil.rmtree(VHS_TAPES_DIRECTORY)

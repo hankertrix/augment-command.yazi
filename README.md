@@ -51,6 +51,7 @@ ya pack -u
 | `smart_paste`                       | `true` or `false`                     | `false`   | Paste items into a directory without entering it. The behaviour is exactly the same as the [smart paste tip on Yazi's documentation][smart-paste-tip]. Setting this option to `false` will use the default `paste` behaviour. You can also enable this behaviour by passing the `--smart` flag to the `paste` command.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | `smart_tab_create`                  | `true` or `false`                     | `false`   | Create tabs in the directory that is being hovered instead of the current directory. The behaviour is exactly the same as the [smart tab tip on Yazi's documentation][smart-tab-tip]. Setting this option to `false` will use the default `tab_create` behaviour, which means you need to pass the `--current` flag to the command. You can also enable this behaviour by passing the `--smart` flag to the `tab_create` command.                                                                                                                                                                                                                                                                                                                                                                                                 |
 | `smart_tab_switch`                  | `true` or `false`                     | `false`   | If the tab that is being switched to does not exist yet, setting this option to `true` will create all the tabs in between the current number of open tabs, and the tab that is being switched to. The behaviour is exactly the same as the [smart switch tip on Yazi's documentation][smart-switch-tip]. Setting this option to `false` will use the default `tab_switch` behaviour. You can also enable this behaviour by passing the `--smart` flag to the `tab_switch` command.                                                                                                                                                                                                                                                                                                                                               |
+| `confirm_on_quit`                   | `true` or `false`                     | `true`    | Setting this option to `true` will cause Yazi to prompt you for a confirmation before quitting when there is more than 1 tab open. Setting this option to `false` will use the default `quit` behaviour, which is to immediately quit Yazi. You can also enable this behaviour by passing the `--confirm` flag to the `quit` command.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | `open_file_after_creation`          | `true` or `false`                     | `false`   | This option determines whether the plugin will open a file after it has been created. Setting this option to `true` will cause the plugin to open the created file. You can also enable this behaviour by passing the `--open` flag to the `create` command.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | `enter_directory_after_creation`    | `true` or `false`                     | `false`   | This option determines whether the plugin will enter a directory after it has been created. Setting this option to `true` will cause the plugin to enter the created directory. You can also enable this behaviour by passing the `--enter` flag to the `create` command.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | `use_default_create_behaviour`      | `true` or `false`                     | `false`   | This option determines whether the plugin will use the behaviour of Yazi's `create` command. Setting this option to `true` will use the behaviour of Yazi's `create` command. You can also enable this behaviour by passing the `--default-behaviour` flag to the `create` command.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
@@ -81,6 +82,7 @@ require("augment-command"):setup({
     smart_paste = false,
     smart_tab_create = false,
     smart_tab_switch = false,
+    confirm_on_quit = true,
     open_file_after_creation = false,
     enter_directory_after_creation = false,
     use_default_create_behaviour = false,
@@ -699,6 +701,44 @@ then it will operate on the selected items.
 
   [smart-tab-switch-video]
 
+### Quit (`quit`)
+
+- You should use Yazi's default `quit` command instead of this augmented
+  command if you don't want to have a prompt when quitting Yazi
+  with multiple tabs open.
+  This command has a visual side effect of showing a confirmation prompt
+  for a split second before closing Yazi when quitting Yazi
+  with only 1 tab open, which can be annoying.
+  This confirmation prompt is due to the plugin still running for a bit
+  after the `quit` command is emitted, causing Yazi to prompt you for
+  confirmation as there are tasks still running.
+  However, once the plugin has stopped running, which is a split second
+  after the `quit` command is emitted, Yazi will exit.
+  You can observe this visual effect in the video demonstration below.
+- When `confirm_on_quit` is set to `true`, the plugin will prompt you for
+  confirmation when there is more than 1 tab open. Otherwise, it will
+  immediately quit Yazi, just like the default `quit` command.
+- Due to the
+  [`confirm` component](https://github.com/sxyazi/yazi/issues/2082)
+  currently not being exposed to plugin developers, the `quit` command uses
+  Yazi's input component to prompt for a confirmation,
+  like in Yazi v0.3.0 and below. This is not ideal, but hopefully it wouldn't
+  be too annoying.
+  If you are using the latest version of Yazi from the main branch,
+  the `confirm` component is now exposed to plugin developers and
+  the plugin will use the `confirm` component instead.
+- `--confirm` flag to get the plugin to prompt you for confirmation when
+  quitting with multiple tabs open.
+  This flag will cause the `quit` command to prompt you for confirmation
+  when quitting with multiple tabs open even when `confirm_on_quit` is
+  set to `false`.
+  This allows you to set a specific key to use this behaviour with the
+  `quit` command instead of using it for every `quit` command.
+
+  Video:
+
+  [quit-with-confirmation-video]
+
 ### Arrow (`arrow`)
 
 - When `wraparound_file_navigation` is set to `true`,
@@ -883,7 +923,7 @@ for details on how to do so.
 ### Full configuration example
 
 For a full configuration example,
-you can take a look at [my `keymap.toml` file][my-keymap-toml]
+you can have a look at [my `keymap.toml` file][my-keymap-toml]
 and [my `yazi.toml` file][my-yazi-toml].
 
 ## [Licence]
@@ -978,6 +1018,10 @@ You can view the full licence in the [`LICENSE`][Licence] file.
 <!-- Tab switch command -->
 
 [smart-tab-switch-video]: https://github.com/user-attachments/assets/1afb540d-47a9-4625-ae59-95d5cd91aa35
+
+<!--Quit command-->
+
+[quit-with-confirmation-video]: placeholder
 
 <!-- Arrow command -->
 

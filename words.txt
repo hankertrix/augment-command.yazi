@@ -26,6 +26,10 @@ Keybind
 keybind
 Keybinds
 keybinds
+Keymap
+keymap
+Keymaps
+keymaps
 Subclass
 subclass
 Subclassing
