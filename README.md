@@ -1019,9 +1019,9 @@ You can view the full licence in the [`LICENSE`][Licence] file.
 
 [smart-tab-switch-video]: https://github.com/user-attachments/assets/1afb540d-47a9-4625-ae59-95d5cd91aa35
 
-<!--Quit command-->
+<!-- Quit command -->
 
-[quit-with-confirmation-video]: placeholder
+[quit-with-confirmation-video]: https://github.com/user-attachments/assets/b6206ee4-766b-44ce-b90b-15b015ae71f9
 
 <!-- Arrow command -->
 
