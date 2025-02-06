@@ -25,22 +25,22 @@
 
 -- The type for the supported colours
 ---@alias SupportedColours "reset"
----    |"black"
----    |"white"
----    |"red"
----    |"lightred"
----    |"green"
----    |"lightgreen"
----    |"yellow"
----    |"lightyellow"
----    |"blue"
----    |"lightblue"
----    |"magenta"
----    |"lightmagenta"
----    |"cyan"
----    |"lightcyan"
----    |"gray"
----    |"lightgray"
+---	|"black"
+---	|"white"
+---	|"red"
+---	|"lightred"
+---	|"green"
+---	|"lightgreen"
+---	|"yellow"
+---	|"lightyellow"
+---	|"blue"
+---	|"lightblue"
+---	|"magenta"
+---	|"lightmagenta"
+---	|"cyan"
+---	|"lightcyan"
+---	|"gray"
+---	|"lightgray"
 
 -- The type of the Color object
 ---@alias Color SupportedColours|string
@@ -48,12 +48,12 @@
 -- The type of the ui.Style object
 ---@class (exact) ui.Style
 ---@field fg fun(
----    self: ui.Style,
----    fg: Color,    -- The foreground color to set.
+---	self: ui.Style,
+---	fg: Color,    -- The foreground color to set.
 ---): ui.Style Set the foreground color of the style.
 ---@field bg fun(
----    self: ui.Style,
----    bg: Color,    -- The background color to set.
+---	self: ui.Style,
+---	bg: Color,    -- The background color to set.
 ---): ui.Style Set the background color of the style.
 ---@field bold fun(self: ui.Style): ui.Style Set the style to bold.
 ---@field dim fun(self: ui.Style): ui.Style Set the style to dim.
@@ -61,23 +61,23 @@
 ---@field underline fun(self: ui.Style): ui.Style Set the style to underline.
 ---@field blink fun(self: ui.Style): ui.Style Set the style to blink.
 ---@field blink_rapid fun(
----    self: ui.Style,
+---	self: ui.Style,
 ---): ui.Style Set the style to blink rapidly.
 ---@field reverse fun(self: ui.Style): ui.Style Set the style to reverse.
 ---@field hidden fun(self: ui.Style): ui.Style Set the style to hidden.
 ---@field crossed fun(self: ui.Style): ui.Style Set the style to crossed.
 ---@field reset fun(self: ui.Style): ui.Style Reset the style.
 ---@field patch fun(
----    self: ui.Style,
----    style: ui.Style,    -- The style to patch.
+---	self: ui.Style,
+---	style: ui.Style,    -- The style to patch.
 ---): ui.Style Patch the style with another style.
 
 -- The type of the ui.Span object
 ---@class (exact) ui.Span: ui.Style
 ---@field visible fun(self: ui.Span): boolean Whether the span is visible.
 ---@field style fun(
----    self: ui.Span,
----    style: ui.Style,    -- The style to set.
+---	self: ui.Span,
+---	style: ui.Style,    -- The style to set.
 ---): ui.Span Set the style of the span.
 
 -- The type of the area function for the ui.Line object
@@ -94,20 +94,20 @@
 
 -- The possible alignments of the ui.Line object
 ---@alias ui.Line.Alignment ui.Line.LEFT
----    |ui.Line.CENTER
----    |ui.Line.RIGHT
+---	|ui.Line.CENTER
+---	|ui.Line.RIGHT
 
 -- The type of the ui.Line object
 ---@class (exact) ui.Line: ui.Style
 ---@field area ui.Line.area Set or retrieve the current area of the line.
 ---@field align fun(
----    self: ui.Line,
----    alignment: ui.Line.Alignment,    -- The alignment to set.
+---	self: ui.Line,
+---	alignment: ui.Line.Alignment,    -- The alignment to set.
 ---): ui.Line Set the alignment of the line.
 ---@field visible fun(self: ui.Line): boolean Whether the line is visible.
 ---@field style fun(
----    self: ui.Line,
----    style: ui.Style,    -- The style to set.
+---	self: ui.Line,
+---	style: ui.Style,    -- The style to set.
 ---): ui.Line Set the style of the line.
 ---@field LEFT ui.Line.LEFT A constant for the align() method
 ---@field CENTER ui.Line.CENTER A constant for the align() method
@@ -127,8 +127,8 @@
 
 -- The possible alignments of the ui.Text object
 ---@alias ui.Text.Alignment ui.Text.LEFT
----    |ui.Text.CENTER
----    |ui.Text.RIGHT
+---	|ui.Text.CENTER
+---	|ui.Text.RIGHT
 
 -- The types for the wrap of the ui.Text object
 ---@alias ui.Text.WRAP_NO integer No wrapping.
@@ -137,29 +137,29 @@
 
 -- The possible wrappings of the ui.Text object
 ---@alias ui.Text.Wrapping ui.Text.WRAP_NO
----    |ui.Text.WRAP
----    |ui.Text.WRAP_TRIM
+---	|ui.Text.WRAP
+---	|ui.Text.WRAP_TRIM
 
 -- The type of the ui.Text object
 ---@class (exact) ui.Text: ui.Style
 ---@field parse fun(
----    code: string,    -- The ANSI escape codes to parse.
+---	code: string,    -- The ANSI escape codes to parse.
 ---): ui.Text Parse ANSI escape codes into a ui.Text object.
 ---@field area ui.Text.area Set or retrieve the current area of the text.
 ---@field align fun(
----    self: ui.Text,
----    alignment: ui.Text.Alignment,    -- The alignment to set.
+---	self: ui.Text,
+---	alignment: ui.Text.Alignment,    -- The alignment to set.
 ---): ui.Text Set the alignment of the text.
 ---@field wrap fun(
----    self: ui.Text,
----    wrapping: ui.Text.Wrapping,    -- The wrapping to set.
+---	self: ui.Text,
+---	wrapping: ui.Text.Wrapping,    -- The wrapping to set.
 ---): ui.Text Set the wrapping of the text.
 ---@field max_width fun(
----    self: ui.Text,
+---	self: ui.Text,
 ---): integer Get the maximum width of the text.
 ---@field style fun(
----    self: ui.Text,
----    style: ui.Style,    -- The style to set.
+---	self: ui.Text,
+---	style: ui.Style,    -- The style to set.
 ---): ui.Text Set the style of the text.
 ---@field LEFT ui.Text.LEFT A constant for the align() method
 ---@field CENTER ui.Text.CENTER A constant for the align() method
@@ -174,7 +174,7 @@
 
 -- The possible directions of the ui.Layout object
 ---@alias ui.Layout.Direction ui.Layout.HORIZONTAL
----    |ui.Layout.VERTICAL
+---	|ui.Layout.VERTICAL
 
 -- The type of the ui.Constraint.Fill function
 --
@@ -186,48 +186,48 @@
 -- The type of the ui.Constraint object
 ---@class (exact) ui.Constraint
 ---@field Min fun(
----    min: integer,    -- The minimum size to set.
+---	min: integer,    -- The minimum size to set.
 ---): ui.Constraint Set a minimum size for the element.
 ---@field Max fun(
----    max: integer,    -- The maximum size to set.
+---	max: integer,    -- The maximum size to set.
 ---): ui.Constraint Set a maximum size for the element.
 ---@field Length fun(
----    length: integer,    -- The fixed size to set.
+---	length: integer,    -- The fixed size to set.
 --- ): ui.Constraint Set a fixed size for the element.
 ---@field Percentage fun(
----    percentage: integer,    -- The percentage to set.
+---	percentage: integer,    -- The percentage to set.
 ---): ui.Constraint Applies a percentage of the remaining space to the element.
 ---@field Ratio fun(
----    numerator: integer,    -- The numerator of the ratio to set.
----    denominator: integer,    -- The denominator of the ratio to set.
+---	numerator: integer,    -- The numerator of the ratio to set.
+---	denominator: integer,    -- The denominator of the ratio to set.
 ---): ui.Constraint Applies a ratio of the remaining space to the element.
 ---@field Fill ui.Constraint.Fill Fill the remaining space of the element.
 
 -- The type of the ui.Layout object
 ---@class (exact) ui.Layout
 ---@field direction fun(
----    self: ui.Layout,
----    direction: ui.Layout.Direction,    -- The direction to set.
+---	self: ui.Layout,
+---	direction: ui.Layout.Direction,    -- The direction to set.
 ---): ui.Layout Set the direction of the layout.
 ---@field margin fun(
----    self: ui.Layout,
----    margin: integer,    -- The margin to set.
+---	self: ui.Layout,
+---	margin: integer,    -- The margin to set.
 ---): ui.Layout Set the margin of the layout.
 ---@field margin_h fun(
----    self: ui.Layout,
----    margin: integer,    -- The horizontal margin to set.
+---	self: ui.Layout,
+---	margin: integer,    -- The horizontal margin to set.
 ---): ui.Layout Set the horizontal margin of the layout.
 ---@field margin_v fun(
----    self: ui.Layout,
----    margin: integer,    -- The vertical margin to set.
+---	self: ui.Layout,
+---	margin: integer,    -- The vertical margin to set.
 ---): ui.Layout Set the vertical margin of the layout.
 ---@field constraints fun(
----    self: ui.Layout,
----    constraints: ui.Constraint[],    -- The constraints to set.
+---	self: ui.Layout,
+---	constraints: ui.Constraint[],    -- The constraints to set.
 ---): ui.Layout Set the constraints of the layout.
 ---@field split fun(
----    self: ui.Layout,
----    rect: ui.Rect,    -- The rectangular area to split.
+---	self: ui.Layout,
+---	rect: ui.Rect,    -- The rectangular area to split.
 ---): ui.Rect Split the layout into multiple ui.Rect based on the constraints.
 
 -- The type of the area function for the ui.List object
@@ -241,8 +241,8 @@
 ---@class (exact) ui.List
 ---@field area ui.List.area Set or retrieve the current area of the list.
 ---@field style fun(
----    self: ui.List,
----    style: ui.Style,    -- The style to set.
+---	self: ui.List,
+---	style: ui.Style,    -- The style to set.
 ---): ui.List Set the style of the list.
 
 -- The direction of the ui.Bar object
@@ -255,11 +255,11 @@
 
 -- The possible directions of the ui.Bar object
 ---@alias ui.Bar.Direction ui.Bar.NONE
----    |ui.Bar.TOP
----    |ui.Bar.RIGHT
----    |ui.Bar.BOTTOM
----    |ui.Bar.LEFT
----    |ui.Bar.ALL
+---	|ui.Bar.TOP
+---	|ui.Bar.RIGHT
+---	|ui.Bar.BOTTOM
+---	|ui.Bar.LEFT
+---	|ui.Bar.ALL
 
 -- The type of the area function for the ui.Bar object
 --
@@ -272,12 +272,12 @@
 ---@class (exact) ui.Bar
 ---@field area ui.Bar.area Set or retrieve the current area of the bar.
 ---@field symbol fun(
----    self: ui.Bar,
----    symbol: string,    -- The symbol to set.
+---	self: ui.Bar,
+---	symbol: string,    -- The symbol to set.
 ---): ui.Bar Set the symbol of the bar.
 ---@field style fun(
----    self: ui.Bar,
----    style: ui.Style,    -- The style to set.
+---	self: ui.Bar,
+---	style: ui.Style,    -- The style to set.
 ---): ui.Bar Set the style of the bar.
 ---@field NONE string A constant for the ui.Bar() method
 ---@field TOP string A constant for the ui.Bar() method
@@ -296,11 +296,11 @@
 
 -- The possible positions of the ui.Border object
 ---@alias ui.Border.Position ui.Border.NONE
----    |ui.Border.TOP
----    |ui.Border.RIGHT
----    |ui.Border.BOTTOM
----    |ui.Border.LEFT
----    |ui.Border.ALL
+---	|ui.Border.TOP
+---	|ui.Border.RIGHT
+---	|ui.Border.BOTTOM
+---	|ui.Border.LEFT
+---	|ui.Border.ALL
 
 -- The type of the area function for the ui.Border object
 --
@@ -319,22 +319,22 @@
 
 -- The different types of the ui.Border object
 ---@alias ui.Border.Type ui.Border.PLAIN
----    |ui.Border.ROUNDED
----    |ui.Border.DOUBLE
----    |ui.Border.THICK
----    |ui.Border.QUADRANT_INSIDE
----    |ui.Border.QUADRANT_OUTSIDE
+---	|ui.Border.ROUNDED
+---	|ui.Border.DOUBLE
+---	|ui.Border.THICK
+---	|ui.Border.QUADRANT_INSIDE
+---	|ui.Border.QUADRANT_OUTSIDE
 
 -- The type of the ui.Border object
 ---@class (exact) ui.Border
 ---@field area ui.Border.area Set or retrieve the current area of the border.
 ---@field type fun(
----    self: ui.Border,
----    type: ui.Border.Type,    -- The type to set.
+---	self: ui.Border,
+---	type: ui.Border.Type,    -- The type to set.
 ---): ui.Border Set the type of the border.
 ---@field style fun(
----    self: ui.Border,
----    style: ui.Style,    -- The style to set.
+---	self: ui.Border,
+---	style: ui.Style,    -- The style to set.
 ---): ui.Border Set the style of the border.
 
 -- The type of the area function for the ui.Gauge object
@@ -348,24 +348,24 @@
 ---@class (exact) ui.Gauge
 ---@field area ui.Gauge.area Set or retrieve the current area of the gauge.
 ---@field percent fun(
----    self: ui.Gauge,
----    percent: integer,    -- The percentage to set.
+---	self: ui.Gauge,
+---	percent: integer,    -- The percentage to set.
 ---): ui.Gauge Set the percentage of the gauge.
 ---@field ratio fun(
----    self: ui.Gauge,
----    ratio: integer,    -- The ratio to set.
+---	self: ui.Gauge,
+---	ratio: integer,    -- The ratio to set.
 ---): ui.Gauge Set the ratio of the gauge.
 ---@field label fun(
----    self: ui.Gauge,
----    label: string,    -- The label to set.
+---	self: ui.Gauge,
+---	label: string,    -- The label to set.
 ---): ui.Gauge Set the label of the gauge.
 ---@field style fun(
----    self: ui.Gauge,
----    style: ui.Style,    -- The style to set.
+---	self: ui.Gauge,
+---	style: ui.Style,    -- The style to set.
 ---): ui.Gauge Set the style of the gauge except for the bar.
 ---@field gauge_style fun(
----    self: ui.Gauge,
----    style: ui.Style,    -- The style to set.
+---	self: ui.Gauge,
+---	style: ui.Style,    -- The style to set.
 ---): ui.Gauge Set the style of the gauge bar.
 
 -- The type of the area function for the ui.Clear object
@@ -383,39 +383,39 @@
 ---@class (exact) UI
 ---@field Rect fun(params: ui.RectParams): ui.Rect Create a rectangular area.
 ---@field Pad fun(
----    top: integer,      -- The top padding.
----    right: integer,    -- The right padding.
----    bottom: integer,   -- The bottom padding.
----    left: integer,     -- The left padding.
+---	top: integer,       -- The top padding.
+---	right: integer,     -- The right padding.
+---	bottom: integer,    -- The bottom padding.
+---	left: integer,      -- The left padding.
 ---): ui.Pad Create a padding object.
 ---@field Style fun(): ui.Style Create a style object.
 ---@field Span fun(text: string|ui.Span): ui.Span Create a span object.
 ---@field Line (fun(
----    list_of_spans: string
----        |ui.Span
----        |ui.Line
----        |(string|ui.Span|ui.Line)[],
+---	list_of_spans: string
+---		|ui.Span
+---		|ui.Line
+---		|(string|ui.Span|ui.Line)[],
 ---): ui.Line)|ui.Line Create a line object.
 ---@field Text (fun(
----    list_of_lines: string
----        |ui.Line
----        |ui.Span
----        |(string|ui.Line|ui.Span)[],
+---	list_of_lines: string
+---		|ui.Line
+---		|ui.Span
+---		|(string|ui.Line|ui.Span)[],
 ---): ui.Text)|ui.Text Create a text object.
 ---@field Layout (fun(): ui.Layout)|ui.Layout Create a layout object.
 ---@field Constraint ui.Constraint The constraint object.
 ---@field List fun(
----    list_of_text: (string|ui.Text|ui.Line|ui.Span)[],
+---	list_of_text: (string|ui.Text|ui.Line|ui.Span)[],
 ---): ui.List Create a list object.
 ---@field Bar (fun(
----    direction: ui.Bar.Direction,    -- The direction to create the bar.
+---	direction: ui.Bar.Direction,    -- The direction to create the bar.
 ---): ui.Bar)|ui.Bar Create a bar object.
 ---@field Border (fun(
----    position: ui.Border.Position,    -- The position to create the border.
+---	position: ui.Border.Position,    -- The position to create the border.
 ---): ui.Border)|ui.Border Create a border object.
 ---@field Gauge fun(): ui.Gauge Create a gauge object.
 ---@field Clear fun(
----    rect: ui.Rect,    -- The rectangular area to clear.
+---	rect: ui.Rect,    -- The rectangular area to clear.
 ---): ui.Clear Clear the content of a specified rectangular area.
 
 -- The type for the Cha object
@@ -450,24 +450,24 @@
 ---@field has_root boolean Whether the Url has a root.
 ---@field name fun(self: Url): string|nil Returns the file name.
 ---@field stem fun(
----    self: Url,
+---	self: Url,
 ---): string|nil Returns the file name without the file extension.
 ---@field join fun(
----    self: Url,
----    url: Url|string,    -- The Url or string to join with.
+---	self: Url,
+---	url: Url|string,    -- The Url or string to join with.
 ---): Url Join with another Url or string.
 ---@field parent fun(self: Url): Url|nil Return the parent directory Url.
 ---@field starts_with fun(
----    self: Url,
----    url: Url|string,    -- The Url or string to check.
+---	self: Url,
+---	url: Url|string,    -- The Url or string to check.
 ---): boolean Whether the Url starts with another Url or string.
 ---@field ends_with fun(
----    self: Url,
----    url: Url|string,    -- The Url or string to check.
+---	self: Url,
+---	url: Url|string,    -- The Url or string to check.
 ---): boolean Whether the Url ends with another Url or string.
 ---@field strip_prefix fun(
----    self: Url,
----    url: Url|string,    -- The Url or string to strip.
+---	self: Url,
+---	url: Url|string,    -- The Url or string to strip.
 ---): Url Strip the prefix of another Url or string.
 
 -- The type of the File object
@@ -504,20 +504,20 @@
 -- The type of the folder::File object
 ---@class (exact) folder.File: File
 ---@field size fun(
----    self: folder.File,
+---	self: folder.File,
 ---): integer|nil The size of the file, in bytes.
 ---@field mime fun(self: folder.File): string|nil The mime type of the file.
 ---@field prefix fun(
----    self: folder.File,
+---	self: folder.File,
 ---): string|nil The prefix of the file relative to the CWD.
 ---@field icon fun(self: folder.File): Icon|nil The icon of the file.
 ---@field style fun(self: folder.File): ui.Style|nil The style of the file.
 ---@field is_hovered fun(
----    self: folder.File,
+---	self: folder.File,
 ---): boolean Whether the file is hovered.
 ---@field is_yanked fun(self: folder.File): boolean Whether the file is yanked.
 ---@field is_selected fun(
----    self: folder.File,
+---	self: folder.File,
 ---): boolean Whether the file is selected.
 ---@field found folder.File.found
 
@@ -533,9 +533,9 @@
 ---@field files fs.Files The files of the folder.
 ---@field hovered folder.File|nil The hovered file of the folder.
 ---@field stage {
----    is_loading: boolean,
----    loaded: boolean,
----    failed: boolean,
+---	is_loading: boolean,
+---	loaded: boolean,
+---	failed: boolean,
 ---}
 
 -- The type of the tab::Mode object
@@ -547,22 +547,22 @@
 
 -- The sort method enum
 ---@alias SortMethod "none" Do not sort.
----    |"mtime" Sort by last modified time.
----    |"btime" Sort by birth time.
----    |"extension" Sort by file extension.
----    |"alphabetical" Sort alphabetically, e.g. 1.md < 10.md < 2.md.
----    |"natural" Sort naturally, e.g. 1.md < 2.md < 10.md.
----    |"size" Sort by file size.
----    |"random" Sort randomly.
+---	|"mtime" Sort by last modified time.
+---	|"btime" Sort by birth time.
+---	|"extension" Sort by file extension.
+---	|"alphabetical" Sort alphabetically, e.g. 1.md < 10.md < 2.md.
+---	|"natural" Sort naturally, e.g. 1.md < 2.md < 10.md.
+---	|"size" Sort by file size.
+---	|"random" Sort randomly.
 
 -- The line mode, which displays information associated with the file
 -- on the right side of the file list row.
 ---@alias LineMode "none" No line mode.
----    |"size" Display the file size in bytes.
----    |"btime" Display the birth time of the file.
----    |"mtime" Display the last modified time of the file.
----    |"permissions" Display the permissions of the file, Unix only.
----    |"owner" Display the owner of the file, Unix only.
+---	|"size" Display the file size in bytes.
+---	|"btime" Display the birth time of the file.
+---	|"mtime" Display the last modified time of the file.
+---	|"permissions" Display the permissions of the file, Unix only.
+---	|"owner" Display the owner of the file, Unix only.
 
 -- The type of the tab::Preference object
 ---@class (exact) tab.Preference
@@ -620,10 +620,10 @@
 
 -- The type of non table sendable values
 ---@alias SendableValueNonTable string
----    |number
----    |boolean
----    |nil
----    |Url
+---	|number
+---	|boolean
+---	|nil
+---	|Url
 
 -- The type of sendable values
 ---@alias SendableValue SendableValueNonTable
@@ -632,7 +632,7 @@
 -- The type of the permit object
 ---@class (exact) Permit
 ---@field drop fun(
----    self: Permit,
+---	self: Permit,
 ---): nil Drop the permit to restore the TUI display.
 
 -- The type of the candidates for the which() method
@@ -642,13 +642,13 @@
 
 -- The type of the origin position
 ---@alias OriginPosition "top-left"
----    |"top-right"
----    |"top-center"
----    |"top-right"
----    |"bottom-left"
----    |"bottom-center"
----    |"bottom-right"
----    |"hovered"
+---	|"top-right"
+---	|"top-center"
+---	|"top-right"
+---	|"bottom-left"
+---	|"bottom-center"
+---	|"bottom-right"
+---	|"hovered"
 
 -- The type of the position object
 ---@class (exact) Position
@@ -665,16 +665,16 @@
 -- The type of the input event
 --
 -- The input events are:
---     0: The input was cancelled.
---     1: The input was confirmed.
---     2: The input was cancelled.
---     3: The input has changed the input, applicable when realtime is true
+--	 0: The input was cancelled.
+--	 1: The input was confirmed.
+--	 2: The input was cancelled.
+--	 3: The input has changed the input, applicable when realtime is true
 ---@alias InputEvent integer
 
 -- The type of the receiver object
 ---@class (exact) InputReceiver
 ---@field recv fun(
----    self: InputReceiver,
+---	self: InputReceiver,
 ---): integer|nil, InputEvent Receive an input event.
 
 -- The type of the confirm position object
@@ -689,8 +689,8 @@
 
 -- The type of the notification level
 ---@alias NotificationLevel "info" Default notification level, informational.
----    |"warn" Warning notification.
----    |"error" Error notification.
+---	|"warn" Warning notification.
+---	|"error" Error notification.
 
 -- The type of the notification options
 ---@class (exact) YaziNotificationOptions
@@ -706,25 +706,25 @@
 ---@class (exact) Ya
 ---@field hide fun(): Permit Hide the TUI.
 ---@field file_cache fun(opts: {
----    file: File,       -- The file to cache.
----    skip: integer,    -- The number of units to skip.
+---	file: File,       -- The file to cache.
+---	skip: integer,    -- The number of units to skip.
 ---}): Url|nil Calculate the cached Url of a file.
 ---@field render fun(): nil Render the UI, sync context only.
 ---@field manager_emit fun(
----    cmd: string,            -- The command to emit.
----    args: SendableValue,    -- The arguments to pass to the command.
+---	cmd: string,            -- The command to emit.
+---	args: SendableValue,    -- The arguments to pass to the command.
 ---): nil Emit a manager command.
 ---@field image_show fun(
----    url: Url,          -- The Url of the image to show.
----    rect: ui.Rect):    -- The rectangular area to show the image in.
+---	url: Url,          -- The Url of the image to show.
+---	rect: ui.Rect):    -- The rectangular area to show the image in.
 --- nil Display an image in the specified area, async context only.
 ---@field image_precache fun(
----    src: Url,     -- The Url of the image to precache.
----    dest: Url,     -- The destination Url of the image.
+---	src: Url,     -- The Url of the image to precache.
+---	dest: Url,     -- The destination Url of the image.
 ---): nil Pre-cache the image to a specified Url, async context only.
 ---@field which fun(opts: {
----    cands: WhichKeyCandidate[],    -- The candidates to check.
----    silent: boolean|nil,    -- Whether to disable the key indicator UI.
+---	cands: WhichKeyCandidate[],    -- The candidates to check.
+---	silent: boolean|nil,    -- Whether to disable the key indicator UI.
 ---}): integer|nil Return the 1-based index of the valid candidate, async only.
 ---
 --- Request user input.
@@ -734,30 +734,30 @@
 --- input events.
 --- The function is only available in the async context.
 ---@field input fun(opts: {
----    title: string,    -- The title of the input.
----    value: string|nil,    -- The initial value of the input.
----    position: Position,    -- The position of the input.
----    realtime: boolean|nil,    -- Whether to update the input in real time.
----    debounce: integer|nil,    -- The debounce time in milliseconds.
+---	title: string,    -- The title of the input.
+---	value: string|nil,    -- The initial value of the input.
+---	position: Position,    -- The position of the input.
+---	realtime: boolean|nil,    -- Whether to update the input in real time.
+---	debounce: integer|nil,    -- The debounce time in milliseconds.
 ---}): (string|nil, InputEvent)|InputReceiver
 ---@field confirm fun(opts: {
----    title: string|ui.Line,    -- The title of the confirmation prompt.
----    content: string|ui.Text,    -- The content of the confirmation prompt.
----    pos: YaziConfirmPosition,    -- The position of the confirmation prompt.
+---	title: string|ui.Line,    -- The title of the confirmation prompt.
+---	content: string|ui.Text,    -- The content of the confirmation prompt.
+---	pos: YaziConfirmPosition,    -- The position of the confirmation prompt.
 ---}): boolean Show a confirmation prompt to the user.
 ---@field notify fun(opts: {
----    title: string,    -- The title of the notification.
----    content: string,    -- The content of the notification.
----    timeout: number,    -- The timeout in seconds.
----    level: NotificationLevel|nil,    -- The level of the notification.
+---	title: string,    -- The title of the notification.
+---	content: string,    -- The content of the notification.
+---	timeout: number,    -- The timeout in seconds.
+---	level: NotificationLevel|nil,    -- The level of the notification.
 ---}): nil Send a foreground notification to the user.
 ---@field dbg fun(
----    msg: any,
----    ...: any,
+---	msg: any,
+---	...: any,
 ---): nil Append debug messages to the log file.
 ---@field err fun(
----    msg: any,
----    ...: any,
+---	msg: any,
+---	...: any,
 ---): nil Append error messages to the log file.
 ---
 --- Preview a file as code into the specified area.
@@ -767,55 +767,55 @@
 ---
 --- The function is only available in the async context.
 ---@field preview_code fun(opts: {
----    file: File,    -- The file to preview.
----    area: ui.Rect,    -- The area to preview the file.
----    skip: integer,    -- The number of units to skip.
----    window: Window,    -- The window to preview the file.
+---	file: File,    -- The file to preview.
+---	area: ui.Rect,    -- The area to preview the file.
+---	skip: integer,    -- The number of units to skip.
+---	window: Window,    -- The window to preview the file.
 ---}): string|nil, integer|nil
 ---@field preview_widgets fun(opts: {
----    area: ui.Rect,    -- The ui.Rect of the available preview area.
----    file: File,    -- The file to preview.
----    mime: string,    -- The mime type of the file.
----    skip: integer,    -- The number of units to skip.
+---	area: ui.Rect,    -- The ui.Rect of the available preview area.
+---	file: File,    -- The file to preview.
+---	mime: string,    -- The mime type of the file.
+---	skip: integer,    -- The number of units to skip.
 ---},
----widgets: (ui.Text|ui.List|ui.Line|ui.Span)[],    -- The widgets to preview.
+---widgets: (ui.Text|ui.List|ui.Line|ui.Span)[],	-- The widgets to preview.
 ---): nil
 ---@field sync fun(
----    func: SyncFunction,
+---	func: SyncFunction,
 ---): SyncFunction Run a function in the sync context.
 ---
 --- Return the target operating system.
 ---@field target_os fun():
---- string
----     |"linux"
----     |"macos"
----     |"ios"
----     |"freebsd"
----     |"dragonfly"
----     |"netbsd"
----     |"openbsd"
----     |"solaris"
----     |"android"
----     |"windows"
+---	string
+---		|"linux"
+---		|"macos"
+---		|"ios"
+---		|"freebsd"
+---		|"dragonfly"
+---		|"netbsd"
+---		|"openbsd"
+---		|"solaris"
+---		|"android"
+---		|"windows"
 ---
 --- Return the target operating system family.
 ---@field target_family fun():
---- string
----     |"unix" Linux and macOS
----     |"windows" Windows
----     |"wasm" Web
+---	string
+---		|"unix" Linux and macOS
+---		|"windows" Windows
+---		|"wasm" Web
 ---@field hash fun(
----    str: string,    -- The string to calculate the hash for.
+---	str: string,    -- The string to calculate the hash for.
 ---): string Calculate the hash of a string.
 ---@field quote fun(
----    str: string,    -- The string to be quoted.
+---	str: string,    -- The string to be quoted.
 ---): string Quote characters in a string that are special shell characters
 ---@field truncate fun(
----    text: string,    -- The text to truncate.
----    opts: {
----        max: integer,    -- The maximum length of the text.
----        rtl: boolean|nil,    -- Whether the text is right-to-left.
----    },
+---	text: string,    -- The text to truncate.
+---	opts: {
+---		max: integer,    -- The maximum length of the text.
+---		rtl: boolean|nil,    -- Whether the text is right-to-left.
+---	},
 ---): string Truncate a string to the maximum length given.
 ---
 --- Get or set the clipboard content.
@@ -825,27 +825,27 @@
 ---
 --- The function is only available in the async context.
 ---@field clipboard fun(
----    text: string|nil,    -- The text to copy to the clipboard.
+---	text: string|nil,    -- The text to copy to the clipboard.
 ---): string|nil
 ---@field time fun(): number Return the current time in seconds.
 ---@field sleep fun(
----    seconds: number,    -- The number of seconds to sleep.
+---	seconds: number,    -- The number of seconds to sleep.
 ---): nil Sleep for a specified number of seconds.
 ---@field uid fun(): integer|nil Return the current user ID, Unix only.
 ---@field gid fun(): integer|nil Return the current group ID, Unix only.
 ---@field user_name fun(
----    uid: integer|nil,    -- The user ID to get the name for.
+---	uid: integer|nil,    -- The user ID to get the name for.
 ---): string|nil Return the user name for the given user ID, Unix only.
 ---@field group_name fun(
----    gid: integer|nil,    -- The group ID to get the name for.
+---	gid: integer|nil,    -- The group ID to get the name for.
 ---): string|nil Return the group name for the given group ID, Unix only.
 ---@field host_name fun(): string|nil Return the host name, Unix only.
 
 -- The type of the ps object
 ---@class (exact) Ps
 ---@field pub fun(
----    kind: string,    -- The kind of the message.
----    value: SendableValue,    -- The value of the message.
+---	kind: string,    -- The kind of the message.
+---	value: SendableValue,    -- The value of the message.
 ---): nil Publish a message to the current Yazi instance.
 ---
 --- Publish a message to a specific Yazi instance
@@ -859,9 +859,9 @@
 --- and is subscribed to this kind through sub_remote(),
 --- it will receive the message.
 ---@field pub_to fun(
----    receiver: integer,    -- The ID of the receiver, 0 for all remotes.
----    kind: string,    -- The kind of the message.
----    value: SendableValue,    -- The value of the message.
+---	receiver: integer,    -- The ID of the receiver, 0 for all remotes.
+---	kind: string,    -- The kind of the message.
+---	value: SendableValue,    -- The value of the message.
 ---): nil
 ---
 --- Subscribe to local message of a specific kind and
@@ -872,29 +872,29 @@
 --- Note that no time consuming operations should be
 --- done in the callback handler.
 ---@field sub fun(
----    kind: string,    -- The kind of the message.
----    callback: fun(body: SendableValue),
+---	kind: string,    -- The kind of the message.
+---	callback: fun(body: SendableValue),
 ---): nil
 ---@field sub_remote fun(
----    kind: string,    -- The kind of the message.
----    callback: fun(body: SendableValue),
+---	kind: string,    -- The kind of the message.
+---	callback: fun(body: SendableValue),
 ---): nil Same as sub(), but for remotes.
 ---@field unsub fun(
----    kind: string,    -- The kind of the message.
+---	kind: string,    -- The kind of the message.
 ---): nil Unsubscribe from local messages of the given kind.
 ---@field unsub_remote fun(
----    kind: string,    -- The kind of the message.
+---	kind: string,    -- The kind of the message.
 ---): nil Same as unsub(), but for remotes.
 
 -- The creation type enum
 ---@alias CreationType "dir" Create a new empty directory.
----    |"dir_all" Create a new empty directory and all its parents.
+---	|"dir_all" Create a new empty directory and all its parents.
 
 -- The removal type enum
 ---@alias RemovalType "file" Remove a file.
----    |"dir" Remove an existing empty directory.
----    |"dir_all" Remove an existing directory together with all its contents.
----    |"dir_clean" Remove all empty directories under it.
+---	|"dir" Remove an existing empty directory.
+---	|"dir_all" Remove an existing directory together with all its contents.
+---	|"dir_clean" Remove all empty directories under it.
 
 -- The type of the file system object
 --
@@ -910,31 +910,31 @@
 --- doesn't depend on the current working directory.
 ---@field cwd fun(): Url|nil, integer|nil
 ---@field cha fun(
----    url: Url,    -- The Url of the file to get the Cha for.
----    follow: boolean|nil,    -- Whether to follow symlinks.
+---	url: Url,    -- The Url of the file to get the Cha for.
+---	follow: boolean|nil,    -- Whether to follow symlinks.
 ---): Cha|nil, Error|nil Return the Cha of a file.
 ---@field write fun(
----    url: Url,    -- The Url of the file to write to.
----    data: string,    -- The data to write to the file.
+---	url: Url,    -- The Url of the file to write to.
+---	data: string,    -- The data to write to the file.
 ---): boolean|nil, Error|nil Write data to a file.
 ---@field create fun(
----    type: CreationType,    -- The type of creation to perform.
----    url: Url,    -- The Url of the item to create.
+---	type: CreationType,    -- The type of creation to perform.
+---	url: Url,    -- The Url of the item to create.
 ---): boolean|nil, Error|nil Create a new item.
 ---@field remove fun(
----    type: RemovalType,    -- The type of removal to perform.
----    url: Url,    -- The Url of the item to remove.
+---	type: RemovalType,    -- The type of removal to perform.
+---	url: Url,    -- The Url of the item to remove.
 ---): boolean|nil, Error|nil Remove an item.
 ---@field read_dir fun(
----    url: Url,    -- The Url of the directory to read.
----    options: {
----        glob: string|nil,    -- A glob pattern to filter the files.
----        limit: integer|nil,    -- The maximum number of files to read.
----        resolve: boolean|nil,    -- Whether to resolve symlinks.
----     },
+---	url: Url,    -- The Url of the directory to read.
+---	options: {
+---		glob: string|nil,    -- A glob pattern to filter the files.
+---		limit: integer|nil,    -- The maximum number of files to read.
+---		resolve: boolean|nil,    -- Whether to resolve symlinks.
+---	},
 ---): File[]|nil, Error|nil Read the contents of a directory.
 ---@field unique_name fun(
----    url: Url,    -- The Url of the item to generate a unique name for.
+---	url: Url,    -- The Url of the item to generate a unique name for.
 ---): Url|nil, Error|nil Generate a unique name for a file or directory.
 
 -- The type of the Command configuration
@@ -942,8 +942,8 @@
 ---@alias Command.NULL integer Discard the output, default.
 ---@alias Command.INHERIT integer Inherit the output.
 ---@alias CommandConfiguration Command.PIPED
----    |Command.NULL
----    |Command.INHERIT
+---	|Command.NULL
+---	|Command.INHERIT
 
 -- The type of the Status object
 ---@class (exact) CommandStatus
@@ -959,51 +959,51 @@
 -- The type of the read event
 --
 -- The read events are:
---     0: The data comes from the stdout.
---     1: The data comes from the stderr.
---     2: There's no data to read from both stdout and stderr.
---     3: The process timed out, only available using read_line_with()
+--	 0: The data comes from the stdout.
+--	 1: The data comes from the stderr.
+--	 2: There's no data to read from both stdout and stderr.
+--	 3: The process timed out, only available using read_line_with()
 ---@alias ReadEvent integer
 
 -- The type of the command object
 ---@class (exact) Command
 ---@field arg fun(
----    self: Command,
----    args: string,    -- The argument to append to the command.
+---	self: Command,
+---	args: string,    -- The argument to append to the command.
 ---): Command Append an argument to the command.
 ---@field args fun(
----    self: Command,
----    args: string[],    -- The arguments to append to the command.
+---	self: Command,
+---	args: string[],    -- The arguments to append to the command.
 ---): Command Append arguments to the command.
 ---@field cwd fun(
----    self: Command,
----    cwd: string,    -- The working directory to set for the command.
+---	self: Command,
+---	cwd: string,    -- The working directory to set for the command.
 ---): Command Set the working directory for the command.
 ---@field env fun(
----    self: Command,
----    key: string,    -- The key of the environment variable to set.
----    value: string,    -- The value of the environment variable to set.
+---	self: Command,
+---	key: string,    -- The key of the environment variable to set.
+---	value: string,    -- The value of the environment variable to set.
 ---): Command Set an environment variable for the command.
 ---@field stdin fun(
----    self: Command,
----    cfg: CommandConfiguration,    -- The configuration for the stdin.
+---	self: Command,
+---	cfg: CommandConfiguration,    -- The configuration for the stdin.
 ---): Command Set the stdin configuration for the command.
 ---@field stdout fun(
----    self: Command,
----    cfg: CommandConfiguration,    -- The configuration for the stdout.
+---	self: Command,
+---	cfg: CommandConfiguration,    -- The configuration for the stdout.
 ---): Command Set the stdout configuration for the command.
 ---@field stderr fun(
----    self: Command,
----    cfg: CommandConfiguration,    -- The configuration for the stderr.
+---	self: Command,
+---	cfg: CommandConfiguration,    -- The configuration for the stderr.
 ---): Command Set the stderr configuration for the command.
 ---@field spawn fun(
----    self: Command,
+---	self: Command,
 ---): Child|nil, Error|nil Spawn the command.
 ---@field output fun(
----    self: Command,
+---	self: Command,
 ---): CommandOutput|nil, Error|nil Get the output of the command.
 ---@field status fun(
----    self: Command,
+---	self: Command,
 ---): CommandStatus|nil, Error|nil Get the status of the command.
 ---@field PIPED Command.PIPED Pipe the output.
 ---@field NULL Command.NULL Discard the output, default.
@@ -1012,17 +1012,17 @@
 -- The type of the child process
 ---@class (exact) Child
 ---@field read fun(
----    self: Child,
----    len: integer,    -- The number of bytes to read.
+---	self: Child,
+---	len: integer,    -- The number of bytes to read.
 ---): string|nil, ReadEvent Read a number of bytes from the child process.
 ---@field read_line fun(
----    self: Child,
+---	self: Child,
 ---): string|nil, ReadEvent Read a line from the child process.
 ---@field read_line_with fun(
----    self: Child,
----    opts: {
----        timeout: integer,    -- The timeout in milliseconds.
----     },
+---	self: Child,
+---	opts: {
+---		timeout: integer,    -- The timeout in milliseconds.
+---	},
 ---): string|nil, ReadEvent Read a line from the child process with a timeout.
 ---
 --- Write all bytes from the src string to the stdin of the child process.
@@ -1030,20 +1030,20 @@
 --- so stdin(Command.PIPED) is set, and take_stdin() is never called.
 --- Otherwise, an error will be thrown.
 ---@field write_all fun(
----    self: Child,
----    src: string,    -- The source to write to the child process.
+---	self: Child,
+---	src: string,    -- The source to write to the child process.
 ---): boolean, Error|nil
 ---@field flush fun(
----    self: Child,
+---	self: Child,
 ---): boolean, Error|nil Flush buffered data to the stdin of the child process.
 ---@field wait fun(
----    self: Child,
+---	self: Child,
 ---): CommandStatus|nil, Error|nil Wait for the child process to finish.
 ---@field wait_with_output fun(
----    self: Child,
+---	self: Child,
 ---): CommandOutput|nil, Error|nil Same as wait(), but also returns the output.
 ---@field start_kill fun(
----    self: Child,
+---	self: Child,
 ---): boolean, Error|nil Send a SIGTERM signal to the child process.
 ---
 --- Take and return the stdin stream of the child process,
@@ -1051,7 +1051,7 @@
 --- processes with stdin(Command.PIPED) set, otherwise it will
 --- return nil.
 ---@field take_stdin fun(
----    self: Child,
+---	self: Child,
 ---): string|nil
 ---
 --- Take and return the stdout stream of the child process,
@@ -1062,7 +1062,7 @@
 --- This is useful for redirecting the output of a process
 --- to another process' stdin.
 ---@field take_stdout fun(
----    self: Child,
+---	self: Child,
 ---): string|nil
 ---
 --- Take and return the stderr stream of the child process,
@@ -1070,7 +1070,7 @@
 --- processes with stdin(Command.PIPED) set, otherwise it will
 --- return nil.
 ---@field take_stderr fun(
----    self: Child,
+---	self: Child,
 ---): string|nil
 
 -- Type the globals provided by Yazi
