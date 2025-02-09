@@ -2875,7 +2875,8 @@ local function handle_create(args, config)
 		-- whether they want to overwrite the item
 		local user_confirmation = get_user_confirmation(
 
-			-- TODO: Remove the line below when Yazi releases a new version
+			-- TODO: Remove the line below when Yazi
+			-- releases a new stable version
 			"The item already exists, overwrite? (y/N)",
 			"Overwrite file?",
 			ui.Text({
