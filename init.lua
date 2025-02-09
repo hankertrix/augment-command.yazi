@@ -1,3 +1,4 @@
+--- @since 0.4.2
 -- Plugin to make some Yazi commands smarter
 -- Written in Lua 5.4
 
