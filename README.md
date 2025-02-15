@@ -530,32 +530,6 @@ then it will operate on the selected items.
   The plugin will automatically replace the shell variable you give
   with the file paths for the item group before executing the command.
 
-- Most of the time, you won't need to escape the quotes in the shell command.
-  However, if you have a long shell command that you are also passing
-  arguments to, you may need to escape the quotes within the command,
-  like this:
-
-  ```toml
-  # ~/.config/yazi/keymap.toml on Linux and macOS
-  # C:\Users\USERNAME\AppData\Roaming\yazi\config\keymap.toml on Windows
-
-  [[manager.prepend_keymap]]
-  on = "i"
-  run = "plugin augment-command -- shell --block 'bat -p --pager \"less\" $@'"
-  desc = "Open with bat"
-  ```
-
-- Alternatively, you can use the triple single quote `'''` delimiter for the
-  run string and avoid escaping the shell command altogether,
-  as shown in the example below:
-
-  ```toml
-  [[manager.prepend_keymap]]
-  on = "i"
-  run = '''plugin augment-command -- shell --block "bat -p --pager 'less' $@"'''
-  desc = "Open with bat"
-  ```
-
 - `--exit-if-dir` flag to stop the shell command given
   from executing if the item group consists only of directories.
   For example, if the item group is the hovered item, then
@@ -594,6 +568,105 @@ then it will operate on the selected items.
   Video:
 
   [shell-exit-if-directory-video]
+
+#### Passing arguments to the `shell` command
+
+Ideally, you will want to avoid using backslashes to escape the shell command
+arguments, and below are a few ways to do it:
+
+1. Shell arguments that don't have special shell variables on Linux and macOS,
+   like `$SHELL`, or don't contain special shell characters like `>`, `|`
+   or spaces, need not be quoted with double quotes `"`
+   or single quotes `'` respectively.
+   For example:
+
+   ```toml
+   # ~/.config/yazi/keymap.toml on Linux and macOS
+   # %AppData%\yazi\config\keymap.toml on Windows
+   [[manager.prepend_keymap]]
+   on = "i"
+   run = "plugin augment-command -- shell --block 'bat -p --pager less $@'"
+   desc = "Open with bat"
+   ```
+
+   Even though the `$@` argument above is considered a shell variable in Linux
+   and macOS, the plugin automatically replaces it with the full path
+   of the items in the item group, so it does not need to be quoted with
+   double quotes `"`, as it is expanded by the plugin,
+   and not meant to be expanded by the shell.
+
+2. If the shell arguments contain special shell variables on Linux and macOS,
+   like `$SHELL`, or special shell characters like `>`, `|`, or spaces,
+   use `--` to denote the end of the arguments
+   passed to the `plugin` command.
+   For example:
+
+   ```toml
+   # ~/.config/yazi/keymap.toml on Linux and macOS
+   # %AppData%\yazi\config\keymap.toml on Windows
+   [[manager.prepend_keymap]]
+   on = "<C-s>"
+   run = 'plugin augment-command -- shell --block -- sh -c "$SHELL"'
+   desc = "Open a shell inside of a shell here"
+   ```
+
+   ```toml
+   # ~/.config/yazi/keymap.toml on Linux and macOS
+   # %AppData%\yazi\config\keymap.toml on Windows
+   [[manager.prepend_keymap]]
+   on = "<C-s>"
+   run = "plugin augment-command -- shell --block -- sh -c 'echo hello'"
+   desc = "Open a shell and say hello inside the opened shell"
+   ```
+
+3. If the shell arguments itself contain special shell variables on Linux and
+   macOS, like `$SHELL`, or special shell characters like `>`, `|`, or spaces,
+   use the triple single quote `'''` delimiter for the `run` string.
+
+   ```toml
+   # ~/.config/yazi/keymap.toml on Linux and macOS
+   # %AppData%\yazi\config\keymap.toml on Windows
+   [[manager.prepend_keymap]]
+   on = "<C-s>"
+   run = '''plugin augment-command -- shell --block -- sh -c 'sh -c "$SHELL"''''
+   desc = "Open a shell inside of a shell inside of a shell here"
+   ```
+
+   ```toml
+   # ~/.config/yazi/keymap.toml on Linux and macOS
+   # %AppData%\yazi\config\keymap.toml on Windows
+   [[manager.prepend_keymap]]
+   on = "<C-s>"
+   run = '''plugin augment-command --
+       shell --block -- sh -c "$SHELL -c 'echo hello'"
+   '''
+   desc = "Open a shell inside of a shell and say hello inside the opened shell"
+   ```
+
+   A more legitimate use case for this would be something like
+   [Yazi's tip to email files using Mozilla Thunderbird][thunderbird-tip]:
+
+   ```toml
+   # ~/.config/yazi/keymap.toml on Linux and macOS
+   # %AppData%\yazi\config\keymap.toml on Windows
+   [[manager.prepend_keymap]]
+   on = "<C-e>"
+   run = '''plugin augment-command --
+       shell --
+           paths=$(for p in $@; do echo "$p"; done | paste -s -d,)
+           thunderbird -compose "attachment='$paths'"
+   '''
+   desc = "Email files using Mozilla Thunderbird"
+   ```
+
+   Once again, the `$@` variable above does not need to be quoted in double
+   quotes `"` as it is expanded by the plugin instead of the shell.
+
+If the above few methods to avoid using backslashes within your shell command
+to escape the quotes are still insufficient for your use case,
+it is probably more appropriate to write a shell script in a separate file
+and execute that instead of writing the shell command inline
+in your `keymap.toml` file.
 
 ### Paste (`paste`)
 
@@ -918,6 +991,7 @@ You can view the full licence in the [`LICENSE`][Licence] file.
 [brew-link]: https://brew.sh/
 [yazi-yazi-toml-extract-openers]: https://github.com/sxyazi/yazi/blob/main/yazi-config/preset/yazi-default.toml#L51-L54
 [yazi-yazi-toml]: https://github.com/sxyazi/yazi/blob/main/yazi-config/preset/yazi-default.toml
+[thunderbird-tip]: https://yazi-rs.github.io/docs/tips#email-selected-files-using-thunderbird
 [yazi-keymap-toml]: https://github.com/sxyazi/yazi/blob/main/yazi-config/preset/keymap-default.toml
 [my-keymap-toml]: https://github.com/hankertrix/Dotfiles/blob/main/.config/yazi/keymap.toml
 [my-yazi-toml]: https://github.com/hankertrix/Dotfiles/blob/main/.config/yazi/yazi.toml
