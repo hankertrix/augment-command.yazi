@@ -586,9 +586,9 @@ then it will operate on the selected items.
   # %AppData%\yazi\config\keymap.toml on Windows
 
   [[manager.prepend_keymap]]
-  on = "i"
+  on = "o"
   run = "plugin augment-command -- shell '$EDITOR $@' --block --exit-if-dir"
-  desc = "Open the pager"
+  desc = "Open the editor"
   ```
 
   Video:
