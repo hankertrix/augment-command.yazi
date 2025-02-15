@@ -578,11 +578,11 @@ then it will operate on the selected items.
 #### Passing arguments to the `shell` command
 
 Ideally, you will want to avoid using backslashes to escape the shell command
-arguments, and below are a few ways to do it:
+arguments, so here are a few ways to do it:
 
-1. Shell arguments that don't have special shell variables on Linux and macOS,
-   like `$SHELL`, or don't contain special shell characters like `>`, `|`
-   or spaces, need not be quoted with double quotes `"`
+1. Shell arguments that don't have special shell variables
+   on Linux and macOS, like `$SHELL`, or don't have special shell characters
+   like `>`, `|` or spaces, need not be quoted with double quotes `"`
    or single quotes `'` respectively.
    For example:
 
@@ -601,10 +601,10 @@ arguments, and below are a few ways to do it:
    double quotes `"`, as it is expanded by the plugin,
    and not meant to be expanded by the shell.
 
-2. If the shell arguments contain special shell variables on Linux and macOS,
-   like `$SHELL`, or special shell characters like `>`, `|`, or spaces,
-   use `--` to denote the end of the arguments
-   passed to the `plugin` command.
+2. If the arguments to the `shell` command have special shell variables
+   on Linux and macOS, like `$SHELL`, or special shell characters like
+   `>`, `|`, or spaces, use `--` to denote the end of the flags and options
+   passed to the `shell` command.
    For example:
 
    ```toml
@@ -625,8 +625,9 @@ arguments, and below are a few ways to do it:
    desc = "Open a shell and say hello inside the opened shell"
    ```
 
-3. If the shell arguments itself contain special shell variables on Linux and
-   macOS, like `$SHELL`, or special shell characters like `>`, `|`, or spaces,
+3. If the arguments passed to the `shell` command themselves contain arguments
+   that have special shell variables on Linux and macOS, like `$SHELL`,
+   or special shell characters like `>`, `|`, or spaces,
    use the triple single quote `'''` delimiter for the `run` string.
 
    ```toml
