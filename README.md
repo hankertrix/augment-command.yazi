@@ -451,16 +451,7 @@ then it will operate on the selected items.
   create directories to ensure that the path given exists.
   It also supports all the options supported by Yazi's `create` command,
   so you can pass them to the command and expect the same behaviour.
-  However, due to the
-  [`confirm` component](https://github.com/sxyazi/yazi/issues/2082)
-  currently not being exposed to plugin developers, it uses Yazi's input
-  component to prompt for a confirmation, like in Yazi v0.3.0 and below.
-  This is not ideal, but it shouldn't happen that often and
-  hopefully wouldn't be too annoying.
-  If you are using the latest version of Yazi from the main branch,
-  the `confirm` component is now exposed to plugin developers and
-  the plugin will use the `confirm` component instead.
-  However, the separator in the `confirm` component will be the text colour
+  Do note that the separator in the `confirm` component will be the text colour
   instead of your configured border colour for the `confirm` component as
   the `list` part of the `confirm` component has not been exposed to plugin
   developers, so the separator is made using text.
@@ -681,15 +672,6 @@ then it will operate on the selected items.
 - When `confirm_on_quit` is set to `true`, the plugin will prompt you for
   confirmation when there is more than 1 tab open. Otherwise, it will
   immediately quit Yazi, just like the default `quit` command.
-- Due to the
-  [`confirm` component](https://github.com/sxyazi/yazi/issues/2082)
-  currently not being exposed to plugin developers, the `quit` command uses
-  Yazi's input component to prompt for a confirmation,
-  like in Yazi v0.3.0 and below. This is not ideal, but hopefully it wouldn't
-  be too annoying.
-  If you are using the latest version of Yazi from the main branch,
-  the `confirm` component is now exposed to plugin developers and
-  the plugin will use the `confirm` component instead.
 - `--confirm` flag to get the plugin to prompt you for confirmation when
   quitting with multiple tabs open.
   This flag will cause the `quit` command to prompt you for confirmation
