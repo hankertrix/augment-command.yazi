@@ -545,7 +545,7 @@ then it will operate on the selected items.
   # %AppData%\yazi\config\keymap.toml on Windows
 
   [[manager.prepend_keymap]]
-  on = [ "i" ]
+  on = "i"
   run = "plugin augment-command -- shell '$PAGER $@' --block --exit-if-dir"
   desc = "Open the pager"
   ```
@@ -560,7 +560,7 @@ then it will operate on the selected items.
   # %AppData%\yazi\config\keymap.toml on Windows
 
   [[manager.prepend_keymap]]
-  on = [ "i" ]
+  on = "i"
   run = "plugin augment-command -- shell '$EDITOR $@' --block --exit-if-dir"
   desc = "Open the pager"
   ```
@@ -727,15 +727,15 @@ then it will operate on the selected items.
 
   # Use K to move up in the parent directory
   [[manager.prepend_keymap]]
-  on   = [ "K" ]
-  run  = [ "leave", "arrow -1", "enter" ]
+  on = "K"
+  run = [ "leave", "arrow -1", "enter" ]
   desc = "Move up in the parent directory"
 
 
   # Use J to move down in the parent directory
   [[manager.prepend_keymap]]
-  on   = [ "J" ]
-  run  = [ "leave", "arrow 1", "enter" ]
+  on = "J"
+  run = [ "leave", "arrow 1", "enter" ]
   desc = "Move down in the parent directory"
   ```
 
@@ -808,7 +808,7 @@ on Windows, in this format:
 # %AppData%\yazi\config\keymap.toml on Windows
 
 [[manager.prepend_keymap]]
-on = [ "key" ]
+on = "key"
 run = "plugin augment-command -- command arguments --flags --options=42"
 desc = "Description"
 ```
@@ -820,7 +820,7 @@ For example, to use the augmented `enter` command:
 # %AppData%\yazi\config\keymap.toml on Windows
 
 [[manager.prepend_keymap]]
-on = [ "l" ]
+on = "l"
 run = "plugin augment-command -- enter"
 desc = "Enter a directory and skip directories with only a single subdirectory"
 ```
@@ -833,19 +833,23 @@ are also supported, for example:
 # %AppData%\yazi\config\keymap.toml on Windows
 
 [[manager.prepend_keymap]]
-on   = [ "k" ]
-run  = "plugin augment-command -- arrow -1"
+on = "k"
+run = "plugin augment-command -- arrow -1"
 desc = "Move cursor up"
 
 [[manager.prepend_keymap]]
-on = [ "r" ]
+on = "r"
 run = "plugin augment-command -- rename --cursor=before_ext"
 desc = "Rename a file or directory"
 
 [[manager.prepend_keymap]]
-on = [ "D" ]
+on = "D"
 run = "plugin augment-command -- remove --permanently"
 desc = "Permanently delete the files"
+
+[[manager.prepend_keymap]]
+on = ["g", "j"]
+run = "plugin augment-command -- parent_arrow 1"
 ```
 
 For the default descriptions of the commands, you can refer to
