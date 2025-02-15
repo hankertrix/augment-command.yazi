@@ -546,8 +546,8 @@ then it will operate on the selected items.
   ```
 
 - Alternatively, you can use the triple single quote `'''` delimiter for the
-  run string and avoid the escaping the shell command altogether,
-  like the example below:
+  run string and avoid escaping the shell command altogether,
+  as shown in the example below:
 
   ```toml
   [[manager.prepend_keymap]]
