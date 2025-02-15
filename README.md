@@ -530,6 +530,32 @@ then it will operate on the selected items.
   The plugin will automatically replace the shell variable you give
   with the file paths for the item group before executing the command.
 
+- Most of the time, you won't need to escape the quotes in the shell command.
+  However, if you have a long shell command that you are also passing
+  arguments to, you may need to escape the quotes within the command,
+  like this:
+
+  ```toml
+  # ~/.config/yazi/keymap.toml on Linux and macOS
+  # C:\Users\USERNAME\AppData\Roaming\yazi\config\keymap.toml on Windows
+
+  [[manager.prepend_keymap]]
+  on = "i"
+  run = "plugin augment-command -- shell --block 'bat -p --pager \"less\" $@'"
+  desc = "Open with bat"
+  ```
+
+- Alternatively, you can use the triple single quote `'''` delimiter for the
+  run string and avoid the escaping the shell command altogether,
+  like the example below:
+
+  ```toml
+  [[manager.prepend_keymap]]
+  on = "i"
+  run = '''plugin augment-command -- shell --block "bat -p --pager 'less' $@"'''
+  desc = "Open with bat"
+  ```
+
 - `--exit-if-dir` flag to stop the shell command given
   from executing if the item group consists only of directories.
   For example, if the item group is the hovered item, then
