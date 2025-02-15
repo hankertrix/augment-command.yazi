@@ -20,7 +20,7 @@ plugin.
 
 ## Requirements
 
-- [Yazi](https://github.com/sxyazi/yazi) v0.4.2+
+- [Yazi](https://github.com/sxyazi/yazi) v25.2.7+
 - [`7z` or `7zz` command][7z-link]
 - [`file` command][file-command-link]
 
@@ -66,13 +66,12 @@ ya pack -u
 
 If you would like to use the default configuration, which is shown below,
 you don't need to add anything to your `~/.config/yazi/init.lua`
-file on Linux and macOS, or your
-`C:\Users\USERNAME\AppData\Roaming\yazi\config\init.lua`
-file on Windows, where `USERNAME` is your Windows username.
+file on Linux and macOS, or your `%AppData%\yazi\config\init.lua`
+file on Windows.
 
 ```lua
 -- ~/.config/yazi/init.lua for Linux and macOS
--- C:\Users\USERNAME\AppData\Roaming\yazi\config\init.lua for Windows
+-- %AppData%\yazi\config\init.lua for Windows
 
 -- Using the default configuration
 require("augment-command"):setup({
@@ -100,15 +99,14 @@ require("augment-command"):setup({
 However, if you would like to configure the plugin, you can add
 your desired configuration options to your `~/.config/yazi/init.lua` file
 on Linux and macOS, or your
-`C:\Users\USERNAME\AppData\Roaming\yazi\config\init.lua`
-file on Windows, where `USERNAME` is your Windows username.
+`%AppData%\yazi\config\init.lua` file on Windows.
 You can leave out configuration options that you would
 like to be left as default.
 An example configuration is shown below:
 
 ```lua
 -- ~/.config/yazi/init.lua for Linux and macOS
--- C:\Users\USERNAME\AppData\Roaming\yazi\config\init.lua for Windows
+-- %AppData%\yazi\config\init.lua for Windows
 
 -- Custom configuration
 require("augment-command"):setup({
@@ -240,8 +238,7 @@ then it will operate on the selected items.
   [`extract` openers section][yazi-yazi-toml-extract-openers]
   in [Yazi's default `yazi.toml`][yazi-yazi-toml] into your `yazi.toml`,
   which is located at `~/.config/yazi/yazi.toml` for Linux and macOS, and
-  `C:\Users\USERNAME\AppData\Roaming\yazi\config\yazi.toml`
-  file on Windows, where `USERNAME` is your Windows username.
+  `%AppData%\yazi\config\yazi.toml` file on Windows.
   Make sure that the `extract` openers are under the `opener` key in your
   `yazi.toml`. Then replace `extract` with `augmented-extract`,
   and you will be using the plugin's `extract` command instead of
@@ -251,7 +248,7 @@ then it will operate on the selected items.
 
   ```toml
   # ~/.config/yazi/yazi.toml for Linux and macOS
-  # C:\Users\USERNAME\AppData\Roaming\yazi\config\yazi.toml for Windows
+  # %AppData%\yazi\config\yazi.toml for Windows
 
   [opener]
   extract = [
@@ -264,7 +261,7 @@ then it will operate on the selected items.
 
   ```toml
   # ~/.config/yazi/yazi.toml for Linux and macOS
-  # C:\Users\USERNAME\AppData\Roaming\yazi\config\yazi.toml for Windows
+  # %AppData%\yazi\config\yazi.toml for Windows
 
   [[opener.extract]]
   run = 'ya pub augmented-extract --list "$@"'
@@ -541,40 +538,6 @@ then it will operate on the selected items.
   [here](https://yazi-rs.github.io/docs/configuration/keymap/#manager.shell).
   The plugin will automatically replace the shell variable you give
   with the file paths for the item group before executing the command.
-- You will also need to escape the quotes when giving the shell command
-  if you use the same quotes to quote the given arguments to the plugin.
-  For example, if you pass the arguments to the plugin with double quotes,
-  i.e. `--args="shell"`, you will have to escape the double quotes with a
-  backslash character, like shown below:
-
-  ```toml
-  # ~/.config/yazi/keymap.toml on Linux and macOS
-  # C:\Users\USERNAME\AppData\Roaming\yazi\config\keymap.toml on Windows
-
-  [[manager.prepend_keymap]]
-  on = [ "o" ]
-  run = 'plugin augment-command --args="shell \"$EDITOR $@\" --block"'
-  desc = "Open the editor"
-  ```
-
-- Alternatively, you can use the triple single quote `'''` delimiter
-  for the run string and avoid the escaping the shell command altogether,
-  like the two examples below:
-
-  ```toml
-  # ~/.config/yazi/keymap.toml on Linux and macOS
-  # C:\Users\USERNAME\AppData\Roaming\yazi\config\keymap.toml on Windows
-
-  [[manager.prepend_keymap]]
-  on = [ "o" ]
-  run = '''plugin augment-command --args='shell "$EDITOR $@" --block''''
-  desc = "Open the editor"
-
-  [[manager.prepend_keymap]]
-  on = [ "i" ]
-  run = '''plugin augment-command --args="shell '$PAGER $@' --block"'''
-  desc = "Open the pager"
-  ```
 
 - `--exit-if-dir` flag to stop the shell command given
   from executing if the item group consists only of directories.
@@ -588,11 +551,11 @@ then it will operate on the selected items.
 
   ```toml
   # ~/.config/yazi/keymap.toml on Linux and macOS
-  # C:\Users\USERNAME\AppData\Roaming\yazi\config\keymap.toml on Windows
+  # %AppData%\yazi\config\keymap.toml on Windows
 
   [[manager.prepend_keymap]]
   on = [ "i" ]
-  run = '''plugin augment-command --args="shell '$PAGER $@' --block --exit-if-dir"'''
+  run = "plugin augment-command -- shell '$PAGER $@' --block --exit-if-dir"
   desc = "Open the pager"
   ```
 
@@ -603,11 +566,11 @@ then it will operate on the selected items.
 
   ```toml
   # ~/.config/yazi/keymap.toml on Linux and macOS
-  # C:\Users\USERNAME\AppData\Roaming\yazi\config\keymap.toml on Windows
+  # %AppData%\yazi\config\keymap.toml on Windows
 
   [[manager.prepend_keymap]]
   on = [ "i" ]
-  run = '''plugin augment-command --args="shell '$EDITOR $@' --block --exit-if-dir"'''
+  run = "plugin augment-command -- shell '$EDITOR $@' --block --exit-if-dir"
   desc = "Open the pager"
   ```
 
@@ -778,7 +741,7 @@ then it will operate on the selected items.
 
   ```toml
   # ~/.config/yazi/keymap.toml on Linux and macOS
-  # C:\Users\USERNAME\AppData\Roaming\yazi\config\keymap.toml on Windows
+  # %AppData%\yazi\config\keymap.toml on Windows
 
   # Use K to move up in the parent directory
   [[manager.prepend_keymap]]
@@ -855,16 +818,16 @@ then it will operate on the selected items.
 
 Add the commands that you would like to use to your `keymap.toml` file,
 located at `~/.config/yazi/keymap.toml` on Linux and macOS
-and at `C:\Users\USERNAME\AppData\Roaming\yazi\config\keymap.toml`
+and at `%AppData%\yazi\config\keymap.toml`
 on Windows, in this format:
 
 ```toml
 # ~/.config/yazi/keymap.toml on Linux and macOS
-# C:\Users\USERNAME\AppData\Roaming\yazi\config\keymap.toml on Windows
+# %AppData%\yazi\config\keymap.toml on Windows
 
 [[manager.prepend_keymap]]
 on = [ "key" ]
-run = "plugin augment-command --args='command arguments --flags --options=42'"
+run = "plugin augment-command -- command arguments --flags --options=42"
 desc = "Description"
 ```
 
@@ -872,11 +835,11 @@ For example, to use the augmented `enter` command:
 
 ```toml
 # ~/.config/yazi/keymap.toml on Linux and macOS
-# C:\Users\USERNAME\AppData\Roaming\yazi\config\keymap.toml on Windows
+# %AppData%\yazi\config\keymap.toml on Windows
 
 [[manager.prepend_keymap]]
 on = [ "l" ]
-run = "plugin augment-command --args='enter'"
+run = "plugin augment-command -- enter"
 desc = "Enter a directory and skip directories with only a single subdirectory"
 ```
 
@@ -885,21 +848,21 @@ are also supported, for example:
 
 ```toml
 # ~/.config/yazi/keymap.toml on Linux and macOS
-# C:\Users\USERNAME\AppData\Roaming\yazi\config\keymap.toml on Windows
+# %AppData%\yazi\config\keymap.toml on Windows
 
 [[manager.prepend_keymap]]
 on   = [ "k" ]
-run  = "plugin augment-command --args='arrow -1'"
+run  = "plugin augment-command -- arrow -1"
 desc = "Move cursor up"
 
 [[manager.prepend_keymap]]
 on = [ "r" ]
-run = "plugin augment-command --args='rename --cursor=before_ext'"
+run = "plugin augment-command -- rename --cursor=before_ext"
 desc = "Rename a file or directory"
 
 [[manager.prepend_keymap]]
 on = [ "D" ]
-run = "plugin augment-command --args='remove --permanently'"
+run = "plugin augment-command -- remove --permanently"
 desc = "Permanently delete the files"
 ```
 
@@ -907,11 +870,9 @@ For the default descriptions of the commands, you can refer to
 [Yazi's default `keymap.toml` file][yazi-keymap-toml].
 
 Essentially, all you need to do to use this plugin
-is to wrap a Yazi command in single quotes,
-like `'enter'`,
-then add `plugin augment-command --args=`
-in front of it, which results in
-`plugin augment-command --args='enter'`.
+is to add `plugin augment-command --`, with a space at the end,
+in front of a Yazi command, such as `enter`,
+which results in `plugin augment-command -- enter'`.
 
 ### Using the `extract` command as an opener
 

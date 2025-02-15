@@ -1,4 +1,5 @@
---- @since 0.4.2
+--- @since 25.2.7
+
 -- Plugin to make some Yazi commands smarter
 -- Written in Lua 5.4
 
@@ -601,46 +602,20 @@ local function get_user_input(prompt, options)
 end
 
 -- Function to get the user's confirmation
--- TODO: Remove the `ya.input` version once `ya.confirm` is stable
----@param prompt string The prompt to show to the user
 ---@param title string|ui.Line The title of the confirmation prompt
 ---@param content string|ui.Text The content of the confirmation prompt
 ---@return boolean confirmation Whether the user has confirmed or not
-local function get_user_confirmation(prompt, title, content)
+local function get_user_confirmation(title, content)
 	--
 
-	-- If the ya.confirm API exists, use it
-	if ya.confirm then
-		--
+	-- Get the user's confirmation
+	local confirmation = ya.confirm(merge_tables(DEFAULT_CONFIRM_OPTIONS, {
+		title = title,
+		content = content,
+	}))
 
-		-- Get the user's confirmation
-		local confirmation = ya.confirm(merge_tables(DEFAULT_CONFIRM_OPTIONS, {
-			title = title,
-			content = content,
-		}))
-
-		-- Return the result of the confirmation
-		return confirmation
-	end
-
-	-- TODO: Remove everything after this when `ya.confirm` is stable
-
-	-- Get the user's input
-	local user_input, event = get_user_input(prompt)
-
-	-- If the user has not confirmed the input,
-	-- or the user input is nil,
-	-- then return false
-	if not user_input or event ~= 1 then return false end
-
-	-- Lowercase the user's input
-	user_input = user_input:lower()
-
-	-- If the user input starts with a "y", then return true
-	if user_input:find("^y") then return true end
-
-	-- Otherwise, return false
-	return false
+	-- Return the result of the confirmation
+	return confirmation
 end
 
 -- Function to merge the given configuration table with the default one
@@ -741,30 +716,10 @@ end
 ---@param args Arguments The arguments to pass to the plugin command
 ---@return nil
 local function emit_plugin_command(command, args)
-	--
-
-	-- If the ya.confirm API exists, which means
-	-- the user is on the unstable version of Yazi,
-	-- use the new syntax to emit the plugin command
-	if ya.confirm then
-		return ya.manager_emit("plugin", {
-			PLUGIN_NAME,
-			string.format("%s %s", command, convert_arguments_to_string(args)),
-		})
-
-	-- TODO: Remove the following code when Yazi releases a stable version
-	-- Otherwise, the user is on the stable version,
-	-- so emit the plugin command using the old syntax
-	else
-		return ya.manager_emit("plugin", {
-			PLUGIN_NAME,
-			args = string.format(
-				"%s %s",
-				command,
-				convert_arguments_to_string(args)
-			),
-		})
-	end
+	return ya.manager_emit("plugin", {
+		PLUGIN_NAME,
+		string.format("%s %s", command, convert_arguments_to_string(args)),
+	})
 end
 
 -- Function to subscribe to the augmented-extract event
@@ -2875,10 +2830,6 @@ local function handle_create(args, config)
 		-- Get the user's confirmation for
 		-- whether they want to overwrite the item
 		local user_confirmation = get_user_confirmation(
-
-			-- TODO: Remove the line below when Yazi
-			-- releases a new stable version
-			"The item already exists, overwrite? (y/N)",
 			"Overwrite file?",
 			ui.Text({
 				ui.Line("Will overwrite the following file:")
@@ -3301,7 +3252,6 @@ local function handle_quit(args, config)
 
 	-- Otherwise, get the user's confirmation for quitting
 	local user_confirmation = get_user_confirmation(
-		"Multiple tabs open, really quit?",
 		"Quit?",
 		ui.Text({
 			"There are multiple tabs open.",

@@ -21,7 +21,7 @@ PLUGIN_FILE_NAME: str = "main.lua"
 ARCHIVE_FILE_EXTENSIONS: set[str] = {".zip", ".7z"}
 
 # The plugin command template
-PLUGIN_COMMAND_TEMPLATE = "plugin augment-command --args='{}'"
+PLUGIN_COMMAND_TEMPLATE = "plugin augment-command -- {}"
 
 # The default key to use for a command
 DEFAULT_KEY = "e"
@@ -554,7 +554,7 @@ class VHSTape:
 			[
 				"[[manager.prepend_keymap]]",
 				f'on = [ "{key}" ]',
-				f"run = '''{PLUGIN_COMMAND_TEMPLATE}'''".format(command),
+				f"run = '{PLUGIN_COMMAND_TEMPLATE}'".format(command),
 			]
 		)
 
@@ -2084,7 +2084,7 @@ async def main():
 	vhs_tapes = [
 		vhs_tape
 		for vhs_tape in VHS_TAPES
-		if vhs_tape.name == "Quit with confirmation"
+		if vhs_tape.name == "Shell behaviour"
 	]
 
 	# Create the VHS tapes
