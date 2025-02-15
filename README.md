@@ -2,7 +2,7 @@
 
 A [Yazi][yazi-link] plugin that enhances Yazi's default commands.
 This plugin is inspired by the
-[Yazi tips page](https://yazi-rs.github.io/docs/tips),
+[Yazi tips page][yazi-tips-page],
 the [bypass.yazi](https://github.com/Rolv-Apneseth/bypass.yazi) plugin
 and the [fast-enter.yazi](https://github.com/ourongxing/fast-enter.yazi)
 plugin.
@@ -20,7 +20,7 @@ plugin.
 
 ## Requirements
 
-- [Yazi](https://github.com/sxyazi/yazi) v25.2.7+
+- [Yazi][yazi-link] v25.2.7+
 - [`7z` or `7zz` command][7z-link]
 - [`file` command][file-command-link]
 
@@ -526,9 +526,15 @@ then it will operate on the selected items.
 - To use this command, the syntax is exactly the same as the default
   `shell` command provided by Yazi. You just provide the command you want and
   provide any Yazi shell variable, which is documented
-  [here](https://yazi-rs.github.io/docs/configuration/keymap/#manager.shell).
+  [here][yazi-shell-variables].
   The plugin will automatically replace the shell variable you give
   with the file paths for the item group before executing the command.
+
+- There is no need to quote the shell variable on Linux and macOS,
+  as it is expanded by the plugin instead of the shell,
+  and the paths are already quoted using the `ya.quote` function
+  before execution, so quoting is entirely unnecessary
+  and may result in unexpected behaviour.
 
 - `--exit-if-dir` flag to stop the shell command given
   from executing if the item group consists only of directories.
@@ -827,14 +833,14 @@ in your `keymap.toml` file.
   # Use K to move up in the parent directory
   [[manager.prepend_keymap]]
   on = "K"
-  run = [ "leave", "arrow -1", "enter" ]
+  run = ["leave", "arrow -1", "enter"]
   desc = "Move up in the parent directory"
 
 
   # Use J to move down in the parent directory
   [[manager.prepend_keymap]]
   on = "J"
-  run = [ "leave", "arrow 1", "enter" ]
+  run = ["leave", "arrow 1", "enter"]
   desc = "Move down in the parent directory"
   ```
 
@@ -980,6 +986,7 @@ You can view the full licence in the [`LICENSE`][Licence] file.
 <!-- Regular links -->
 
 [yazi-link]: https://github.com/sxyazi/yazi
+[yazi-tips-page]: https://yazi-rs.github.io/docs/tips
 [smart-paste-tip]: https://yazi-rs.github.io/docs/tips#smart-paste
 [smart-tab-tip]: https://yazi-rs.github.io/docs/tips#smart-tab
 [smart-switch-tip]: https://yazi-rs.github.io/docs/tips#smart-switch
@@ -991,6 +998,7 @@ You can view the full licence in the [`LICENSE`][Licence] file.
 [brew-link]: https://brew.sh/
 [yazi-yazi-toml-extract-openers]: https://github.com/sxyazi/yazi/blob/main/yazi-config/preset/yazi-default.toml#L51-L54
 [yazi-yazi-toml]: https://github.com/sxyazi/yazi/blob/main/yazi-config/preset/yazi-default.toml
+[yazi-shell-variables]: https://yazi-rs.github.io/docs/configuration/keymap/#manager.shell
 [thunderbird-tip]: https://yazi-rs.github.io/docs/tips#email-selected-files-using-thunderbird
 [yazi-keymap-toml]: https://github.com/sxyazi/yazi/blob/main/yazi-config/preset/keymap-default.toml
 [my-keymap-toml]: https://github.com/hankertrix/Dotfiles/blob/main/.config/yazi/keymap.toml
