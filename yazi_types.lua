@@ -24,7 +24,8 @@
 ---@field bottom integer The bottom padding.
 
 -- The type for the supported colours
----@alias SupportedColours "reset"
+---@alias SupportedColours
+---	|"reset"
 ---	|"black"
 ---	|"white"
 ---	|"red"
@@ -93,7 +94,8 @@
 ---@alias ui.Line.RIGHT integer Align the line to the right
 
 -- The possible alignments of the ui.Line object
----@alias ui.Line.Alignment ui.Line.LEFT
+---@alias ui.Line.Alignment
+---	|ui.Line.LEFT
 ---	|ui.Line.CENTER
 ---	|ui.Line.RIGHT
 
@@ -126,7 +128,8 @@
 ---@alias ui.Text.RIGHT integer Align the text to the right
 
 -- The possible alignments of the ui.Text object
----@alias ui.Text.Alignment ui.Text.LEFT
+---@alias ui.Text.Alignment
+---	|ui.Text.LEFT
 ---	|ui.Text.CENTER
 ---	|ui.Text.RIGHT
 
@@ -136,7 +139,8 @@
 ---@alias ui.Text.WRAP_TRIM integer ui.Text.WRAP + trim leading whitespace.
 
 -- The possible wrappings of the ui.Text object
----@alias ui.Text.Wrapping ui.Text.WRAP_NO
+---@alias ui.Text.Wrapping
+---	|ui.Text.WRAP_NO
 ---	|ui.Text.WRAP
 ---	|ui.Text.WRAP_TRIM
 
@@ -173,7 +177,8 @@
 ---@alias ui.Layout.VERTICAL integer Layout vertically.
 
 -- The possible directions of the ui.Layout object
----@alias ui.Layout.Direction ui.Layout.HORIZONTAL
+---@alias ui.Layout.Direction
+---	|ui.Layout.HORIZONTAL
 ---	|ui.Layout.VERTICAL
 
 -- The type of the ui.Constraint.Fill function
@@ -254,7 +259,8 @@
 ---@alias ui.Bar.ALL integer All directions.
 
 -- The possible directions of the ui.Bar object
----@alias ui.Bar.Direction ui.Bar.NONE
+---@alias ui.Bar.Direction
+---	|ui.Bar.NONE
 ---	|ui.Bar.TOP
 ---	|ui.Bar.RIGHT
 ---	|ui.Bar.BOTTOM
@@ -295,7 +301,8 @@
 ---@alias ui.Border.ALL integer All directions.
 
 -- The possible positions of the ui.Border object
----@alias ui.Border.Position ui.Border.NONE
+---@alias ui.Border.Position
+---	|ui.Border.NONE
 ---	|ui.Border.TOP
 ---	|ui.Border.RIGHT
 ---	|ui.Border.BOTTOM
@@ -318,7 +325,8 @@
 ---@alias ui.Border.QUADRANT_OUTSIDE integer Border with the quadrant outside.
 
 -- The different types of the ui.Border object
----@alias ui.Border.Type ui.Border.PLAIN
+---@alias ui.Border.Type
+---	|ui.Border.PLAIN
 ---	|ui.Border.ROUNDED
 ---	|ui.Border.DOUBLE
 ---	|ui.Border.THICK
@@ -546,7 +554,8 @@
 ---@field is_visual boolean Whether the tab is in visual mode.
 
 -- The sort method enum
----@alias SortMethod "none" Do not sort.
+---@alias SortMethod
+---	|"none" Do not sort.
 ---	|"mtime" Sort by last modified time.
 ---	|"btime" Sort by birth time.
 ---	|"extension" Sort by file extension.
@@ -557,7 +566,8 @@
 
 -- The line mode, which displays information associated with the file
 -- on the right side of the file list row.
----@alias LineMode "none" No line mode.
+---@alias LineMode
+---	|"none" No line mode.
 ---	|"size" Display the file size in bytes.
 ---	|"btime" Display the birth time of the file.
 ---	|"mtime" Display the last modified time of the file.
@@ -619,15 +629,17 @@
 ---@field yanked manager.Yanked The yanked urls.
 
 -- The type of non table sendable values
----@alias SendableValueNonTable string
+---@alias SendableValueNonTable
+---	|string
 ---	|number
 ---	|boolean
 ---	|nil
 ---	|Url
 
 -- The type of sendable values
----@alias SendableValue SendableValueNonTable
---- |table<SendableValueNonTable, SendableValueNonTable|SendableValue>
+---@alias SendableValue
+---	|SendableValueNonTable
+---	|table<SendableValueNonTable, SendableValueNonTable|SendableValue>
 
 -- The type of the permit object
 ---@class (exact) Permit
@@ -641,7 +653,8 @@
 ---@field desc string|nil The description of the candidate.
 
 -- The type of the origin position
----@alias OriginPosition "top-left"
+---@alias OriginPosition
+---	|"top-left"
 ---	|"top-right"
 ---	|"top-center"
 ---	|"top-right"
@@ -688,9 +701,10 @@
 ---@field content string|ui.Text The content of the confirmation prompt.
 
 -- The type of the notification level
----@alias NotificationLevel "info" Default notification level, informational.
----	|"warn" Warning notification.
----	|"error" Error notification.
+---@alias NotificationLevel
+---	|"Info" Default notification level, informational.
+---	|"Warn" Warning notification.
+---	|"Error" Error notification.
 
 -- The type of the notification options
 ---@class (exact) YaziNotificationOptions
@@ -777,8 +791,7 @@
 ---	file: File,    -- The file to preview.
 ---	mime: string,    -- The mime type of the file.
 ---	skip: integer,    -- The number of units to skip.
----},
----widgets: (ui.Text|ui.List|ui.Line|ui.Span)[],	-- The widgets to preview.
+---}, widgets: (ui.Text|ui.List|ui.Line|ui.Span)[],    -- The widgets to preview
 ---): nil
 ---@field sync fun(
 ---	func: SyncFunction,
@@ -787,23 +800,23 @@
 --- Return the target operating system.
 ---@field target_os fun():
 ---	string
----		|"linux"
----		|"macos"
----		|"ios"
----		|"freebsd"
----		|"dragonfly"
----		|"netbsd"
----		|"openbsd"
----		|"solaris"
----		|"android"
----		|"windows"
+---	|"linux"
+---	|"macos"
+---	|"ios"
+---	|"freebsd"
+---	|"dragonfly"
+---	|"netbsd"
+---	|"openbsd"
+---	|"solaris"
+---	|"android"
+---	|"windows"
 ---
 --- Return the target operating system family.
 ---@field target_family fun():
 ---	string
----		|"unix" Linux and macOS
----		|"windows" Windows
----		|"wasm" Web
+---	|"unix" Linux and macOS
+---	|"windows" Windows
+---	|"wasm" Web
 ---@field hash fun(
 ---	str: string,    -- The string to calculate the hash for.
 ---): string Calculate the hash of a string.
@@ -887,11 +900,13 @@
 ---): nil Same as unsub(), but for remotes.
 
 -- The creation type enum
----@alias CreationType "dir" Create a new empty directory.
+---@alias CreationType
+---	|"dir" Create a new empty directory.
 ---	|"dir_all" Create a new empty directory and all its parents.
 
 -- The removal type enum
----@alias RemovalType "file" Remove a file.
+---@alias RemovalType
+---	|"file" Remove a file.
 ---	|"dir" Remove an existing empty directory.
 ---	|"dir_all" Remove an existing directory together with all its contents.
 ---	|"dir_clean" Remove all empty directories under it.
@@ -941,7 +956,8 @@
 ---@alias Command.PIPED integer Pipe the output.
 ---@alias Command.NULL integer Discard the output, default.
 ---@alias Command.INHERIT integer Inherit the output.
----@alias CommandConfiguration Command.PIPED
+---@alias CommandConfiguration
+---	|Command.PIPED
 ---	|Command.NULL
 ---	|Command.INHERIT
 
