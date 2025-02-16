@@ -351,9 +351,9 @@ local file_extension_pattern = "%.([%a]+)$"
 ---@type string
 local shell_variable_pattern = "[%$%%][%*@0]"
 
--- The pattern to match the bat command with the pager option passed
+-- The pattern to match the bat command
 ---@type string
-local bat_command_with_pager_pattern = "%f[%a]bat%f[%A].*%-%-pager%s+"
+local bat_command_pattern = "%f[%a]bat%f[%A]"
 
 -- Utility functions
 
@@ -575,7 +575,7 @@ end
 local function show_warning(warning_message, options)
 	return ya.notify(merge_tables(DEFAULT_NOTIFICATION_OPTIONS, options or {}, {
 		content = warning_message,
-		level = "warn",
+		level = "Warn",
 	}))
 end
 
@@ -586,7 +586,7 @@ end
 local function show_error(error_message, options)
 	return ya.notify(merge_tables(DEFAULT_NOTIFICATION_OPTIONS, options or {}, {
 		content = error_message,
-		level = "error",
+		level = "Error",
 	}))
 end
 
@@ -2926,41 +2926,73 @@ end
 -- Function to fix the bat default pager command
 ---@param command string The command containing the bat default pager command
 ---@return string command The fixed bat command
-local function fix_bat_default_pager_shell_command(command)
+local function fix_shell_command_containing_bat(command)
 	--
 
-	-- Initialise the default pager command for bat without the F flag
+	-- The pattern to match the pager argument for the bat command
+	local bat_pager_pattern = "(%-%-pager)%s+(%S+)"
+
+	-- Get the pager argument for the bat command
+	local _, pager_argument = command:match(bat_pager_pattern)
+
+	-- If there is a pager argument
+	--
+	-- We don't need to do much if the pager argument already exists,
+	-- as we can rely on the function that fixes the less command to
+	-- remove the -F flag that is executed after this function is called.
+	--
+	-- There's only work to be done if the pager argument isn't quoted,
+	-- as we need to quote it so the function that fixes the less command
+	-- can execute cleanly without causing shell syntax errors.
+	--
+	-- The reason why we don't quote the less command in the function
+	-- to fix the less command is to not deal with using backslashes
+	-- to escape the quotes, which can get really messy and really confusing,
+	-- so we just naively replace the less command with the fixed version
+	-- without caring about whether the less command is passed as an
+	-- argument, or is called as a shell command.
+	if pager_argument then
+		--
+
+		-- If the pager argument is quoted, return the command immediately
+		if pager_argument:find("['\"].+['\"]") then
+			return command
+		end
+
+		-- Otherwise, quote the pager argument with single quotes
+		--
+		-- It should be fine to quote with single quotes
+		-- as the user passing the argument probably isn't
+		-- using a shell variable, as they would have quoted
+		-- the shell variable in double quotes instead of
+		-- omitting the quotes.
+		pager_argument = string.format("'%s'", pager_argument)
+
+		-- Replace the pager argument with the quoted version
+		local modified_command =
+			command:gsub(bat_pager_pattern, "%1 " .. pager_argument)
+
+		-- Return the modified command
+		return modified_command
+	end
+
+	-- If there is no pager argument,
+	-- initialise the default pager command for bat without the F flag
 	local bat_default_pager_command_without_f_flag = "less -RX"
 
-	-- Get the modified command and the replacement count
-	-- when replacing the less command when it is quoted
-	local modified_command, replacement_count = command:gsub(
-		"("
-			.. bat_command_with_pager_pattern
-			.. "['\"]+%s*"
-			.. ")"
-			.. "less"
-			.. "(%s*['\"]+)",
-		"%1" .. bat_default_pager_command_without_f_flag .. "%2"
+	-- Replace the bat command with the command to use the
+	-- bat default pager command without the F flag
+	local modified_command = command:gsub(
+		bat_command_pattern,
+		string.format(
+			"bat --pager '%s'",
+			bat_default_pager_command_without_f_flag
+		),
+		1
 	)
 
-	-- If the replacement count is not 0,
-	-- then return the modified command
-	if replacement_count ~= 0 then return modified_command end
-
-	-- Otherwise, get the modified command and the replacement count
-	-- when replacing the less command when it is unquoted
-	modified_command, replacement_count = command:gsub(
-		"(" .. bat_command_with_pager_pattern .. ")" .. "less",
-		'%1"' .. bat_default_pager_command_without_f_flag .. '"'
-	)
-
-	-- If the replacement count is not 0,
-	-- then return the modified command
-	if replacement_count ~= 0 then return modified_command end
-
-	-- Otherwise, return the given command
-	return command
+	-- Return the modified command
+	return modified_command
 end
 
 -- Function to fix the shell commands given to work properly with Yazi
@@ -2969,21 +3001,20 @@ end
 local function fix_shell_command(command)
 	--
 
+	-- If the given command contains the bat command
+	if command:find(bat_command_pattern) ~= nil then
+		--
+
+		-- Calls the command to fix the bat command
+		command = fix_shell_command_containing_bat(command)
+	end
+
 	-- If the given command includes the less command
 	if command:find("%f[%a]less%f[%A]") ~= nil then
 		--
 
 		-- Fix the command containing less
 		command = fix_shell_command_containing_less(command)
-	end
-
-	-- If the given command contains the bat command with the pager
-	-- option passed
-	if command:find(bat_command_with_pager_pattern) ~= nil then
-		--
-
-		-- Calls the command to fix the bat command with the default pager
-		command = fix_bat_default_pager_shell_command(command)
 	end
 
 	-- Return the modified command
