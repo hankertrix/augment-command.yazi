@@ -451,10 +451,6 @@ then it will operate on the selected items.
   create directories to ensure that the path given exists.
   It also supports all the options supported by Yazi's `create` command,
   so you can pass them to the command and expect the same behaviour.
-  Do note that the separator in the `confirm` component will be the text colour
-  instead of your configured border colour for the `confirm` component as
-  the `list` part of the `confirm` component has not been exposed to plugin
-  developers, so the separator is made using text.
 - The rationale for this behaviour is that creating a path without
   a file extension usually means you intend to create a directory instead
   of a file, as files usually have file extensions.

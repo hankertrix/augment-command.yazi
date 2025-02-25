@@ -2084,7 +2084,7 @@ async def main():
 	vhs_tapes = [
 		vhs_tape
 		for vhs_tape in VHS_TAPES
-		if vhs_tape.name == "Shell behaviour"
+		if vhs_tape.name == "Create behaviour"
 	]
 
 	# Create the VHS tapes
