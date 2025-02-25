@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 
+import argparse
 import asyncio
 import os
 import shutil
 import subprocess
 from collections.abc import Coroutine
 from pathlib import Path
-from typing import final, override
+from typing import cast, final, override
 
 # The absolute path to run the script from
 WORKING_DIRECTORY = Path(__file__).parent
@@ -63,6 +64,32 @@ CHANGE_TO_WORKING_DIRECTORY: str = f'Type "cd {WORKING_DIRECTORY}" Enter'
 
 # The command to clear the screen
 CLEAR_SCREEN: str = "Type 'clear' Enter"
+
+
+# Function to create the argument parser and parse the command line arguments
+def get_command_line_arguments() -> argparse.Namespace:
+	"""
+	Function to create the argument parser to parse
+	the command line arguments and return the arguments.
+	"""
+
+	# Create the command line argument parser
+	parser: argparse.ArgumentParser = argparse.ArgumentParser()
+
+	# Add the arguments
+	_ = parser.add_argument(
+		"-s",
+		"--search-term",
+		type=str,
+		default=None,
+		help="The substring to search for in the video title.",
+	)
+
+	# Parse the arguments
+	args = parser.parse_args()
+
+	# Return the arguments
+	return args
 
 
 @final
@@ -2070,6 +2097,9 @@ VHS_TAPES: list[VHSTape] = [
 async def main():
 	"Main function to run to generate the VHS tapes"
 
+	# Get the arguments to the script
+	args = get_command_line_arguments()
+
 	# Change directory to the working directory
 	os.chdir(WORKING_DIRECTORY)
 
@@ -2080,12 +2110,18 @@ async def main():
 	# Initialise the list of threads
 	threads: list[Coroutine[None, None, None]] = []
 
-	# Initialise the list of VHS tapes
-	vhs_tapes = [
-		vhs_tape
-		for vhs_tape in VHS_TAPES
-		if vhs_tape.name == "Create behaviour"
-	]
+	# Initialise the list of vhs tapes
+	vhs_tapes = VHS_TAPES
+
+	# If a search term is given,
+	# then get only the vhs tapes
+	# that contain the search term
+	if (search_term := cast(str | None, args.search_term)) is not None:
+		vhs_tapes = [
+			vhs_tape
+			for vhs_tape in VHS_TAPES
+			if search_term.lower() in vhs_tape.name.lower()
+		]
 
 	# Create the VHS tapes
 	for vhs_tape in vhs_tapes:
