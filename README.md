@@ -10,12 +10,32 @@ plugin.
 ## Table of Contents
 
 - [Requirements](#requirements)
+  - [Optional dependencies](#optional-dependencies)
 - [Installation](#installation)
 - [Configuration](#configuration)
 - [What about the commands are augmented?][augment-section]
 - [Augmented commands](#augmented-commands)
+  - [Open (`open`)](#open-open)
+  - [Extract (`extract`)](#extract-extract)
+  - [Enter (`enter`)](#enter-enter)
+  - [Leave (`leave`)](#leave-leave)
+  - [Rename (`rename`)](#rename-rename)
+  - [Remove (`remove`)](#remove-remove)
+  - [Create (`create`)](#create-create)
+  - [Shell (`shell`)](#shell-shell)
+    - [Passing arguments to the `shell` command](#passing-arguments-to-the-shell-command)
+  - [Paste (`paste`)](#paste-paste)
+  - [Tab create (`tab_create`)](#tab-create-tab_create)
+  - [Tab switch (`tab_switch`)](#tab-switch-tab_switch)
+  - [Quit (`quit`)](#quit-quit)
+  - [Arrow (`arrow`)](#arrow-arrow)
 - [New commands](#new-commands)
+  - [Parent arrow (`parent_arrow`)](#parent-arrow-parent_arrow)
+  - [Editor (`editor`)](#editor-editor)
+  - [Pager (`pager`)](#pager-pager)
 - [Usage](#usage)
+  - [Using the `extract` command as an opener](#using-the-extract-command-as-an-opener)
+  - [Full configuration example](#full-configuration-example)
 - [Licence](#licence)
 
 ## Requirements
