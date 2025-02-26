@@ -2115,13 +2115,17 @@ async def main():
 
 	# If a search term is given,
 	# then get only the vhs tapes
-	# that contain the search term
+	# that contain the search terms
 	if (search_term := cast(str | None, args.search_term)) is not None:
-		vhs_tapes = [
-			vhs_tape
-			for vhs_tape in VHS_TAPES
-			if search_term.lower() in vhs_tape.name.lower()
-		]
+		vhs_tapes = list(
+			filter(
+				lambda tape: all(
+					term in tape.name.lower()
+					for term in search_term.lower().split()
+				),
+				vhs_tapes,
+			)
+		)
 
 	# Create the VHS tapes
 	for vhs_tape in vhs_tapes:
