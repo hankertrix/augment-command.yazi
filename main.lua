@@ -1,4 +1,4 @@
---- @since 25.2.7
+--- @since 25.2.26
 
 -- Plugin to make some Yazi commands smarter
 -- Written in Lua 5.4
@@ -720,7 +720,7 @@ end
 ---@param args Arguments The arguments to pass to the plugin command
 ---@return nil
 local function emit_plugin_command(command, args)
-	return ya.manager_emit("plugin", {
+	return ya.mgr_emit("plugin", {
 		PLUGIN_NAME,
 		string.format("%s %s", command, convert_arguments_to_string(args)),
 	})
@@ -1271,7 +1271,7 @@ local function skip_single_child_directories(initial_directory_path)
 	end
 
 	-- Emit the change directory command to change to the directory variable
-	ya.manager_emit("cd", { directory })
+	ya.mgr_emit("cd", { directory })
 end
 
 -- Class implementations
@@ -2313,7 +2313,7 @@ local function handle_open(args, config)
 		--
 
 		-- Emit the command and exit the function
-		return ya.manager_emit("open", args)
+		return ya.mgr_emit("open", args)
 	end
 
 	-- If the hovered item is a directory
@@ -2345,7 +2345,7 @@ local function handle_open(args, config)
 		-- opening only the hovered item
 		-- as the item group is the hovered item,
 		-- and exit the function
-		return ya.manager_emit("open", merge_tables(args, { hovered = true }))
+		return ya.mgr_emit("open", merge_tables(args, { hovered = true }))
 	end
 
 	-- Otherwise, the hovered item is an archive
@@ -2525,12 +2525,12 @@ local function handle_extract(args, config)
 			--
 
 			-- Reveal the item and exit the function
-			return ya.manager_emit("reveal", { extracted_items_url })
+			return ya.mgr_emit("reveal", { extracted_items_url })
 		end
 
 		-- Otherwise, change the directory to the extracted item.
 		-- Note that extracted_items_url is destroyed here.
-		ya.manager_emit("cd", { extracted_items_url })
+		ya.mgr_emit("cd", { extracted_items_url })
 
 		-- If the user wants to skip single subdirectories on enter,
 		-- and the no skip flag is not passed
@@ -2567,7 +2567,7 @@ local function handle_enter(args, config)
 	end
 
 	-- Otherwise, always emit the enter command,
-	ya.manager_emit("enter", args)
+	ya.mgr_emit("enter", args)
 
 	-- If the user doesn't want to skip single subdirectories on enter,
 	-- or one of the arguments passed is no skip,
@@ -2590,7 +2590,7 @@ local function handle_leave(args, config)
 	--
 
 	-- Always emit the leave command
-	ya.manager_emit("leave", args)
+	ya.mgr_emit("leave", args)
 
 	-- If the user doesn't want to skip single subdirectories on leave,
 	-- or one of the arguments passed is no skip,
@@ -2633,7 +2633,7 @@ local function handle_leave(args, config)
 	end
 
 	-- Emit the change directory command to change to the directory variable
-	ya.manager_emit("cd", { directory })
+	ya.mgr_emit("cd", { directory })
 end
 
 -- Function to handle a Yazi command
@@ -2654,14 +2654,14 @@ local function handle_yazi_command(command, args)
 		--
 
 		-- Emit the command to operate on the selected items
-		ya.manager_emit(command, args)
+		ya.mgr_emit(command, args)
 
 	-- If the item group is the hovered item
 	elseif item_group == ItemGroup.Hovered then
 		--
 
 		-- Emit the command with the hovered option
-		ya.manager_emit(command, merge_tables(args, { hovered = true }))
+		ya.mgr_emit(command, merge_tables(args, { hovered = true }))
 	end
 end
 
@@ -2690,7 +2690,7 @@ local function enter_or_open_created_item(item_url, is_directory, args, config)
 		end
 
 		-- Otherwise, call the function change to the created directory
-		return ya.manager_emit("cd", { item_url })
+		return ya.mgr_emit("cd", { item_url })
 	end
 
 	-- Otherwise, the item is a file
@@ -2704,13 +2704,13 @@ local function enter_or_open_created_item(item_url, is_directory, args, config)
 	end
 
 	-- Otherwise, call the function to reveal the created file
-	ya.manager_emit("reveal", { item_url })
+	ya.mgr_emit("reveal", { item_url })
 
 	-- Wait for Yazi to finish loading
 	wait_until_yazi_is_loaded()
 
 	-- Call the function to open the file
-	return ya.manager_emit("open", { hovered = true })
+	return ya.mgr_emit("open", { hovered = true })
 end
 
 -- Function to execute the create command
@@ -3148,7 +3148,7 @@ local function handle_shell(args, _)
 	args = merge_tables({ command }, args)
 
 	-- Emit the command to operate on the hovered item
-	ya.manager_emit("shell", args)
+	ya.mgr_emit("shell", args)
 end
 
 -- Function to handle the paste command
@@ -3165,17 +3165,17 @@ local function handle_paste(args, config)
 
 		-- Just paste the items inside the current directory
 		-- and exit the function
-		return ya.manager_emit("paste", args)
+		return ya.mgr_emit("paste", args)
 	end
 
 	-- Otherwise, enter the directory
-	ya.manager_emit("enter", {})
+	ya.mgr_emit("enter", {})
 
 	-- Paste the items inside the directory
-	ya.manager_emit("paste", args)
+	ya.mgr_emit("paste", args)
 
 	-- Leave the directory
-	ya.manager_emit("leave", {})
+	ya.mgr_emit("leave", {})
 end
 
 -- Function to execute the tab create command
@@ -3203,12 +3203,12 @@ local execute_tab_create = ya.sync(function(state, args)
 
 		-- Emit the command to create a new tab with the arguments
 		-- and exit the function
-		return ya.manager_emit("tab_create", args)
+		return ya.mgr_emit("tab_create", args)
 	end
 
 	-- Otherwise, emit the command to create a new tab
 	-- with the hovered item's url
-	ya.manager_emit("tab_create", { hovered_item.url })
+	ya.mgr_emit("tab_create", { hovered_item.url })
 end)
 
 -- Function to handle the tab create command
@@ -3241,7 +3241,7 @@ local execute_tab_switch = ya.sync(function(state, args)
 	if
 		not (state.config.smart_tab_switch or table_pop(args, "smart", false))
 	then
-		return ya.manager_emit("tab_switch", args)
+		return ya.mgr_emit("tab_switch", args)
 	end
 
 	-- Get the current tab
@@ -3256,19 +3256,19 @@ local execute_tab_switch = ya.sync(function(state, args)
 		--
 
 		-- Call the tab create command
-		ya.manager_emit("tab_create", { current_tab.cwd })
+		ya.mgr_emit("tab_create", { current_tab.cwd })
 
 		-- If there is a hovered item
 		if current_tab.hovered then
 			--
 
 			-- Reveal the hovered item
-			ya.manager_emit("reveal", { current_tab.hovered.url })
+			ya.mgr_emit("reveal", { current_tab.hovered.url })
 		end
 	end
 
 	-- Switch to the given tab index
-	ya.manager_emit("tab_switch", args)
+	ya.mgr_emit("tab_switch", args)
 end)
 
 -- Function to handle the tab switch command
@@ -3292,7 +3292,7 @@ local function handle_quit(args, config)
 	-- or if the number of tabs is 1 or less,
 	-- then emit the quit command
 	if not (config.confirm_on_quit or args.confirm) or number_of_tabs <= 1 then
-		return ya.manager_emit("quit", args)
+		return ya.mgr_emit("quit", args)
 	end
 
 	-- Otherwise, get the user's confirmation for quitting
@@ -3308,7 +3308,7 @@ local function handle_quit(args, config)
 	if not user_confirmation then return end
 
 	-- Otherwise, emit the quit command
-	ya.manager_emit("quit", args)
+	ya.mgr_emit("quit", args)
 end
 
 -- Function to handle smooth scrolling
@@ -3361,7 +3361,7 @@ local wraparound_arrow = ya.sync(function(_, args)
 	-- immediately emit the arrow command
 	-- and exit the function
 	if type(steps) ~= "number" then
-		return ya.manager_emit("arrow", merge_tables(args, { steps }))
+		return ya.mgr_emit("arrow", merge_tables(args, { steps }))
 	end
 
 	-- Get the number of files in the current tab
@@ -3384,7 +3384,7 @@ local wraparound_arrow = ya.sync(function(_, args)
 	local item_url = current_tab.files[new_cursor_index + 1].url
 
 	-- Emit the reveal command
-	ya.manager_emit("reveal", merge_tables(args, { item_url }))
+	ya.mgr_emit("reveal", merge_tables(args, { item_url }))
 end)
 
 -- Function to handle the arrow command
@@ -3403,12 +3403,12 @@ local function handle_arrow(args, config)
 		-- immediately emit the arrow command
 		-- and exit the function
 		if type(steps) ~= "number" then
-			return ya.manager_emit("arrow", merge_tables(args, { steps }))
+			return ya.mgr_emit("arrow", merge_tables(args, { steps }))
 		end
 
 		-- Initialise the function to the regular arrow command
 		local function scroll_func(step)
-			ya.manager_emit("arrow", merge_tables(args, { step }))
+			ya.mgr_emit("arrow", merge_tables(args, { step }))
 		end
 
 		-- If wraparound file navigation is wanted
@@ -3432,7 +3432,7 @@ local function handle_arrow(args, config)
 	if config.wraparound_file_navigation then return wraparound_arrow(args) end
 
 	-- Otherwise, emit the regular arrow command
-	ya.manager_emit("arrow", args)
+	ya.mgr_emit("arrow", args)
 end
 
 -- Function to get the directory items in the parent directory
@@ -3595,7 +3595,7 @@ local execute_parent_arrow = ya.sync(function(state, args)
 
 			-- Emit the command to change directory to
 			-- the directory item and exit the function
-			return ya.manager_emit("cd", { directory_item.url })
+			return ya.mgr_emit("cd", { directory_item.url })
 		end
 	end
 end)

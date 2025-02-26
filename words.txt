@@ -34,6 +34,8 @@ Subclass
 subclass
 Subclassing
 subclassing
+Preloaders
+preloaders
 Yazi
 yazi
 Hankertrix
@@ -59,3 +61,6 @@ lightgray
 cands
 unsub
 gtar
+prio
+darkgray
+syntect

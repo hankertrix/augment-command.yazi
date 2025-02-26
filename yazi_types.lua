@@ -41,7 +41,7 @@
 ---	|"cyan"
 ---	|"lightcyan"
 ---	|"gray"
----	|"lightgray"
+---	|"darkgray"
 
 -- The type of the Color object
 ---@alias Color SupportedColours|string
@@ -601,8 +601,8 @@
 ---@field selected tab.Selected The selected files within the tab.
 ---@field preview tab.Preview The preview within the tab.
 
--- The type of the manager::Tabs object
----@class (exact) manager.Tabs
+-- The type of the mgr::Tabs object
+---@class (exact) mgr.Tabs
 ---@field idx integer The index of the active tab.
 
 -- The type of the tasks::Tasks.progress object
@@ -617,16 +617,16 @@
 ---@class (exact) tasks.Tasks
 ---@field progress tasks.Tasks.progress The progress of the tasks.
 
--- The type of the manager::Yanked object
----@class (exact) manager.Yanked
+-- The type of the mgr::Yanked object
+---@class (exact) mgr.Yanked
 ---@field is_cut boolean Whether the yanked urls are cut.
 
 -- The type of the app data
 ---@class (exact) AppData
 ---@field active tab.Tab The active tab.
----@field tabs manager.Tabs All tabs.
+---@field tabs mgr.Tabs All tabs.
 ---@field tasks tasks.Tasks All tasks.
----@field yanked manager.Yanked The yanked urls.
+---@field yanked mgr.Yanked The yanked urls.
 
 -- The type of non table sendable values
 ---@alias SendableValueNonTable
@@ -724,7 +724,7 @@
 ---	skip: integer,    -- The number of units to skip.
 ---}): Url|nil Calculate the cached Url of a file.
 ---@field render fun(): nil Render the UI, sync context only.
----@field manager_emit fun(
+---@field mgr_emit fun(
 ---	cmd: string,            -- The command to emit.
 ---	args: SendableValue,    -- The arguments to pass to the command.
 ---): nil Emit a manager command.
@@ -1089,6 +1089,159 @@
 ---	self: Child,
 ---): string|nil
 
+-- The type of the args object in the runtime
+---@class (exact) Runtime.Args
+---@field chooser_file string The file to write the selected files to
+
+-- The type of the manager object in the runtime
+---@class (exact) Runtime.Mgr
+---@field ratio integer[] The ratio of the panes.
+---@field show_symlink boolean Whether to show the symlink after file name
+
+-- The type of the priority object
+--
+-- Normal is the default value if not specified
+---@alias Priority
+---	|"high"
+---	|"normal"
+---	|"low"
+
+-- The type of the fetcher object
+---@class Runtime.Plugin.Fetcher
+---@field id string The fetcher's ID
+---@field name string Glob expression matching the file name
+---@field run string The name of the Lua plugin to run
+---@field if string Execute the fetcher based on this condition
+---@field prio Priority The priority of the task
+
+-- The type of the spotter object
+---@class Runtime.Plugin.Spotter
+---@field name string Glob expression matching the file name
+---@field mime string Glob expression matching the mime-type
+---@field run string The name of the Lua plugin to run
+
+-- The type of the preloader object
+---@class Runtime.Plugin.Preloader
+---@field name string Glob expression matching the file name
+---@field mime string Glob expression matching the mime-type
+---@field cond string Conditional expression
+---@field run string The name of the Lua plugin to run
+---@field multi boolean Whether to preload multiple files at once
+---@field prio Priority The priority of the preload
+
+-- The type of the previewer object
+---@class Runtime.Plugin.Previewer
+---@field name string Glob expression matching the file name
+---@field mime string Glob expression matching the mime-type
+---@field run string The name of the Lua plugin to run
+---@field sync boolean Whether to run synchronously
+
+-- The type of the plugin object in the runtime
+---@class (exact) Runtime.Plugin
+---@field fetchers Runtime.Plugin.Fetcher[] The list of installed fetchers
+---@field spotter Runtime.Plugin.Spotter[] The list of installed spotters
+---@field preloaders Runtime.Plugin.Preloader[] The list of installed preloaders
+---@field previewer Runtime.Plugin.Previewer[] The list of installed previewers
+
+-- The type of the preview object in the runtime
+---@class (exact) Runtime.Preview
+---@field wrap boolean Whether to wrap long lines in the code preview
+---@field tab_size integer The width of a tab character in spaces
+---@field max_width integer The maximum preview width for preview images
+---@field max_height integer The maximum preview height for preview images
+---@field image_delay integer Delay in milliseconds before sending image data
+---@field image_quality integer Quality of cached images, ranges from 50 - 90
+
+-- The type of the tasks object in the runtime
+---@class (exact) Runtime.Tasks
+---@field image_alloc integer Maximum memory limit in bytes for image decoding
+
+-- The type of the runtime object
+---@class (exact) Runtime
+---@field args Runtime.Args
+---@field mgr Runtime.Mgr
+---@field plugins Runtime.Plugin
+---@field preview Runtime.Preview
+---@field tasks Runtime.Tasks
+
+-- The type of the style in the theme
+---@class (exact) Theme.Style
+---@field fg Color The foreground colour
+---@field bg Color The background colour
+---@field bold boolean Whether the item is bolded
+---@field dim boolean Whether the item is dimmed
+---@field italic boolean Whether the item is italic
+---@field underline boolean Whether the item is underlined
+---@field blink boolean Whether the item is blinking
+---@field blink_rapid boolean Whether the item is blinking rapidly
+---@field reverse boolean Whether the background and foreground are reversed
+---@field hidden boolean Whether the item is hidden
+---@field crossed boolean Whether the item is crossed out
+
+-- The type of the manager object in the theme
+---@class (exact) Theme.Manager
+---@field cwd Theme.Style The style of the current working directory
+---@field hovered Theme.Style The style of the hovered item
+---@field preview_hovered Theme.Style Style of the hovered file in the preview
+---@field find_keyword Theme.Style Style of the highlighted portion
+---@field find_position Theme.Style Style of the current number of matches
+---@field marker_copied Theme.Style Style of the "copied" marker
+---@field marker_cut Theme.Style Style of the "cut" marker
+---@field marker_marked Theme.Style Style of the "marked" marker in visual mode
+---@field marker_selected Theme.Style Style of the "selected" marker
+---@field tab_active Theme.Style Style of the active tab
+---@field tab_inactive Theme.Style Style of the inactive tab
+---@field tab_width integer The maximum width of the tab marker
+---@field count_copied Theme.Style The style of the copied file number
+---@field count_cut Theme.Style The style of the cut file number
+---@field count_selected Theme.Style The style of the selected file number
+---@field border_symbol string The symbol used for the border
+---@field border_style Theme.Style The style of the border
+---@field syntect_theme string Path to syntactic highlighting theme file
+
+-- The type of the mode object in the theme
+---@class (exact) Theme.Mode
+---@field normal_main Theme.Style The normal mode 1st separator style
+---@field normal_alt Theme.Style The normal mode 2nd separator style
+---@field select_main Theme.Style The select mode 1st separator style
+---@field select_alt Theme.Style The select mode 2nd separator style
+---@field unset_main Theme.Style The unset mode 1st separator style
+---@field unset_alt Theme.Style The unset mode 2nd separator style
+
+-- The type of the status object in the theme
+---@class (exact) Theme.Status
+---@field overall Theme.Style The overall style of the status bar
+---@field sep_left {
+---	open: string,
+---	close: string,
+---} The left side separator symbol
+---@field sep_right {
+---	open: string,
+---	close: string,
+---} The right side separator symbol
+---@field perm_type Theme.Style The style of the file type
+---@field perm_read Theme.Style The style of the read permission
+---@field perm_write Theme.Style The style of the write permission
+---@field perm_exec Theme.Style The style of the execute permission
+---@field perm_sep Theme.Style The style of the "-" separator
+---@field progress_label Theme.Style The style of the progress label
+---@field progress_normal Theme.Style Style of the progress bar normally
+---@field progress_error Theme.Style Style of the progress bar with an error
+
+-- The type of the spotter object in the theme
+---@class (exact) Theme.Spotter
+---@field border Theme.Style The style of the border of the spotter
+---@field title Theme.Style The style of the title of the spotter
+---@field tbl_cell Theme.Style The style of the selected item in the spotter
+---@field tbl_col Theme.Style The style of the values in the spotter
+
+-- The type of the theme object
+---@class Theme
+---@field mgr Theme.Manager
+---@field mode Theme.Mode
+---@field status Theme.Status
+---@field spot Theme.Spotter
+
 -- Type the globals provided by Yazi
 
 -- Type the ui global
@@ -1123,3 +1276,13 @@ fs = fs
 -- Type the Command global
 ---@type Command
 Command = Command
+
+-- Type the rt global
+---@type Runtime
+---@diagnostic disable-next-line: lowercase-global
+rt = rt
+
+-- Type the th global
+---@type Theme
+---@diagnostic disable-next-line: lowercase-global
+th = th
