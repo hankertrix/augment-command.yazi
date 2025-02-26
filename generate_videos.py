@@ -1765,6 +1765,35 @@ VHS_TAPES: list[VHSTape] = [
 		],
 	),
 	VHSTape(
+		name="Smooth arrow",
+		scripts=[
+			VHSTape.edit_plugin_config("smooth_scrolling", True),
+			VHSTape.create_keymap_toml_with_keymap(
+				{
+					"j": "arrow 25",
+					"k": "arrow -25",
+				}
+			),
+		],
+		yazi_body=[
+			"Type 'gh'",
+			SLEEP_TIME,
+			"Type 'j'",
+			SLEEP_TIME,
+			"Type 'j'",
+			SLEEP_TIME,
+			"Type 'k'",
+			SLEEP_TIME,
+			"Type 'k'",
+			SLEEP_TIME,
+			"Type 'j'",
+			"Type 'j'",
+			SLEEP_TIME,
+			"Type 'k'",
+			"Type 'k'",
+		],
+	),
+	VHSTape(
 		name="Wraparound arrow",
 		scripts=[
 			VHSTape.edit_plugin_config("wraparound_file_navigation", True),
@@ -1773,6 +1802,36 @@ VHS_TAPES: list[VHSTape] = [
 			VHSTape.press_key_repeatedly("j", 20),
 			SLEEP_TIME,
 			VHSTape.press_key_repeatedly("k", 20),
+		],
+	),
+	VHSTape(
+		name="Smooth wraparound arrow",
+		scripts=[
+			VHSTape.edit_plugin_config("smooth_scrolling", True),
+			VHSTape.edit_plugin_config("wraparound_file_navigation", True),
+			VHSTape.create_keymap_toml_with_keymap(
+				{
+					"d": "arrow 10",
+					"u": "arrow -10",
+				}
+			),
+		],
+		yazi_body=[
+			"Type 'gh'",
+			SLEEP_TIME,
+			VHSTape.press_key_repeatedly("j", 5),
+			SLEEP_TIME,
+			"Type 'u'",
+			SLEEP_TIME,
+			"Type 'u'",
+			SLEEP_TIME,
+			"Type 'G'",
+			SLEEP_TIME,
+			VHSTape.press_key_repeatedly("k", 5),
+			SLEEP_TIME,
+			"Type 'd'",
+			SLEEP_TIME,
+			"Type 'd'",
 		],
 	),
 	VHSTape(
@@ -1792,6 +1851,37 @@ VHS_TAPES: list[VHSTape] = [
 		],
 	),
 	VHSTape(
+		name="Smooth parent arrow",
+		scripts=[
+			VHSTape.edit_plugin_config("smooth_scrolling", True),
+			VHSTape.create_keymap_toml_with_keymap(
+				{
+					"J": "parent_arrow 25",
+					"K": "parent_arrow -25",
+				}
+			),
+		],
+		yazi_body=[
+			"Type 'gh'",
+			SLEEP_TIME,
+			"Type 'l'",
+			SLEEP_TIME,
+			"Type 'J'",
+			SLEEP_TIME,
+			"Type 'J'",
+			SLEEP_TIME,
+			"Type 'K'",
+			SLEEP_TIME,
+			"Type 'K'",
+			SLEEP_TIME,
+			"Type 'J'",
+			"Type 'J'",
+			SLEEP_TIME,
+			"Type 'K'",
+			"Type 'K'",
+		],
+	),
+	VHSTape(
 		name="Wraparound parent arrow",
 		scripts=[
 			VHSTape.edit_plugin_config("wraparound_file_navigation", True),
@@ -1804,6 +1894,44 @@ VHS_TAPES: list[VHSTape] = [
 			VHSTape.press_key_repeatedly("J", 20),
 			SLEEP_TIME,
 			VHSTape.press_key_repeatedly("K", 20),
+		],
+	),
+	VHSTape(
+		name="Smooth wraparound parent arrow",
+		scripts=[
+			VHSTape.edit_plugin_config("smooth_scrolling", True),
+			VHSTape.edit_plugin_config("wraparound_file_navigation", True),
+			VHSTape.create_keymap_toml_with_keymap(
+				{
+					"J": "parent_arrow 1",
+					"K": "parent_arrow -1",
+					"d": "parent_arrow 10",
+					"u": "parent_arrow -10",
+				}
+			),
+		],
+		yazi_body=[
+			"Type 'gh'",
+			SLEEP_TIME,
+			"Type 'l'",
+			SLEEP_TIME,
+			VHSTape.press_key_repeatedly("J", 5),
+			SLEEP_TIME,
+			"Type 'u'",
+			SLEEP_TIME,
+			"Type 'u'",
+			SLEEP_TIME,
+			"Type 'h'",
+			SLEEP_TIME,
+			"Type '/vm-stuff' Enter",
+			SLEEP_TIME,
+			"Type 'l'",
+			SLEEP_TIME,
+			VHSTape.press_key_repeatedly("K", 5),
+			SLEEP_TIME,
+			"Type 'd'",
+			SLEEP_TIME,
+			"Type 'd'",
 		],
 	),
 	VHSTape(
