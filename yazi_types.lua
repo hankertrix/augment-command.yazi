@@ -1228,6 +1228,26 @@
 ---@field progress_normal Theme.Style Style of the progress bar normally
 ---@field progress_error Theme.Style Style of the progress bar with an error
 
+-- The type of the which key object in the theme
+---@class (exact) Theme.Which
+---@field cols integer The number of columns, and it can only be 1, 2 or 3
+---@field mask Theme.Style The style of the mask
+---@field cand Theme.Style The style of the candidate
+---@field rest Theme.Style The style of the rest key
+---@field desc Theme.Style The style of the description
+---@field separator string The separator symbol "->"
+---@field separator_style Theme.Style The style of the separator symbol
+
+-- The type of the confirm object in the theme
+---@class (exact) Theme.Confirm
+---@field border Theme.Style The style of the border
+---@field title Theme.Style The style of the title
+---@field content Theme.Style The style of the content
+---@field list Theme.Style The style of the list below the content
+---@field btn_yes Theme.Style The style of the yes button
+---@field btn_no Theme.Style The style of the no button
+---@field btn_labels string[] A list of two strings containing the button labels
+
 -- The type of the spotter object in the theme
 ---@class (exact) Theme.Spotter
 ---@field border Theme.Style The style of the border of the spotter
@@ -1235,11 +1255,63 @@
 ---@field tbl_cell Theme.Style The style of the selected item in the spotter
 ---@field tbl_col Theme.Style The style of the values in the spotter
 
+-- The type of the notify object in the theme
+---@class (exact) Theme.Notify
+---@field title_info Theme.Style The style of the info title
+---@field title_warn Theme.Style The style of the warning title
+---@field title_error Theme.Style The style of the error title
+---@field icon_info string The info icon
+---@field icon_warn string The warning icon
+---@field icon_error string The error icon
+
+-- The type of the picker object in the theme
+---@class (exact) Theme.Pick
+---@field border Theme.Style The style of the border
+---@field active Theme.Style The style of the selected item
+---@field inactive Theme.Style The style of the unselected item
+
+-- The type of the input object in the theme
+---@class (exact) Theme.Input
+---@field border Theme.Style The style of the border
+---@field title Theme.Style The style of the title
+---@field value Theme.Style The style of the value
+---@field selected Theme.Style The style of the selected value
+
+-- The type of the completion object in the theme
+---@class (exact) Theme.Cmp
+---@field border Theme.Style The style of the border
+---@field active Theme.Style The style of the selected item
+---@field inactive Theme.Style The style of the unselected item
+---@field icon_file string The file icon
+---@field icon_folder string The folder icon
+---@field icon_command string The command icon
+
+-- The type of the tasks object in the theme
+---@class (exact) Theme.Tasks
+---@field border Theme.Style The style of the border
+---@field title Theme.Style The style of the title
+---@field hovered Theme.Style The style of the hovered item
+
+-- The type of the help object in the theme
+---@class (exact) Theme.Help
+---@field on Theme.Style The style of the column containing the key
+---@field run Theme.Style The style of the column containing the commands
+---@field desc Theme.Style The style of the column containing the description
+---@field hovered Theme.Style The style of the hovered item
+---@field footer Theme.Style The style of the footer
+
 -- The type of the theme object
 ---@class Theme
 ---@field mgr Theme.Manager
 ---@field mode Theme.Mode
 ---@field status Theme.Status
+---@field which Theme.Which
+---@field notify Theme.Notify
+---@field pick Theme.Pick
+---@field input Theme.Input
+---@field cmp Theme.Cmp
+---@field tasks Theme.Tasks
+---@field help Theme.Help
 ---@field spot Theme.Spotter
 
 -- Type the globals provided by Yazi

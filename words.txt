@@ -64,3 +64,4 @@ gtar
 prio
 darkgray
 syntect
+cand
