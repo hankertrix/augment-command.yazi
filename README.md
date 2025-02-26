@@ -1110,16 +1110,23 @@ You can view the full licence in the [`LICENSE`][Licence] file.
 
 <!-- Arrow command -->
 
-[smooth-arrow-video]: placeholder
+[smooth-arrow-video]: 
+https://github.com/user-attachments/assets/508724b1-14c5-4e3d-8946-68d3d5c837b7
+
 [wraparound-arrow-video]: https://github.com/user-attachments/assets/b121b9ab-371d-4556-8c94-b082a0588d71
-[smooth-wraparound-arrow-video]: placeholder
+[smooth-wraparound-arrow-video]: 
+https://github.com/user-attachments/assets/5753fec6-9570-4d9e-ba66-d7bc25f00047
+
 
 <!-- Parent arrow command -->
 
 [parent-arrow-video]: https://github.com/user-attachments/assets/ba0166b6-c516-43ae-bc1c-34757ad4e5ac
-[smooth-parent-arrow-video]: placeholder
+[smooth-parent-arrow-video]: 
+https://github.com/user-attachments/assets/27f7e61e-3da6-4b68-b81b-12ad3a5092e0
+
 [wraparound-parent-arrow-video]: https://github.com/user-attachments/assets/c53fdee2-b06c-482b-8b8b-5de179cd7c27
-[smooth-wraparound-parent-arrow-video]: placeholder
+[smooth-wraparound-parent-arrow-video]: https://github.com/user-attachments/assets/717af2ab-cb1e-4710-8834-b5e27cce06a6
+
 
 <!-- Editor command -->
 
