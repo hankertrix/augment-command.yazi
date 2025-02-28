@@ -65,3 +65,4 @@ prio
 darkgray
 syntect
 cand
+darkman

@@ -2235,6 +2235,16 @@ async def main():
 	if not os.path.isdir(VHS_TAPES_DIRECTORY):
 		os.mkdir(VHS_TAPES_DIRECTORY)
 
+	# Get the current theme
+	darkman_result = subprocess.run(["darkman", "get"], capture_output=True)
+
+	# Get the theme from the stdout
+	initial_theme = darkman_result.stdout.decode("utf-8").strip()
+
+	# If the theme is light, change the theme to dark
+	if initial_theme == "light":
+		_ = subprocess.run(["darkman", "set", "dark"])
+
 	# Initialise the list of threads
 	threads: list[Coroutine[None, None, None]] = []
 
@@ -2274,6 +2284,10 @@ async def main():
 
 	# Remove the VHS tapes directory
 	shutil.rmtree(VHS_TAPES_DIRECTORY)
+
+	# Set the theme back to light if the theme was initially light
+	if initial_theme == "light":
+		_ = subprocess.run(["darkman", "set", "light"])
 
 
 # Name safeguard
