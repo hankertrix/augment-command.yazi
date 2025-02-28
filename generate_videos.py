@@ -34,7 +34,7 @@ DEFAULT_TEXT_FILE_CONTENT = "Hello, world!"
 CONFIG: str = "\n".join(
 	[
 		"Set FontSize 20",
-		'Set FontFamily "CaskaydiaCove NFM"',
+		'Set FontFamily "Maple Mono NF CN"',
 		'Set Theme "BlulocoDark"',
 		"Set Padding 20",
 		"Set Margin 0",
