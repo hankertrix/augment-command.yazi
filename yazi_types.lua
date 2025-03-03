@@ -396,7 +396,7 @@
 ---	bottom: integer,    -- The bottom padding.
 ---	left: integer,      -- The left padding.
 ---): ui.Pad Create a padding object.
----@field Style fun(): ui.Style Create a style object.
+---@field Style fun(style: Theme.Style|nil): ui.Style Create a style object.
 ---@field Span fun(text: string|ui.Span): ui.Span Create a span object.
 ---@field Line (fun(
 ---	list_of_spans: string
@@ -1306,13 +1306,14 @@
 ---@field mode Theme.Mode
 ---@field status Theme.Status
 ---@field which Theme.Which
+---@field confirm Theme.Confirm
+---@field spot Theme.Spotter
 ---@field notify Theme.Notify
 ---@field pick Theme.Pick
 ---@field input Theme.Input
 ---@field cmp Theme.Cmp
 ---@field tasks Theme.Tasks
 ---@field help Theme.Help
----@field spot Theme.Spotter
 
 -- Type the globals provided by Yazi
 

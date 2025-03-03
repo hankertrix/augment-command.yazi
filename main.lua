@@ -1,4 +1,4 @@
---- @since 25.2.26
+--- @since 25.3.2
 
 -- Plugin to make some Yazi commands smarter
 -- Written in Lua 5.4
@@ -2772,19 +2772,6 @@ local function execute_create(item_url, is_directory, args, config)
 	enter_or_open_created_item(item_url, is_directory, args, config)
 end
 
--- Function to get the confirm component border foreground colour
----@type fun(): Color
-local get_confirm_border_fg = ya.sync(
-	--
-
-	-- I have no idea how to type it such that the theme
-	-- is accessible only within a synchronous function,
-	-- so disabling the diagnostic seems to be the
-	-- best course of action
-	---@diagnostic disable-next-line: undefined-global
-	function() return THEME.confirm.border.fg end
-)
-
 -- Function to handle the create command
 ---@type CommandFunction
 local function handle_create(args, config)
@@ -2850,7 +2837,7 @@ local function handle_create(args, config)
 				ui.Line("Will overwrite the following file:")
 					:align(ui.Line.CENTER),
 				ui.Line(string.rep("─", DEFAULT_CONFIRM_OPTIONS.pos.w - 2))
-					:style(ui.Style():fg(get_confirm_border_fg()))
+					:style(ui.Style(th.confirm.border))
 					:align(ui.Line.LEFT),
 				ui.Line(tostring(full_url)):align(ui.Line.LEFT),
 			}):wrap(ui.Text.WRAP_TRIM)
