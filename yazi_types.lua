@@ -388,7 +388,7 @@
 ---@field area ui.Clear.area Set or retrieve the current area of the clear.
 
 -- The type of the ui global object
----@class (exact) UI
+---@class (exact) Ui
 ---@field Rect fun(params: ui.RectParams): ui.Rect Create a rectangular area.
 ---@field Pad fun(
 ---	top: integer,       -- The top padding.
@@ -396,7 +396,7 @@
 ---	bottom: integer,    -- The bottom padding.
 ---	left: integer,      -- The left padding.
 ---): ui.Pad Create a padding object.
----@field Style fun(style: Theme.Style|nil): ui.Style Create a style object.
+---@field Style fun(style: th.Style|nil): ui.Style Create a style object.
 ---@field Span fun(text: string|ui.Span): ui.Span Create a span object.
 ---@field Line (fun(
 ---	list_of_spans: string
@@ -622,7 +622,7 @@
 ---@field is_cut boolean Whether the yanked urls are cut.
 
 -- The type of the app data
----@class (exact) AppData
+---@class (exact) Cx
 ---@field active tab.Tab The active tab.
 ---@field tabs mgr.Tabs All tabs.
 ---@field tasks tasks.Tasks All tasks.
@@ -914,7 +914,7 @@
 -- The type of the file system object
 --
 -- All function in the file system are only available in the async context.
----@class (exact) FileSystem
+---@class (exact) Fs
 ---
 --- Return the Url of the current working directory.
 ---
@@ -1090,11 +1090,11 @@
 ---): string|nil
 
 -- The type of the args object in the runtime
----@class (exact) Runtime.Args
+---@class (exact) rt.Args
 ---@field chooser_file string The file to write the selected files to
 
 -- The type of the manager object in the runtime
----@class (exact) Runtime.Mgr
+---@class (exact) rt.Mgr
 ---@field ratio integer[] The ratio of the panes.
 ---@field show_symlink boolean Whether to show the symlink after file name
 
@@ -1107,7 +1107,7 @@
 ---	|"low"
 
 -- The type of the fetcher object
----@class Runtime.Plugin.Fetcher
+---@class rt.Plugin.Fetcher
 ---@field id string The fetcher's ID
 ---@field name string Glob expression matching the file name
 ---@field run string The name of the Lua plugin to run
@@ -1115,13 +1115,13 @@
 ---@field prio Priority The priority of the task
 
 -- The type of the spotter object
----@class Runtime.Plugin.Spotter
+---@class rt.Plugin.Spotter
 ---@field name string Glob expression matching the file name
 ---@field mime string Glob expression matching the mime-type
 ---@field run string The name of the Lua plugin to run
 
 -- The type of the preloader object
----@class Runtime.Plugin.Preloader
+---@class rt.Plugin.Preloader
 ---@field name string Glob expression matching the file name
 ---@field mime string Glob expression matching the mime-type
 ---@field cond string Conditional expression
@@ -1130,21 +1130,21 @@
 ---@field prio Priority The priority of the preload
 
 -- The type of the previewer object
----@class Runtime.Plugin.Previewer
+---@class rt.Plugin.Previewer
 ---@field name string Glob expression matching the file name
 ---@field mime string Glob expression matching the mime-type
 ---@field run string The name of the Lua plugin to run
 ---@field sync boolean Whether to run synchronously
 
 -- The type of the plugin object in the runtime
----@class (exact) Runtime.Plugin
----@field fetchers Runtime.Plugin.Fetcher[] The list of installed fetchers
----@field spotter Runtime.Plugin.Spotter[] The list of installed spotters
----@field preloaders Runtime.Plugin.Preloader[] The list of installed preloaders
----@field previewer Runtime.Plugin.Previewer[] The list of installed previewers
+---@class (exact) rt.Plugin
+---@field fetchers rt.Plugin.Fetcher[] The list of installed fetchers
+---@field spotter rt.Plugin.Spotter[] The list of installed spotters
+---@field preloaders rt.Plugin.Preloader[] The list of installed preloaders
+---@field previewer rt.Plugin.Previewer[] The list of installed previewers
 
 -- The type of the preview object in the runtime
----@class (exact) Runtime.Preview
+---@class (exact) rt.Preview
 ---@field wrap boolean Whether to wrap long lines in the code preview
 ---@field tab_size integer The width of a tab character in spaces
 ---@field max_width integer The maximum preview width for preview images
@@ -1153,64 +1153,64 @@
 ---@field image_quality integer Quality of cached images, ranges from 50 - 90
 
 -- The type of the tasks object in the runtime
----@class (exact) Runtime.Tasks
+---@class (exact) rt.Tasks
 ---@field image_alloc integer Maximum memory limit in bytes for image decoding
 
 -- The type of the runtime object
----@class (exact) Runtime
----@field args Runtime.Args
----@field mgr Runtime.Mgr
----@field plugins Runtime.Plugin
----@field preview Runtime.Preview
----@field tasks Runtime.Tasks
+---@class (exact) Rt
+---@field args rt.Args
+---@field mgr rt.Mgr
+---@field plugins rt.Plugin
+---@field preview rt.Preview
+---@field tasks rt.Tasks
 
 -- The type of the style in the theme
----@class (exact) Theme.Style
----@field fg Color The foreground colour
----@field bg Color The background colour
----@field bold boolean Whether the item is bolded
----@field dim boolean Whether the item is dimmed
----@field italic boolean Whether the item is italic
----@field underline boolean Whether the item is underlined
----@field blink boolean Whether the item is blinking
----@field blink_rapid boolean Whether the item is blinking rapidly
----@field reverse boolean Whether the background and foreground are reversed
----@field hidden boolean Whether the item is hidden
----@field crossed boolean Whether the item is crossed out
+---@class (exact) th.Style
+---@field fg Color|nil The foreground colour
+---@field bg Color|nil The background colour
+---@field bold boolean|nil Whether the item is bolded
+---@field dim boolean|nil Whether the item is dimmed
+---@field italic boolean|nil Whether the item is italic
+---@field underline boolean|nil Whether the item is underlined
+---@field blink boolean|nil Whether the item is blinking
+---@field blink_rapid boolean|nil Whether the item is blinking rapidly
+---@field reverse boolean|nil Whether the background and foreground are reversed
+---@field hidden boolean|nil Whether the item is hidden
+---@field crossed boolean|nil Whether the item is crossed out
 
 -- The type of the manager object in the theme
----@class (exact) Theme.Manager
----@field cwd Theme.Style The style of the current working directory
----@field hovered Theme.Style The style of the hovered item
----@field preview_hovered Theme.Style Style of the hovered file in the preview
----@field find_keyword Theme.Style Style of the highlighted portion
----@field find_position Theme.Style Style of the current number of matches
----@field marker_copied Theme.Style Style of the "copied" marker
----@field marker_cut Theme.Style Style of the "cut" marker
----@field marker_marked Theme.Style Style of the "marked" marker in visual mode
----@field marker_selected Theme.Style Style of the "selected" marker
----@field tab_active Theme.Style Style of the active tab
----@field tab_inactive Theme.Style Style of the inactive tab
+---@class (exact) th.Manager
+---@field cwd th.Style The style of the current working directory
+---@field hovered th.Style The style of the hovered item
+---@field preview_hovered th.Style Style of the hovered file in the preview
+---@field find_keyword th.Style Style of the highlighted portion
+---@field find_position th.Style Style of the current number of matches
+---@field marker_copied th.Style Style of the "copied" marker
+---@field marker_cut th.Style Style of the "cut" marker
+---@field marker_marked th.Style Style of the "marked" marker in visual mode
+---@field marker_selected th.Style Style of the "selected" marker
+---@field tab_active th.Style Style of the active tab
+---@field tab_inactive th.Style Style of the inactive tab
 ---@field tab_width integer The maximum width of the tab marker
----@field count_copied Theme.Style The style of the copied file number
----@field count_cut Theme.Style The style of the cut file number
----@field count_selected Theme.Style The style of the selected file number
+---@field count_copied th.Style The style of the copied file number
+---@field count_cut th.Style The style of the cut file number
+---@field count_selected th.Style The style of the selected file number
 ---@field border_symbol string The symbol used for the border
----@field border_style Theme.Style The style of the border
+---@field border_style th.Style The style of the border
 ---@field syntect_theme string Path to syntactic highlighting theme file
 
 -- The type of the mode object in the theme
----@class (exact) Theme.Mode
----@field normal_main Theme.Style The normal mode 1st separator style
----@field normal_alt Theme.Style The normal mode 2nd separator style
----@field select_main Theme.Style The select mode 1st separator style
----@field select_alt Theme.Style The select mode 2nd separator style
----@field unset_main Theme.Style The unset mode 1st separator style
----@field unset_alt Theme.Style The unset mode 2nd separator style
+---@class (exact) th.Mode
+---@field normal_main th.Style The normal mode 1st separator style
+---@field normal_alt th.Style The normal mode 2nd separator style
+---@field select_main th.Style The select mode 1st separator style
+---@field select_alt th.Style The select mode 2nd separator style
+---@field unset_main th.Style The unset mode 1st separator style
+---@field unset_alt th.Style The unset mode 2nd separator style
 
 -- The type of the status object in the theme
----@class (exact) Theme.Status
----@field overall Theme.Style The overall style of the status bar
+---@class (exact) th.Status
+---@field overall th.Style The overall style of the status bar
 ---@field sep_left {
 ---	open: string,
 ---	close: string,
@@ -1219,106 +1219,106 @@
 ---	open: string,
 ---	close: string,
 ---} The right side separator symbol
----@field perm_type Theme.Style The style of the file type
----@field perm_read Theme.Style The style of the read permission
----@field perm_write Theme.Style The style of the write permission
----@field perm_exec Theme.Style The style of the execute permission
----@field perm_sep Theme.Style The style of the "-" separator
----@field progress_label Theme.Style The style of the progress label
----@field progress_normal Theme.Style Style of the progress bar normally
----@field progress_error Theme.Style Style of the progress bar with an error
+---@field perm_type th.Style The style of the file type
+---@field perm_read th.Style The style of the read permission
+---@field perm_write th.Style The style of the write permission
+---@field perm_exec th.Style The style of the execute permission
+---@field perm_sep th.Style The style of the "-" separator
+---@field progress_label th.Style The style of the progress label
+---@field progress_normal th.Style Style of the progress bar normally
+---@field progress_error th.Style Style of the progress bar with an error
 
 -- The type of the which key object in the theme
----@class (exact) Theme.Which
+---@class (exact) th.Which
 ---@field cols integer The number of columns, and it can only be 1, 2 or 3
----@field mask Theme.Style The style of the mask
----@field cand Theme.Style The style of the candidate
----@field rest Theme.Style The style of the rest key
----@field desc Theme.Style The style of the description
+---@field mask th.Style The style of the mask
+---@field cand th.Style The style of the candidate
+---@field rest th.Style The style of the rest key
+---@field desc th.Style The style of the description
 ---@field separator string The separator symbol "->"
----@field separator_style Theme.Style The style of the separator symbol
+---@field separator_style th.Style The style of the separator symbol
 
 -- The type of the confirm object in the theme
----@class (exact) Theme.Confirm
----@field border Theme.Style The style of the border
----@field title Theme.Style The style of the title
----@field content Theme.Style The style of the content
----@field list Theme.Style The style of the list below the content
----@field btn_yes Theme.Style The style of the yes button
----@field btn_no Theme.Style The style of the no button
+---@class (exact) th.Confirm
+---@field border th.Style The style of the border
+---@field title th.Style The style of the title
+---@field content th.Style The style of the content
+---@field list th.Style The style of the list below the content
+---@field btn_yes th.Style The style of the yes button
+---@field btn_no th.Style The style of the no button
 ---@field btn_labels string[] A list of two strings containing the button labels
 
 -- The type of the spotter object in the theme
----@class (exact) Theme.Spotter
----@field border Theme.Style The style of the border of the spotter
----@field title Theme.Style The style of the title of the spotter
----@field tbl_cell Theme.Style The style of the selected item in the spotter
----@field tbl_col Theme.Style The style of the values in the spotter
+---@class (exact) th.Spotter
+---@field border th.Style The style of the border of the spotter
+---@field title th.Style The style of the title of the spotter
+---@field tbl_cell th.Style The style of the selected item in the spotter
+---@field tbl_col th.Style The style of the values in the spotter
 
 -- The type of the notify object in the theme
----@class (exact) Theme.Notify
----@field title_info Theme.Style The style of the info title
----@field title_warn Theme.Style The style of the warning title
----@field title_error Theme.Style The style of the error title
+---@class (exact) th.Notify
+---@field title_info th.Style The style of the info title
+---@field title_warn th.Style The style of the warning title
+---@field title_error th.Style The style of the error title
 ---@field icon_info string The info icon
 ---@field icon_warn string The warning icon
 ---@field icon_error string The error icon
 
 -- The type of the picker object in the theme
----@class (exact) Theme.Pick
----@field border Theme.Style The style of the border
----@field active Theme.Style The style of the selected item
----@field inactive Theme.Style The style of the unselected item
+---@class (exact) th.Pick
+---@field border th.Style The style of the border
+---@field active th.Style The style of the selected item
+---@field inactive th.Style The style of the unselected item
 
 -- The type of the input object in the theme
----@class (exact) Theme.Input
----@field border Theme.Style The style of the border
----@field title Theme.Style The style of the title
----@field value Theme.Style The style of the value
----@field selected Theme.Style The style of the selected value
+---@class (exact) th.Input
+---@field border th.Style The style of the border
+---@field title th.Style The style of the title
+---@field value th.Style The style of the value
+---@field selected th.Style The style of the selected value
 
 -- The type of the completion object in the theme
----@class (exact) Theme.Cmp
----@field border Theme.Style The style of the border
----@field active Theme.Style The style of the selected item
----@field inactive Theme.Style The style of the unselected item
+---@class (exact) th.Cmp
+---@field border th.Style The style of the border
+---@field active th.Style The style of the selected item
+---@field inactive th.Style The style of the unselected item
 ---@field icon_file string The file icon
 ---@field icon_folder string The folder icon
 ---@field icon_command string The command icon
 
 -- The type of the tasks object in the theme
----@class (exact) Theme.Tasks
----@field border Theme.Style The style of the border
----@field title Theme.Style The style of the title
----@field hovered Theme.Style The style of the hovered item
+---@class (exact) th.Tasks
+---@field border th.Style The style of the border
+---@field title th.Style The style of the title
+---@field hovered th.Style The style of the hovered item
 
 -- The type of the help object in the theme
----@class (exact) Theme.Help
----@field on Theme.Style The style of the column containing the key
----@field run Theme.Style The style of the column containing the commands
----@field desc Theme.Style The style of the column containing the description
----@field hovered Theme.Style The style of the hovered item
----@field footer Theme.Style The style of the footer
+---@class (exact) th.Help
+---@field on th.Style The style of the column containing the key
+---@field run th.Style The style of the column containing the commands
+---@field desc th.Style The style of the column containing the description
+---@field hovered th.Style The style of the hovered item
+---@field footer th.Style The style of the footer
 
 -- The type of the theme object
----@class Theme
----@field mgr Theme.Manager
----@field mode Theme.Mode
----@field status Theme.Status
----@field which Theme.Which
----@field confirm Theme.Confirm
----@field spot Theme.Spotter
----@field notify Theme.Notify
----@field pick Theme.Pick
----@field input Theme.Input
----@field cmp Theme.Cmp
----@field tasks Theme.Tasks
----@field help Theme.Help
+---@class Th
+---@field mgr th.Manager
+---@field mode th.Mode
+---@field status th.Status
+---@field which th.Which
+---@field confirm th.Confirm
+---@field spot th.Spotter
+---@field notify th.Notify
+---@field pick th.Pick
+---@field input th.Input
+---@field cmp th.Cmp
+---@field tasks th.Tasks
+---@field help th.Help
 
 -- Type the globals provided by Yazi
 
 -- Type the ui global
----@type UI
+---@type Ui
 ---@diagnostic disable-next-line: lowercase-global
 ui = ui
 
@@ -1327,7 +1327,7 @@ ui = ui
 Url = Url
 
 -- Type the cx global
----@type AppData
+---@type Cx
 ---@diagnostic disable-next-line: lowercase-global
 cx = cx
 
@@ -1342,7 +1342,7 @@ ya = ya
 ps = ps
 
 -- Type the fs global
----@type FileSystem
+---@type Fs
 ---@diagnostic disable-next-line: lowercase-global
 fs = fs
 
@@ -1351,11 +1351,11 @@ fs = fs
 Command = Command
 
 -- Type the rt global
----@type Runtime
+---@type Rt
 ---@diagnostic disable-next-line: lowercase-global
 rt = rt
 
 -- Type the th global
----@type Theme
+---@type Th
 ---@diagnostic disable-next-line: lowercase-global
 th = th
