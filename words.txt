@@ -36,6 +36,8 @@ Subclassing
 subclassing
 Preloaders
 preloaders
+Neighbour
+neighbour
 Yazi
 yazi
 Hankertrix
@@ -44,6 +46,14 @@ Caskaydia
 caskaydia
 Bluloco
 bluloco
+Catmull
+catmull
+Lanczos
+lanczos
+Sixel
+sixel
+Ueberzug
+ueberzug
 SevenZip
 EDITMSG
 btime
@@ -66,3 +76,4 @@ darkgray
 syntect
 cand
 darkman
+scrolloff

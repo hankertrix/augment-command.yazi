@@ -1091,12 +1091,32 @@
 
 -- The type of the args object in the runtime
 ---@class (exact) rt.Args
----@field chooser_file string The file to write the selected files to
+---@field chooser_file Url The file path to write the selected files to
+---@field cwd_file Url The file path to write the current working directory to
+
+-- The type of the mouse events, which are the types of mouse events
+-- that can be received by the plugin system.
+---@alias MouseEvents
+---	|"click" Mouse click
+---	|"scroll" Mouse vertical scroll
+---	|"touch" Mouse horizontal scroll
+---	|"mouse" Mouse move
+---	|"drag" Mouse drag (some terminals do not support this)
 
 -- The type of the manager object in the runtime
 ---@class (exact) rt.Mgr
 ---@field ratio integer[] The ratio of the panes.
+---@field sort_by SortMethod The sorting method of the files
+---@field sort_sensitive boolean Whether the files are sorted case-sensitively
+---@field sort_reverse boolean Whether the files are displayed in reverse order
+---@field sort_dir_first boolean Whether directories are displayed first
+---@field sort_translit boolean Whether file names are transliterated
+---@field linemode LineMode The line mode
+---@field show_hidden boolean Whether hidden files are shown
 ---@field show_symlink boolean Whether to show the symlink after file name
+---@field scrolloff integer The scroll offset
+---@field mouse_events MouseEvents The allowed mouse events
+---@field title_format string The terminal title format
 
 -- The type of the priority object
 --
@@ -1143,18 +1163,36 @@
 ---@field preloaders rt.Plugin.Preloader[] The list of installed preloaders
 ---@field previewer rt.Plugin.Previewer[] The list of installed previewers
 
+-- The type of the image filter used on image downscaling,
+-- arranged from fastest to slowest.
+---@alias ImageFilter
+---	|"nearest" Nearest neighbour filter
+---	|"triangle" Linear triangle filter
+---	|"catmull-rom" Catmull-Rom filter
+---	|"lanczos3" Lanczos with window 3 filter
+
 -- The type of the preview object in the runtime
 ---@class (exact) rt.Preview
 ---@field wrap boolean Whether to wrap long lines in the code preview
 ---@field tab_size integer The width of a tab character in spaces
 ---@field max_width integer The maximum preview width for preview images
 ---@field max_height integer The maximum preview height for preview images
+---@field cache_dir string The cache directory for the previews
 ---@field image_delay integer Delay in milliseconds before sending image data
+---@field image_filter ImageFilter The image filter used to downscale images
 ---@field image_quality integer Quality of cached images, ranges from 50 - 90
+---@field sixel_fraction integer The number of samples used for training
+---@field ueberzug_scale number Ueberzug image scaling ratio
+---@field ueberzug_offset number[] Ueberzug image offset, in cell units
 
 -- The type of the tasks object in the runtime
 ---@class (exact) rt.Tasks
+---@field micro_workers integer The maximum number of concurrent micro-tasks
+---@field macro_workers integer The maximum number of concurrent macro-tasks
+---@field bizarre_retry integer Maximum retries when a bizarre failure occurs
 ---@field image_alloc integer Maximum memory limit in bytes for image decoding
+---@field image_bound integer[] Array of [width, height] for maximum image size
+---@field suppress_preload boolean Exclude the preload tasks from the tasks list
 
 -- The type of the runtime object
 ---@class (exact) Rt
