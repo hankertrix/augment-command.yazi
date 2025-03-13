@@ -948,6 +948,9 @@
 ---		resolve: boolean|nil,    -- Whether to resolve symlinks.
 ---	},
 ---): File[]|nil, Error|nil Read the contents of a directory.
+---@field expand_url fun(
+---	url: string|Url,    -- The string or Url to expand.
+---): Url|nil, Error|nil Expand a file path fully.
 ---@field unique_name fun(
 ---	url: Url,    -- The Url of the item to generate a unique name for.
 ---): Url|nil, Error|nil Generate a unique name for a file or directory.
@@ -1091,8 +1094,9 @@
 
 -- The type of the args object in the runtime
 ---@class (exact) rt.Args
----@field chooser_file Url The file path to write the selected files to
+---@field entries Url[] The url of the current directory in each tab in Yazi
 ---@field cwd_file Url The file path to write the current working directory to
+---@field chooser_file Url The file path to write the selected files to
 
 -- The type of the mouse events, which are the types of mouse events
 -- that can be received by the plugin system.
