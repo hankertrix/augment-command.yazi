@@ -3331,6 +3331,11 @@ local function smoothly_scroll(steps, scroll_delay, scroll_func)
 	end
 end
 
+-- [TODO]: Make use of the arrow prev and arrow next commands
+-- once stabilised.
+-- PR: https://github.com/sxyazi/yazi/pull/2485
+-- Docs: https://yazi-rs.github.io/docs/configuration/keymap/#manager.arrow
+--
 -- Function to do the wraparound for the arrow command
 ---@type fun(
 ---	args: Arguments,    -- The arguments passed to the plugin
