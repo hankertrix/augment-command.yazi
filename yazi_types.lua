@@ -451,6 +451,7 @@
 -- The type for the Url object
 ---@class (exact) Url
 ---@field frag string The fragment string of the Url.
+---@field base string Returns the base path of the Url.
 ---@field is_regular boolean Whether the Url points to a regular file.
 ---@field is_search boolean Whether the Url points to file from a search result.
 ---@field is_archive boolean Whether the Url points to a file from an archive.
