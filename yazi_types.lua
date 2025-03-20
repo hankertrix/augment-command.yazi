@@ -717,8 +717,18 @@
 -- The type of a sync function
 ---@alias SyncFunction fun(...: any): any
 
+--- The various types of Yazi IDs
+---@alias YaziIdTypes
+---	|"app" Returns the value of YAZI_ID
+---	|"ft" Returns the ID representing the current list of files
+
+-- The type of Yazi IDs
+---@class (exact) YaziId
+---@field value integer The raw ID as an integer
+
 -- The type of the ya global
 ---@class (exact) Ya
+---@field id fun(type: YaziIdTypes): YaziId Return an ID
 ---@field hide fun(): Permit Hide the TUI.
 ---@field file_cache fun(opts: {
 ---	file: File,       -- The file to cache.
