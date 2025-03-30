@@ -1043,11 +1043,17 @@ local get_tab_preferences = ya.sync(function(_)
 	return tab_preferences
 end)
 
+-- [TODO]: Remove the stage.is_loading once stage() is stable
+-- https://github.com/sxyazi/yazi/issues/2545
+--
 -- Function to get if Yazi is loading
 ---@type fun(): boolean
-local yazi_is_loading = ya.sync(
-	function(_) return cx.active.current.stage.is_loading end
-)
+local yazi_is_loading = ya.sync(function(_)
+	local stage = cx.active.current.stage
+	local is_func, loaded = pcall(stage)
+	if not is_func then return stage.is_loading end
+	return not loaded
+end)
 
 -- Function to wait until Yazi is loaded
 ---@return nil
@@ -3331,11 +3337,6 @@ local function smoothly_scroll(steps, scroll_delay, scroll_func)
 	end
 end
 
--- [TODO]: Make use of the arrow prev and arrow next commands
--- once stabilised.
--- PR: https://github.com/sxyazi/yazi/pull/2485
--- Docs: https://yazi-rs.github.io/docs/configuration/keymap/#manager.arrow
---
 -- Function to do the wraparound for the arrow command
 ---@type fun(
 ---	args: Arguments,    -- The arguments passed to the plugin
@@ -3379,6 +3380,11 @@ local wraparound_arrow = ya.sync(function(_, args)
 	ya.mgr_emit("reveal", merge_tables(args, { item_url }))
 end)
 
+-- [TODO]: Make use of the arrow prev and arrow next commands
+-- once stabilised.
+-- PR: https://github.com/sxyazi/yazi/pull/2485
+-- Docs: https://yazi-rs.github.io/docs/configuration/keymap/#manager.arrow
+--
 -- Function to handle the arrow command
 ---@type CommandFunction
 local function handle_arrow(args, config)
