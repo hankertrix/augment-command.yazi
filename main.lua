@@ -211,6 +211,7 @@ local ARCHIVE_FILE_EXTENSIONS = {
 	gzip = true,
 	rar = true,
 	s7z = true,
+	svgz = true,
 	tar = true,
 	tbz = true,
 	tbz2 = true,
