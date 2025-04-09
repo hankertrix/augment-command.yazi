@@ -348,10 +348,6 @@ local MIME_TYPE_PREFIXES_TO_REMOVE = {
 local get_mime_type_without_prefix_template_pattern =
 	"^(%%a-)/%s([%%-%%d%%a]-)$"
 
--- The pattern to get the file extension
----@type string
-local file_extension_pattern = "%.([%a]+)$"
-
 -- The pattern to get the shell variables in a command
 ---@type string
 local shell_variable_pattern = "[%$%%][%*@0]"
@@ -716,11 +712,11 @@ local function async_shell_command_exists(shell_command, args)
 	return output ~= nil
 end
 
--- Function to emit a plugin command
----@param command string The plugin command to emit
----@param args Arguments The arguments to pass to the plugin command
+-- Function to emit a command from this plugin
+---@param command string The augmented command to emit
+---@param args Arguments The arguments to pass to the augmented command
 ---@return nil
-local function emit_plugin_command(command, args)
+local function emit_augmented_command(command, args)
 	return ya.mgr_emit("plugin", {
 		PLUGIN_NAME,
 		string.format("%s %s", command, convert_arguments_to_string(args)),
@@ -743,7 +739,7 @@ local subscribe_to_augmented_extract_event = ya.sync(function(_)
 
 			-- Emit the command to call the plugin's extract function
 			-- with the given arguments and flags
-			emit_plugin_command("extract", {
+			emit_augmented_command("extract", {
 				archive_path = ya.quote(arg),
 			})
 		end
@@ -2236,7 +2232,7 @@ local function recursively_extract_archive(
 		--
 
 		-- Get the file extension of the file
-		local file_extension = file:match(file_extension_pattern)
+		local file_extension = Url(file).ext
 
 		-- If the file extension is not found, then skip the file
 		if not file_extension then goto continue end
@@ -2251,7 +2247,7 @@ local function recursively_extract_archive(
 		local full_archive_path = tostring(full_archive_url)
 
 		-- Recursively extract the archive
-		emit_plugin_command(
+		emit_augmented_command(
 			"extract",
 			merge_tables(args, {
 				archive_path = ya.quote(full_archive_path),
@@ -2327,7 +2323,7 @@ local function handle_open(args, config)
 		-- calls the function to enter the directory
 		-- and exit the function
 		if config.smart_enter or table_pop(args, "smart", false) then
-			return emit_plugin_command("enter", args)
+			return emit_augmented_command("enter", args)
 		end
 
 		-- Otherwise, just exit the function
@@ -2368,7 +2364,7 @@ local function handle_open(args, config)
 
 	-- Emit the command to extract the archive
 	-- and reveal the extracted items
-	emit_plugin_command(
+	emit_augmented_command(
 		"extract",
 		merge_tables(args, {
 			archive_path = ya.quote(archive_path),
@@ -2447,7 +2443,7 @@ local function handle_extract(args, config)
 		-- Iterate over the archive paths
 		-- and call the extract command on them
 		for _, archive_path in ipairs(archive_paths) do
-			emit_plugin_command(
+			emit_augmented_command(
 				"extract",
 				merge_tables(args, {
 					archive_path = ya.quote(archive_path),
@@ -2562,7 +2558,7 @@ local function handle_enter(args, config)
 		-- call the function for the open command
 		-- and exit the function
 		if config.smart_enter or table_pop(args, "smart", false) then
-			return emit_plugin_command("open", args)
+			return emit_augmented_command("open", args)
 		end
 
 		-- Otherwise, just exit the function
@@ -2817,7 +2813,7 @@ local function handle_create(args, config)
 		--
 
 		-- Get the file extension from the user's input
-		local file_extension = user_input:match(file_extension_pattern)
+		local file_extension = item_url.ext
 
 		-- Set the is directory variable to the is directory condition
 		-- or if the file extension exists
