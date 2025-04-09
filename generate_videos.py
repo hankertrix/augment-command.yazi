@@ -372,6 +372,12 @@ class VHSTape:
 			config_option, stringified_value
 		)
 
+		# The command to apply the configuration
+		apply_config_command = "Type `chezmoi apply` Enter"
+
+		# The setup commands
+		setup_commands = "\n".join([edit_config_command, apply_config_command])
+
 		# The clean up command to undo the edit to the init.lua file
 		clean_up_edit_config_command = (
 			rf"Type `{sed_command_template}` Enter".format(
@@ -381,7 +387,7 @@ class VHSTape:
 
 		# Return the script object
 		return Script(
-			setup=edit_config_command,
+			setup=setup_commands,
 			clean_up=clean_up_edit_config_command,
 			required_programs=["sed"],
 		)

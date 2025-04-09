@@ -79,3 +79,4 @@ syntect
 cand
 darkman
 scrolloff
+chezmoi
