@@ -3240,20 +3240,23 @@ local execute_tab_switch = ya.sync(function(state, args)
 	-- Get the number of tabs currently open
 	local number_of_open_tabs = #cx.tabs
 
+	-- Save the current tab's current working directory
+	local current_working_directory = tostring(current_tab.cwd)
+
 	-- Iterate from the number of current open tabs
 	-- to the given tab number
-	for _ = number_of_open_tabs, tab_index do
+	for _ = number_of_open_tabs, tab_index - 1 do
 		--
 
 		-- Call the tab create command
-		ya.mgr_emit("tab_create", { current_tab.cwd })
+		ya.mgr_emit("tab_create", { current_working_directory })
 
 		-- If there is a hovered item
 		if current_tab.hovered then
 			--
 
 			-- Reveal the hovered item
-			ya.mgr_emit("reveal", { current_tab.hovered.url })
+			ya.mgr_emit("reveal", { tostring(current_tab.hovered.url) })
 		end
 	end
 
