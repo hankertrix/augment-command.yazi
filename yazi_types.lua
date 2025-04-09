@@ -165,6 +165,11 @@
 ---	self: ui.Text,
 ---	style: ui.Style,    -- The style to set.
 ---): ui.Text Set the style of the text.
+---@field scroll fun(
+---	self: ui.Text,
+---	x: integer,    -- Horizontal position to scroll to.
+---	y: integer,    -- Vertical position to scroll to.
+---): ui.Text The function to set a scroll position.
 ---@field LEFT ui.Text.LEFT A constant for the align() method
 ---@field CENTER ui.Text.CENTER A constant for the align() method
 ---@field RIGHT ui.Text.RIGHT A constant for the align() method
@@ -457,15 +462,14 @@
 ---@field is_archive boolean Whether the Url points to a file from an archive.
 ---@field is_absolute boolean Whether the Url is absolute.
 ---@field has_root boolean Whether the Url has a root.
----@field name fun(self: Url): string|nil Returns the file name.
----@field stem fun(
----	self: Url,
----): string|nil Returns the file name without the file extension.
+---@field name string|nil The file name of the Url.
+---@field stem string|nil The file name of the Url without the file extension.
+---@field ext string|nil The file extension of the Url.
+---@field parent Url|nil The parent directory Url of the Url.
 ---@field join fun(
 ---	self: Url,
 ---	url: Url|string,    -- The Url or string to join with.
 ---): Url Join with another Url or string.
----@field parent fun(self: Url): Url|nil Return the parent directory Url.
 ---@field starts_with fun(
 ---	self: Url,
 ---	url: Url|string,    -- The Url or string to check.
@@ -508,29 +512,27 @@
 -- It returns nil if the file is not found.
 -- Otherwise, it returns the position of the matched file,
 -- and the number of all matched files.
----@alias folder.File.found fun(self: folder.File): integer|nil, integer|nil
+---@alias folder.File.found fun(self: fs.File): integer|nil, integer|nil
 
--- The type of the folder::File object
----@class (exact) folder.File: File
----@field size fun(
----	self: folder.File,
----): integer|nil The size of the file, in bytes.
----@field mime fun(self: folder.File): string|nil The mime type of the file.
----@field prefix fun(
----	self: folder.File,
----): string|nil The prefix of the file relative to the CWD.
----@field icon fun(self: folder.File): Icon|nil The icon of the file.
----@field style fun(self: folder.File): ui.Style|nil The style of the file.
----@field is_hovered fun(
----	self: folder.File,
----): boolean Whether the file is hovered.
----@field is_yanked fun(self: folder.File): boolean Whether the file is yanked.
----@field is_selected fun(
----	self: folder.File,
----): boolean Whether the file is selected.
+-- The type of the fs::File object
+---@class (exact) fs.File: File
+---@field is_hovered boolean Whether the file is hovered.
 ---@field found folder.File.found
+---@field size fun(
+---	self: fs.File,
+---): integer|nil The size of the file, in bytes.
+---@field mime fun(self: fs.File): string|nil The mime type of the file.
+---@field prefix fun(
+---	self: fs.File,
+---): string|nil The prefix of the file relative to the CWD.
+---@field icon fun(self: fs.File): Icon|nil The icon of the file.
+---@field style fun(self: fs.File): ui.Style|nil The style of the file.
+---@field is_yanked fun(self: fs.File): boolean Whether the file is yanked.
+---@field is_selected fun(
+---	self: fs.File,
+---): boolean Whether the file is selected.
 
--- The type of the folder::Files object
+-- The type of the fs::Files object
 ---@class (exact) fs.Files
 
 -- The type of the tab::Folder object
@@ -540,12 +542,8 @@
 ---@field cursor integer The cursor position of the folder.
 ---@field window File[] A table of files in the visible area of the folder.
 ---@field files fs.Files The files of the folder.
----@field hovered folder.File|nil The hovered file of the folder.
----@field stage {
----	is_loading: boolean,
----	loaded: boolean,
----	failed: boolean,
----}
+---@field hovered fs.File|nil The hovered file of the folder.
+---@field stage fun(): loaded: boolean, err: Error|nil Get Yazi's loading stage.
 
 -- The type of the tab::Mode object
 -- It represents the mode of a tab.
@@ -595,6 +593,7 @@
 
 -- The type of the tab::Tab object
 ---@class (exact) tab.Tab
+---@field name string The name of the tab.
 ---@field mode tab.Mode The mode of the tab.
 ---@field pref tab.Preference The configuration of the tab.
 ---@field current tab.Folder The current folder of the tab.
@@ -1209,6 +1208,10 @@
 ---@field image_bound integer[] Array of [width, height] for maximum image size
 ---@field suppress_preload boolean Exclude the preload tasks from the tasks list
 
+-- The type of the term object in the runtime
+---@class (exact) rt.Term
+---@field light boolean Whether the user's terminal is in light mode or not
+
 -- The type of the runtime object
 ---@class (exact) Rt
 ---@field args rt.Args
@@ -1216,6 +1219,7 @@
 ---@field plugins rt.Plugin
 ---@field preview rt.Preview
 ---@field tasks rt.Tasks
+---@field term rt.Term
 
 -- The type of the style in the theme
 ---@class (exact) th.Style

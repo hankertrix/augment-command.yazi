@@ -40,7 +40,7 @@ plugin.
 
 ## Requirements
 
-- [Yazi][yazi-link] v25.3.2+
+- [Yazi][yazi-link] v25.4.8+
 - [`7z` or `7zz` command][7z-link]
 - [`file` command][file-command-link]
 

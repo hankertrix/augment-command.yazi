@@ -1,4 +1,4 @@
---- @since 25.3.2
+--- @since 25.4.8
 
 -- Plugin to make some Yazi commands smarter
 -- Written in Lua 5.4
@@ -907,7 +907,7 @@ local function get_temporary_directory_url(path, destination_given)
 		--
 
 		-- Get the parent directory of the given path
-		parent_directory_url = Url(path):parent()
+		parent_directory_url = Url(path).parent
 
 		-- If the parent directory doesn't exist, return nil
 		if not parent_directory_url then return nil end
@@ -1044,22 +1044,18 @@ local get_tab_preferences = ya.sync(function(_)
 	return tab_preferences
 end)
 
--- [TODO]: Remove the stage.is_loading once stage() is stable
--- https://github.com/sxyazi/yazi/issues/2545
---
 -- Function to get if Yazi is loading
 ---@type fun(): boolean
-local yazi_is_loading = ya.sync(function(_)
+local yazi_loaded = ya.sync(function(_)
 	local stage = cx.active.current.stage
-	local is_func, loaded = pcall(stage)
-	if not is_func then return stage.is_loading end
-	return not loaded
+	local loaded, _ = stage()
+	return loaded
 end)
 
 -- Function to wait until Yazi is loaded
 ---@return nil
 local function wait_until_yazi_is_loaded()
-	while yazi_is_loading() do
+	while not yazi_loaded() do
 	end
 end
 
@@ -1353,7 +1349,7 @@ function SevenZip:retry_extractor(extractor_function, clean_up_wanted)
 	local archive_url = Url(self.archive_path)
 
 	-- Get the archive name
-	local archive_name = archive_url:name()
+	local archive_name = archive_url.name
 
 	-- If the archive name is nil,
 	-- return the result of the extractor function
@@ -1994,7 +1990,7 @@ local function move_extracted_items(archive_url, destination_url)
 	end
 
 	-- Get the parent directory of the destination
-	local parent_directory_url = destination_url:parent()
+	local parent_directory_url = destination_url.parent
 
 	-- If the parent directory doesn't exist,
 	-- clean up and return the error
@@ -2003,7 +1999,7 @@ local function move_extracted_items(archive_url, destination_url)
 	end
 
 	-- Get the name of the archive without the extension
-	local archive_name = archive_url:stem()
+	local archive_name = archive_url.stem
 
 	-- If the name of the archive doesn't exist,
 	-- clean up and return the error
@@ -2030,7 +2026,7 @@ local function move_extracted_items(archive_url, destination_url)
 		only_one_item = true
 
 		-- Get the name of the first extracted item
-		local first_extracted_item_name = first_extracted_item.url:name()
+		local first_extracted_item_name = first_extracted_item.url.name
 
 		-- If the first extracted item has no name,
 		-- then clean up and return the error
@@ -2209,7 +2205,7 @@ local function recursively_extract_archive(
 	local base_url = extracted_items_url
 
 	-- Get the parent directory of the extracted items path
-	local parent_directory_url = extracted_items_url:parent()
+	local parent_directory_url = extracted_items_url.parent
 
 	-- If the parent directory doesn't exist
 	if not parent_directory_url then
@@ -2365,7 +2361,7 @@ local function handle_open(args, config)
 
 	-- Get the parent directory of the hovered item
 	---@type Url
-	local parent_directory_url = Url(archive_path):parent()
+	local parent_directory_url = Url(archive_path).parent
 
 	-- If the parent directory doesn't exist, then exit the function
 	if not parent_directory_url then return end
@@ -2502,7 +2498,7 @@ local function handle_extract(args, config)
 		local extracted_items_url = Url(extracted_items_path)
 
 		-- Get the parent directory of the extracted items
-		local parent_directory_url = extracted_items_url:parent()
+		local parent_directory_url = extracted_items_url.parent
 
 		-- If the parent directory doesn't exist, then exit the function
 		if not parent_directory_url then return end
@@ -2629,7 +2625,7 @@ local function handle_leave(args, config)
 
 		-- Get the parent directory of the current directory
 		---@type Url|nil
-		local parent_directory = Url(directory):parent()
+		local parent_directory = Url(directory).parent
 
 		-- If the parent directory is nil,
 		-- break the loop
@@ -2729,7 +2725,7 @@ local function execute_create(item_url, is_directory, args, config)
 	--
 
 	-- Get the parent directory of the file to create
-	local parent_directory_url = item_url:parent()
+	local parent_directory_url = item_url.parent
 
 	-- If the parent directory doesn't exist,
 	-- then show an error and exit the function
@@ -3381,11 +3377,6 @@ local wraparound_arrow = ya.sync(function(_, args)
 	ya.mgr_emit("reveal", merge_tables(args, { item_url }))
 end)
 
--- [TODO]: Make use of the arrow prev and arrow next commands
--- once stabilised.
--- PR: https://github.com/sxyazi/yazi/pull/2485
--- Docs: https://yazi-rs.github.io/docs/configuration/keymap/#manager.arrow
---
 -- Function to handle the arrow command
 ---@type CommandFunction
 local function handle_arrow(args, config)
@@ -3414,9 +3405,18 @@ local function handle_arrow(args, config)
 		if config.wraparound_file_navigation then
 			--
 
-			-- Set the scroll function to the wraparound arrow command
+			-- Set the scroll function to use the arrow previous
+			-- or arrow next commands
 			function scroll_func(step)
-				wraparound_arrow(merge_tables(args, { step }))
+				--
+
+				-- If the step is negative, then call the arrow previous command
+				if step < 0 then
+					return ya.mgr_emit("arrow", merge_tables(args, { "prev" }))
+				end
+
+				-- Otherwise, call the arrow next command
+				return ya.mgr_emit("arrow", merge_tables(args, { "next" }))
 			end
 		end
 
