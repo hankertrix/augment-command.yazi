@@ -139,7 +139,7 @@ local DEFAULT_CONFIG = {
 	skip_single_subdirectory_on_leave = true,
 	smooth_scrolling = false,
 	scroll_delay = 0.02,
-	wraparound_file_navigation = false,
+	wraparound_file_navigation = true,
 }
 
 -- The default input options for this plugin
@@ -235,7 +235,7 @@ local BASE_EXTRACTOR_ERROR = table.concat({
 -- The base extractor that all extractors inherit from
 ---@class Extractor
 ---@field name string The name of the extractor
----@field command string The shell command for the extractor
+---@field command string|nil The shell command for the extractor
 ---@field commands string[] The possible extractor commands
 ---
 --- Whether the extractor supports preserving file permissions
@@ -245,7 +245,7 @@ local BASE_EXTRACTOR_ERROR = table.concat({
 ---@field extract_behaviour_map table<ExtractBehaviour, string>
 local Extractor = {
 	name = "BaseExtractor",
-	command = "",
+	command = nil,
 	commands = {},
 	supports_file_permissions = false,
 	extract_behaviour_map = {},
@@ -368,19 +368,56 @@ local bat_command_pattern = "%f[%a]bat%f[%A]"
 -- with the items in the first table being added first,
 -- and the items in the second table being added second,
 -- and so on.
+--
+-- Pass true as the first parameter to get the function
+-- to merge the tables recursively.
+---@param deep_or_target table<any, any>|boolean Whether to merge recursively
+---@param target table<any, any> The target table to merge
 ---@param ... table<any, any>[] The tables to merge
 ---@return table<any, any> merged_table The merged table
-local function merge_tables(...)
+local function merge_tables(deep_or_target, target, ...)
 	--
 
-	-- Initialise a new table
-	local new_table = {}
+	-- Initialise the target table
+	local target_table = nil
+
+	-- Initialise the arguments
+	local args = nil
+
+	-- Initialise the recursive variable
+	local recursive = false
+
+	-- If the deep or target variable not a table
+	if type(deep_or_target) ~= "table" then
+		--
+
+		-- Set the recursive variable to the boolean value of the
+		-- deep or target variable
+		recursive = not not deep_or_target
+
+		-- Set the target table to the target variable
+		target_table = target
+
+		-- Set the arguments to the rest of the arguments
+		args = { ... }
+
+	-- Otherwise, the deep or target variable is a table
+	else
+		--
+
+		-- Set the target table to the deep or target variable
+		target_table = deep_or_target
+
+		-- Set the arguments to the target variable
+		-- and the rest of the arguments
+		args = { target, ... }
+	end
 
 	-- Initialise the index variable
 	local index = 1
 
 	-- Iterates over the tables given
-	for _, table in ipairs({ ... }) do
+	for _, table in ipairs(args) do
 		--
 
 		-- Iterate over all of the keys and values
@@ -394,23 +431,44 @@ local function merge_tables(...)
 				--
 
 				-- Set the value mapped to the index
-				new_table[index] = value
+				target_table[index] = value
 
 				-- Increment the index
 				index = index + 1
 
-			-- Otherwise, the key isn't a number
-			else
+				-- Continue the loop
+				goto continue
+			end
+
+			-- If recursive merging is wanted
+			-- and the key for the target table
+			-- and the value are both tables
+			if
+				recursive
+				and type(target_table[key]) == "table"
+				and type(value) == "table"
+			then
 				--
 
-				-- Set the key in the new table to the value given
-				new_table[key] = value
+				-- Call the merge table function
+				-- recursively on the target table's
+				-- key to merge the table recursively
+				merge_tables(target_table[key], value)
+
+				-- Continue the loop
+				goto continue
 			end
+
+			-- Otherwise, set the key in the target table to the value given
+			target_table[key] = value
+
+			-- The label to continue the loop
+			::continue::
 		end
 	end
 
-	-- Return the new table
-	return new_table
+	-- Return the target table
+	return target_table
 end
 
 -- Function to split a string into a list
@@ -574,10 +632,12 @@ end
 ---@param options YaziNotificationOptions|nil Options for the notification
 ---@return nil
 local function show_warning(warning_message, options)
-	return ya.notify(merge_tables(DEFAULT_NOTIFICATION_OPTIONS, options or {}, {
-		content = tostring(warning_message),
-		level = "warn",
-	}))
+	return ya.notify(
+		merge_tables({}, DEFAULT_NOTIFICATION_OPTIONS, options or {}, {
+			content = tostring(warning_message),
+			level = "warn",
+		})
+	)
 end
 
 -- Function to show an error
@@ -585,10 +645,12 @@ end
 ---@param options YaziNotificationOptions|nil Options for the notification
 ---@return nil
 local function show_error(error_message, options)
-	return ya.notify(merge_tables(DEFAULT_NOTIFICATION_OPTIONS, options or {}, {
-		content = tostring(error_message),
-		level = "error",
-	}))
+	return ya.notify(
+		merge_tables({}, DEFAULT_NOTIFICATION_OPTIONS, options or {}, {
+			content = tostring(error_message),
+			level = "error",
+		})
+	)
 end
 
 -- Function to get the user's input
@@ -597,7 +659,7 @@ end
 ---@return string|nil user_input The user's input
 ---@return InputEvent event The event for the input function
 local function get_user_input(prompt, options)
-	return ya.input(merge_tables(DEFAULT_INPUT_OPTIONS, options or {}, {
+	return ya.input(merge_tables({}, DEFAULT_INPUT_OPTIONS, options or {}, {
 		title = prompt,
 	}))
 end
@@ -610,7 +672,7 @@ local function get_user_confirmation(title, content)
 	--
 
 	-- Get the user's confirmation
-	local confirmation = ya.confirm(merge_tables(DEFAULT_CONFIRM_OPTIONS, {
+	local confirmation = ya.confirm(merge_tables({}, DEFAULT_CONFIRM_OPTIONS, {
 		title = title,
 		content = content,
 	}))
@@ -714,12 +776,24 @@ end
 
 -- Function to emit a command from this plugin
 ---@param command string The augmented command to emit
----@param args Arguments The arguments to pass to the augmented command
+---@param args Arguments|string The arguments to pass to the augmented command
 ---@return nil
 local function emit_augmented_command(command, args)
+	--
+
+	-- Initialise the arguments
+	local arguments = args
+
+	-- If the arguments are passed in a table,
+	-- convert them to a string
+	if type(args) == "table" then
+		arguments = convert_arguments_to_string(args)
+	end
+
+	-- Emit the augmented command
 	return ya.mgr_emit("plugin", {
 		PLUGIN_NAME,
-		string.format("%s %s", command, convert_arguments_to_string(args)),
+		string.format("%s %s", command, arguments),
 	})
 end
 
@@ -1284,28 +1358,33 @@ function Extractor:new(archive_path, destination_path, config)
 	--
 
 	-- Initialise whether the extractor is available
-	local available = false
+	local available = self.command ~= nil
 
-	-- Iterate over the commands
-	for _, command in ipairs(self.commands) do
+	-- If the extractor has not been initialised
+	if not available then
 		--
 
-		-- Call the shell command exists function
-		-- on the command
-		local exists = async_shell_command_exists(command)
-
-		-- If the command exists
-		if exists then
+		-- Iterate over the commands
+		for _, command in ipairs(self.commands) do
 			--
 
-			-- Save the command
-			self.command = command
+			-- Call the shell command exists function
+			-- on the command
+			local exists = async_shell_command_exists(command)
 
-			-- Set the available variable to true
-			available = true
+			-- If the command exists
+			if exists then
+				--
 
-			-- Break out of the loop
-			break
+				-- Save the command
+				self.command = command
+
+				-- Set the available variable to true
+				available = true
+
+				-- Break out of the loop
+				break
+			end
 		end
 	end
 
@@ -1441,16 +1520,16 @@ function SevenZip:retry_extractor(extractor_function, clean_up_wanted)
 			input_width = #password_prompt + 1
 		end
 
-		-- Get the new position object
-		-- for the new input element
-		---@type Position
-		local new_position =
-			merge_tables(DEFAULT_INPUT_OPTIONS.position, { w = input_width })
-
 		-- Ask the user for the password
-		local user_input, event =
-			---@diagnostic disable-next-line: missing-fields
-			get_user_input(password_prompt, { position = new_position })
+		local user_input, event = get_user_input(
+			password_prompt,
+			merge_tables(
+				true,
+				{},
+				DEFAULT_INPUT_OPTIONS,
+				{ position = { w = input_width } }
+			)
+		)
 
 		-- If the user has confirmed the input,
 		-- and the user input is not nil,
@@ -2122,7 +2201,7 @@ local function recursively_extract_archive(
 
 	-- If there is no extractor, return the result
 	if not extractor then
-		return merge_tables(get_extractor_result, {
+		return merge_tables({}, get_extractor_result, {
 			archive_path = archive_path,
 			destination_path = destination_path,
 		})
@@ -2136,7 +2215,7 @@ local function recursively_extract_archive(
 	---@param result ExtractionResult The result to add the paths to
 	---@return ExtractionResult modified_result The result with the paths added
 	local function add_additional_info(result)
-		return merge_tables(result, {
+		return merge_tables({}, result, {
 			archive_path = archive_path,
 			destination_path = destination_path,
 			extractor_name = extractor.name,
@@ -2209,7 +2288,7 @@ local function recursively_extract_archive(
 
 		-- Modify the move result with a custom error
 		---@type ExtractionResult
-		local modified_move_result = merge_tables(move_result, {
+		local modified_move_result = merge_tables({}, move_result, {
 			error = "Archive has no parent directory",
 			archive_path = archive_path,
 			destination_path = destination_path,
@@ -2246,10 +2325,15 @@ local function recursively_extract_archive(
 		-- Get the full path to the archive
 		local full_archive_path = tostring(full_archive_url)
 
+		-- Yazi is now way too quick (a good problem to have, really),
+		-- so we slow it down a little to make sure that the
+		-- extracted files are not overwritten by each other
+		ya.sleep(10e-3)
+
 		-- Recursively extract the archive
 		emit_augmented_command(
 			"extract",
-			merge_tables(args, {
+			merge_tables({}, args, {
 				archive_path = ya.quote(full_archive_path),
 				remove = true,
 			})
@@ -2344,7 +2428,7 @@ local function handle_open(args, config)
 		-- opening only the hovered item
 		-- as the item group is the hovered item,
 		-- and exit the function
-		return ya.mgr_emit("open", merge_tables(args, { hovered = true }))
+		return ya.mgr_emit("open", merge_tables({}, args, { hovered = true }))
 	end
 
 	-- Otherwise, the hovered item is an archive
@@ -2366,7 +2450,7 @@ local function handle_open(args, config)
 	-- and reveal the extracted items
 	emit_augmented_command(
 		"extract",
-		merge_tables(args, {
+		merge_tables({}, args, {
 			archive_path = ya.quote(archive_path),
 			reveal = true,
 			parent_dir = ya.quote(tostring(parent_directory_url)),
@@ -2445,7 +2529,7 @@ local function handle_extract(args, config)
 		for _, archive_path in ipairs(archive_paths) do
 			emit_augmented_command(
 				"extract",
-				merge_tables(args, {
+				merge_tables({}, args, {
 					archive_path = ya.quote(archive_path),
 				})
 			)
@@ -2660,7 +2744,7 @@ local function handle_yazi_command(command, args)
 		--
 
 		-- Emit the command with the hovered option
-		ya.mgr_emit(command, merge_tables(args, { hovered = true }))
+		ya.mgr_emit(command, merge_tables({}, args, { hovered = true }))
 	end
 end
 
@@ -3350,7 +3434,7 @@ local wraparound_arrow = ya.sync(function(_, args)
 	-- immediately emit the arrow command
 	-- and exit the function
 	if type(steps) ~= "number" then
-		return ya.mgr_emit("arrow", merge_tables(args, { steps }))
+		return ya.mgr_emit("arrow", merge_tables({ steps }, args))
 	end
 
 	-- Get the number of files in the current tab
@@ -3373,7 +3457,7 @@ local wraparound_arrow = ya.sync(function(_, args)
 	local item_url = current_tab.files[new_cursor_index + 1].url
 
 	-- Emit the reveal command
-	ya.mgr_emit("reveal", merge_tables(args, { item_url }))
+	ya.mgr_emit("reveal", merge_tables({ item_url }, args))
 end)
 
 -- Function to handle the arrow command
@@ -3392,16 +3476,20 @@ local function handle_arrow(args, config)
 		-- immediately emit the arrow command
 		-- and exit the function
 		if type(steps) ~= "number" then
-			return ya.mgr_emit("arrow", merge_tables(args, { steps }))
+			return ya.mgr_emit("arrow", merge_tables({ steps }, args))
 		end
 
 		-- Initialise the function to the regular arrow command
 		local function scroll_func(step)
-			ya.mgr_emit("arrow", merge_tables(args, { step }))
+			ya.mgr_emit("arrow", merge_tables({ step }, args))
 		end
 
 		-- If wraparound file navigation is wanted
-		if config.wraparound_file_navigation then
+		-- and the no_wrap argument isn't passed
+		if
+			config.wraparound_file_navigation
+			and not table_pop(args, "no_wrap", false)
+		then
 			--
 
 			-- Set the scroll function to use the arrow previous
@@ -3411,11 +3499,11 @@ local function handle_arrow(args, config)
 
 				-- If the step is negative, then call the arrow previous command
 				if step < 0 then
-					return ya.mgr_emit("arrow", merge_tables(args, { "prev" }))
+					return ya.mgr_emit("arrow", merge_tables({ "prev" }, args))
 				end
 
 				-- Otherwise, call the arrow next command
-				return ya.mgr_emit("arrow", merge_tables(args, { "next" }))
+				return ya.mgr_emit("arrow", merge_tables({ "next" }, args))
 			end
 		end
 
@@ -3425,9 +3513,15 @@ local function handle_arrow(args, config)
 
 	-- Otherwise, if smooth scrolling is not wanted,
 	-- and wraparound file navigation is wanted,
+	-- and the no_wrap argument isn't passed,
 	-- call the wraparound arrow function
 	-- and exit the function
-	if config.wraparound_file_navigation then return wraparound_arrow(args) end
+	if
+		config.wraparound_file_navigation
+		and not table_pop(args, "no_wrap", false)
+	then
+		return wraparound_arrow(args)
+	end
 
 	-- Otherwise, emit the regular arrow command
 	ya.mgr_emit("arrow", args)
@@ -3516,7 +3610,11 @@ local execute_parent_arrow = ya.sync(function(state, args)
 	local sort_directories_first = cx.active.pref.sort_dir_first
 
 	-- If wraparound file navigation is wanted
-	if state.config.wraparound_file_navigation then
+	-- and the no_wrap argument isn't passed
+	if
+		state.config.wraparound_file_navigation
+		and not table_pop(args, "no_wrap", false)
+	then
 		--
 
 		-- If the user sorts their directories first
@@ -3615,7 +3713,7 @@ local function handle_parent_arrow(args, config)
 	smoothly_scroll(
 		steps,
 		config.scroll_delay,
-		function(step) execute_parent_arrow(merge_tables(args, { step })) end
+		function(step) execute_parent_arrow(merge_tables({ step }, args)) end
 	)
 end
 

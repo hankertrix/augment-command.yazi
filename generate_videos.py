@@ -9,14 +9,45 @@ from collections.abc import Coroutine
 from pathlib import Path
 from typing import cast, final, override
 
-# The absolute path to run the script from
-WORKING_DIRECTORY = Path(__file__).parent
+# Get the script directory
+PYTHON_SCRIPT_DIRECTORY: Path = Path(__file__).parent
+
+# The path to the directory for the demonstration
+DEMONSTRATION_DIRECTORY: str = os.path.join(
+	PYTHON_SCRIPT_DIRECTORY, "demonstration"
+)
 
 # The path to the VHS tapes directory
-VHS_TAPES_DIRECTORY: str = "./vhs_tapes"
+VHS_TAPES_DIRECTORY: Path = Path(DEMONSTRATION_DIRECTORY, "vhs_tapes")
+
+# The folder with the subdirectory
+FOLDER_WITH_SUBDIRECTORY: str = "folder_with_subdirectory"
+
+# The empty folder
+EMPTY_FOLDER: str = "empty_folder"
+
+# Lorem ipsum text
+DEMONSTRATION_TEXT: str = """
+Lorem ipsum dolor sit amet, consectetur adipiscing elit,
+sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris
+nisi ut aliquip ex ea commodo consequat.
+Duis aute irure dolor in reprehenderit in voluptate velit esse cillum
+dolore eu fugiat nulla pariatur.
+Excepteur sint occaecat cupidatat non proident,
+sunt in culpa qui officia deserunt mollit anim id est laborum.
+""".strip()
+
+# The file name of the first file
+FIRST_FILE_NAME: str = "file_1.txt"
 
 # The plugin file name
-PLUGIN_FILE_NAME: str = "main.lua"
+PLUGIN_FILE_NAME: str = os.path.join(PYTHON_SCRIPT_DIRECTORY, "main.lua")
+
+# The keymap TOML file name
+KEYMAP_TOML_FILE_NAME: str = os.path.join(
+	PYTHON_SCRIPT_DIRECTORY, "../../", "keymap.toml"
+)
 
 # The set of archive file extensions
 ARCHIVE_FILE_EXTENSIONS: set[str] = {".zip", ".7z"}
@@ -60,10 +91,13 @@ SHORT_SLEEP_TIME: str = "Sleep 500ms"
 VERY_SHORT_SLEEP_TIME: str = "Sleep 250ms"
 
 # The command to change the working directory for all VHS tapes
-CHANGE_TO_WORKING_DIRECTORY: str = f'Type "cd {WORKING_DIRECTORY}" Enter'
+CHANGE_TO_WORKING_DIRECTORY: str = f'Type "cd {DEMONSTRATION_DIRECTORY}" Enter'
 
 # The command to clear the screen
 CLEAR_SCREEN: str = "Type 'clear' Enter"
+
+# The command to apply the configuration
+APPLY_CONFIG_COMMAND: str = "Type 'chezmoi apply --force' Enter Wait"
 
 
 # Function to create the argument parser and parse the command line arguments
@@ -234,7 +268,7 @@ class VHSTape:
 		lines: list[str] = [
 
 			# The output file for the VHS tape
-			f"Output videos/{self.file_name}.mp4",
+			f"Output ../videos/{self.file_name}.mp4",
 
 			# The required programs for the VHS tape
 			"\n".join(
@@ -372,11 +406,8 @@ class VHSTape:
 			config_option, stringified_value
 		)
 
-		# The command to apply the configuration
-		apply_config_command = "Type `chezmoi apply` Enter"
-
 		# The setup commands
-		setup_commands = "\n".join([edit_config_command, apply_config_command])
+		setup_commands = "\n".join([edit_config_command, APPLY_CONFIG_COMMAND])
 
 		# The clean up command to undo the edit to the init.lua file
 		clean_up_edit_config_command = (
@@ -385,10 +416,15 @@ class VHSTape:
 			)
 		)
 
+		# The clean up commands
+		clean_up_commands = "\n".join(
+			[clean_up_edit_config_command, APPLY_CONFIG_COMMAND]
+		)
+
 		# Return the script object
 		return Script(
 			setup=setup_commands,
-			clean_up=clean_up_edit_config_command,
+			clean_up=clean_up_commands,
 			required_programs=["sed"],
 		)
 
@@ -558,16 +594,21 @@ class VHSTape:
 		# The command to create the keymap.toml file
 		create_keymap_toml_command = "\n".join(
 			[
-				"Type `mv '../../keymap.toml' '../../keymap.toml.bak'` Enter",
-				f'Type `echo "{fixed_contents}" > ../../keymap.toml` Enter',
+				f"Type `mv '{KEYMAP_TOML_FILE_NAME}' "
+				+ f"'{KEYMAP_TOML_FILE_NAME}.bak'` Enter",
+				f'Type `echo "{fixed_contents}" > {KEYMAP_TOML_FILE_NAME}` '
+				+ "Enter",
+				APPLY_CONFIG_COMMAND,
 			]
 		)
 
 		# The command to clean up the keymap.toml file
 		clean_up_keymap_toml_command = "\n".join(
 			[
-				"Type 'rm ../../keymap.toml' Enter",
-				"Type `mv '../../keymap.toml.bak' '../../keymap.toml'` Enter",
+				f"Type 'rm {KEYMAP_TOML_FILE_NAME}' Enter",
+				f"Type `mv '{KEYMAP_TOML_FILE_NAME}.bak' "
+				+ f"'{KEYMAP_TOML_FILE_NAME}'` Enter",
+				APPLY_CONFIG_COMMAND,
 			]
 		)
 
@@ -688,7 +729,7 @@ VHS_TAPES: list[VHSTape] = [
 			VHSTape.edit_plugin_config("prompt", True),
 		],
 		yazi_body=[
-			'Type "/cspell.json" Enter',
+			f'Type "/{FIRST_FILE_NAME}" Enter',
 			"Space@300ms 3",
 			'Type "l"',
 			SLEEP_TIME,
@@ -712,12 +753,21 @@ VHS_TAPES: list[VHSTape] = [
 			"Ctrl+c",
 			SHORT_SLEEP_TIME,
 			'Type ":q!" Enter',
+			SLEEP_TIME,
+			'Type "l"',
+			SLEEP_TIME,
+			"Enter",
+			'Space Type "pb"',
+			LONG_SLEEP_TIME,
+			"Ctrl+c",
+			SHORT_SLEEP_TIME,
+			'Type ":q!" Enter',
 		],
 	),
 	VHSTape(
 		name="Open behaviour",
 		yazi_body=[
-			'Type "/cspell.json" Enter',
+			f'Type "/{FIRST_FILE_NAME}" Enter',
 			"Space@300ms 3",
 			'Type "l"',
 			SLEEP_TIME,
@@ -784,35 +834,14 @@ VHS_TAPES: list[VHSTape] = [
 			VHSTape.edit_plugin_config("recursively_extract_archives", False),
 			VHSTape.create_keymap_toml_with_keymap({DEFAULT_KEY: "extract"}),
 			VHSTape.create_multiple_nested_archives(4, 4),
-			Script(
-				setup="\n".join(
-					[
-						'Type `mv "{}" "./.git/"` Enter'.format(
-							"{" + str(index) + "}"
-						)
-						for index in range(4)
-					]
-				),
-				clean_up="\n".join(
-					[
-						'Type `mv "./.git/{}" "./"` Enter'.format(
-							"{" + str(index) + "}"
-						)
-						for index in range(5)
-					]
-				),
-				required_programs=["mv"],
-			),
 		],
 		yazi_body=[
-			'Type "l"',
-			SLEEP_TIME,
 			'Type "/{0}" Enter',
 			SLEEP_TIME,
 			'Type "j"',
 			"Space@300ms 3",
 			SLEEP_TIME,
-			'Type "gg"',
+			f'Type "/{EMPTY_FOLDER}" Enter',
 			SLEEP_TIME,
 			'Type "l"',
 			SLEEP_TIME,
@@ -820,7 +849,7 @@ VHS_TAPES: list[VHSTape] = [
 			LONG_SLEEP_TIME,
 			'Type "h"',
 			SLEEP_TIME,
-			'Type "n"',
+			'Type "/{0}" Enter',
 			SLEEP_TIME,
 			f'Type "{DEFAULT_KEY}"',
 			SLEEP_TIME,
@@ -846,41 +875,22 @@ VHS_TAPES: list[VHSTape] = [
 			VHSTape.edit_plugin_config("must_have_hovered_item", False),
 			VHSTape.create_keymap_toml_with_keymap({DEFAULT_KEY: "extract"}),
 			VHSTape.create_multiple_nested_archives(4, 4),
-			Script(
-				setup="\n".join(
-					[
-						'Type `mv "{}" "./.git/"` Enter'.format(
-							"{" + str(index) + "}"
-						)
-						for index in range(4)
-					]
-				),
-				clean_up="\n".join(
-					[
-						'Type `mv "./.git/{}" "./"` Enter'.format(
-							"{" + str(index) + "}"
-						)
-						for index in range(8)
-					]
-				),
-				required_programs=["mv"],
-			),
 		],
 		yazi_body=[
-			'Type "l"',
-			SLEEP_TIME,
 			'Type "/{0}" Enter',
 			SLEEP_TIME,
 			'Type "j"',
 			"Space@300ms 3",
 			SLEEP_TIME,
-			'Type "gg"',
+			f'Type "/{EMPTY_FOLDER}" Enter',
 			SLEEP_TIME,
 			'Type "l"',
 			SLEEP_TIME,
 			f'Type "{DEFAULT_KEY}"',
 			SLEEP_TIME,
 			'Type "h"',
+			SLEEP_TIME,
+			'Type "gg"',
 			SLEEP_TIME,
 			'Type "/{4}" Enter',
 			SLEEP_TIME,
@@ -904,9 +914,12 @@ VHS_TAPES: list[VHSTape] = [
 			"demo-2.zip",
 			"demo-3.zip",
 			"demo-4.zip",
+			"demo-1",
+			"demo-4",
 			"demo-4_1",
 		],
 		scripts=[
+			VHSTape.edit_plugin_config("recursively_extract_archives", False),
 			VHSTape.edit_plugin_config("prompt", True),
 			VHSTape.create_keymap_toml_with_keymap({DEFAULT_KEY: "extract"}),
 			VHSTape.create_multiple_nested_archives(4, 4),
@@ -922,15 +935,35 @@ VHS_TAPES: list[VHSTape] = [
 			SLEEP_TIME,
 			"Enter",
 			SLEEP_TIME,
+			'Type "gg"',
+			SLEEP_TIME,
+			'Type "/{5}" Enter',
+			SLEEP_TIME,
+			'Type "/{3}" Enter',
+			SLEEP_TIME,
 			f'Type "{DEFAULT_KEY}"',
 			SLEEP_TIME,
 			'Type "s"',
 			SLEEP_TIME,
 			"Enter",
 			SLEEP_TIME,
+			'Type "gg"',
+			SLEEP_TIME,
+			'Type "/{4}" Enter',
+			SLEEP_TIME,
+			'Type "j"',
+			SLEEP_TIME,
+			'Type "j"',
+			SLEEP_TIME,
+			'Type "/{3}" Enter',
+			SLEEP_TIME,
 			f'Type "{DEFAULT_KEY}"',
 			SLEEP_TIME,
 			"Enter",
+			SLEEP_TIME,
+			'Type "gg"',
+			SLEEP_TIME,
+			'Type "/{6}" Enter',
 		],
 	),
 	VHSTape(
@@ -941,8 +974,11 @@ VHS_TAPES: list[VHSTape] = [
 			"demo-3.zip",
 			"demo-4.zip",
 			"demo-5.zip",
+			"demo-4",
+			"demo-1",
 		],
 		scripts=[
+			VHSTape.edit_plugin_config("recursively_extract_archives", False),
 			VHSTape.create_keymap_toml_with_keymap({DEFAULT_KEY: "extract"}),
 			VHSTape.create_multiple_nested_archives(5, 4),
 		],
@@ -953,13 +989,21 @@ VHS_TAPES: list[VHSTape] = [
 			SLEEP_TIME,
 			f'Type "{DEFAULT_KEY}"',
 			SLEEP_TIME,
+			'Type "gg"',
+			SLEEP_TIME,
+			'Type "/{5}" Enter',
+			SLEEP_TIME,
+			'Type "/{0}" Enter',
+			SLEEP_TIME,
+			f'Type "{DEFAULT_KEY}"',
+			SLEEP_TIME,
+			'Type "gg"',
+			SLEEP_TIME,
+			'Type "/{6}" Enter',
+			SLEEP_TIME,
 			'Type "j"',
 			SLEEP_TIME,
-			f'Type "{DEFAULT_KEY}"',
-			SLEEP_TIME,
-			'Type "kk"',
-			SLEEP_TIME,
-			f'Type "{DEFAULT_KEY}"',
+			'Type "j"',
 		],
 	),
 	VHSTape(
@@ -1020,8 +1064,6 @@ VHS_TAPES: list[VHSTape] = [
 		yazi_body=[
 			'Type "l"',
 			SLEEP_TIME,
-			'Type "l"',
-			SLEEP_TIME,
 			'Type "h"',
 			SLEEP_TIME,
 			'Type "jl"',
@@ -1029,8 +1071,6 @@ VHS_TAPES: list[VHSTape] = [
 			'Type "h"',
 			SLEEP_TIME,
 			'Type "jl"',
-			SLEEP_TIME,
-			'Type "h"',
 			SLEEP_TIME,
 			'Type "h"',
 			SLEEP_TIME,
@@ -1052,7 +1092,7 @@ VHS_TAPES: list[VHSTape] = [
 	VHSTape(
 		name="Enter skip single subdirectory",
 		yazi_body=[
-			'Type "j"',
+			f'Type "/{FOLDER_WITH_SUBDIRECTORY}" Enter',
 			SLEEP_TIME,
 			'Type "l"',
 			SLEEP_TIME,
@@ -1065,12 +1105,14 @@ VHS_TAPES: list[VHSTape] = [
 		name="Leave skip single subdirectory",
 		scripts=[
 			Script(
-				setup="Type `cd './.github/workflows/'` Enter",
+				setup=f"Type `cd './{FOLDER_WITH_SUBDIRECTORY}/subdirectory/'`"
+				+ "Enter",
 			),
 		],
 		yazi_body=[
 			'Type "h"',
 			SLEEP_TIME,
+			f'Type "/{FOLDER_WITH_SUBDIRECTORY}" Enter',
 			"Right",
 			SLEEP_TIME,
 			"Right",
@@ -1079,14 +1121,15 @@ VHS_TAPES: list[VHSTape] = [
 	VHSTape(
 		name="Rename must have hovered item",
 		yazi_body=[
-			'Type "l"',
+			f'Type "/{FIRST_FILE_NAME}" Enter',
 			SLEEP_TIME,
 			'Type "j"',
 			"Space@300ms 3",
 			SLEEP_TIME,
-			'Type "gg"',
+			f'Type "/{EMPTY_FOLDER}" Enter',
 			SLEEP_TIME,
 			'Type "l"',
+			SLEEP_TIME,
 			'Type "r"',
 			LONG_SLEEP_TIME,
 			'Type "h"',
@@ -1103,12 +1146,12 @@ VHS_TAPES: list[VHSTape] = [
 			VHSTape.edit_plugin_config("must_have_hovered_item", False),
 		],
 		yazi_body=[
-			'Type "l"',
+			f'Type "/{FIRST_FILE_NAME}" Enter',
 			SLEEP_TIME,
 			'Type "j"',
 			"Space@300ms 3",
 			SLEEP_TIME,
-			'Type "gg"',
+			f'Type "/{EMPTY_FOLDER}" Enter',
 			SLEEP_TIME,
 			'Type "l"',
 			SLEEP_TIME,
@@ -1117,6 +1160,11 @@ VHS_TAPES: list[VHSTape] = [
 			'Type ":q!" Enter',
 			SLEEP_TIME,
 			'Type "h"',
+			SLEEP_TIME,
+			'Type "r"',
+			"Backspace@300ms 3",
+			SLEEP_TIME,
+			"Ctrl+c",
 		],
 	),
 	VHSTape(
@@ -1125,7 +1173,7 @@ VHS_TAPES: list[VHSTape] = [
 			VHSTape.edit_plugin_config("prompt", True),
 		],
 		yazi_body=[
-			'Type "/cspell.json" Enter',
+			f'Type "/{FIRST_FILE_NAME}" Enter',
 			"Space@300ms 3",
 			'Type "r"',
 			SLEEP_TIME,
@@ -1158,7 +1206,7 @@ VHS_TAPES: list[VHSTape] = [
 	VHSTape(
 		name="Rename behaviour",
 		yazi_body=[
-			'Type "/cspell.json" Enter',
+			f'Type "/{FIRST_FILE_NAME}" Enter',
 			"Space@300ms 3",
 			SLEEP_TIME,
 			'Type "r"',
@@ -1187,12 +1235,12 @@ VHS_TAPES: list[VHSTape] = [
 	VHSTape(
 		name="Remove must have hovered item",
 		yazi_body=[
-			'Type "l"',
+			f'Type "/{FIRST_FILE_NAME}" Enter',
 			SLEEP_TIME,
 			'Type "j"',
 			"Space@300ms 3",
 			SLEEP_TIME,
-			'Type "gg"',
+			f'Type "/{EMPTY_FOLDER}" Enter',
 			SLEEP_TIME,
 			'Type "l"',
 			'Type "x"',
@@ -1210,12 +1258,12 @@ VHS_TAPES: list[VHSTape] = [
 			VHSTape.edit_plugin_config("must_have_hovered_item", False),
 		],
 		yazi_body=[
-			'Type "l"',
+			f'Type "/{FIRST_FILE_NAME}" Enter',
 			SLEEP_TIME,
 			'Type "j"',
 			"Space@300ms 3",
 			SLEEP_TIME,
-			'Type "gg"',
+			f'Type "/{EMPTY_FOLDER}" Enter',
 			SLEEP_TIME,
 			'Type "l"',
 			SLEEP_TIME,
@@ -1232,7 +1280,7 @@ VHS_TAPES: list[VHSTape] = [
 			VHSTape.edit_plugin_config("prompt", True),
 		],
 		yazi_body=[
-			'Type "/cspell.json" Enter',
+			f'Type "/{FIRST_FILE_NAME}" Enter',
 			"Space@300ms 3",
 			'Type "x"',
 			SLEEP_TIME,
@@ -1260,7 +1308,7 @@ VHS_TAPES: list[VHSTape] = [
 	VHSTape(
 		name="Remove behaviour",
 		yazi_body=[
-			'Type "/cspell.json" Enter',
+			f'Type "/{FIRST_FILE_NAME}" Enter',
 			"Space@300ms 3",
 			SLEEP_TIME,
 			'Type "x"',
@@ -1458,12 +1506,12 @@ VHS_TAPES: list[VHSTape] = [
 			),
 		],
 		yazi_body=[
-			'Type "l"',
+			f'Type "/{FIRST_FILE_NAME}" Enter',
 			SLEEP_TIME,
 			'Type "j"',
 			"Space@300ms 3",
 			SLEEP_TIME,
-			'Type "gg"',
+			f'Type "/{EMPTY_FOLDER}" Enter',
 			SLEEP_TIME,
 			'Type "l"',
 			f'Type "{DEFAULT_KEY}"',
@@ -1484,12 +1532,12 @@ VHS_TAPES: list[VHSTape] = [
 			),
 		],
 		yazi_body=[
-			'Type "l"',
+			f'Type "/{FIRST_FILE_NAME}" Enter',
 			SLEEP_TIME,
 			'Type "j"',
 			"Space@300ms 3",
 			SLEEP_TIME,
-			'Type "gg"',
+			f'Type "/{EMPTY_FOLDER}" Enter',
 			SLEEP_TIME,
 			'Type "l"',
 			SLEEP_TIME,
@@ -1514,7 +1562,7 @@ VHS_TAPES: list[VHSTape] = [
 			),
 		],
 		yazi_body=[
-			'Type "/cspell.json" Enter',
+			f'Type "/{FIRST_FILE_NAME}" Enter',
 			"Space@300ms 3",
 			f'Type "{DEFAULT_KEY}"',
 			SLEEP_TIME,
@@ -1526,7 +1574,7 @@ VHS_TAPES: list[VHSTape] = [
 			LONG_SLEEP_TIME,
 			'Type "yazi" Enter',
 			SLEEP_TIME,
-			'Type "/cspell.json" Enter',
+			f'Type "/{FIRST_FILE_NAME}" Enter',
 			"Space@300ms 3",
 			f'Type "{DEFAULT_KEY}"',
 			SLEEP_TIME,
@@ -1538,7 +1586,7 @@ VHS_TAPES: list[VHSTape] = [
 			LONG_SLEEP_TIME,
 			'Type "yazi" Enter',
 			SLEEP_TIME,
-			'Type "/cspell.json" Enter',
+			f'Type "/{FIRST_FILE_NAME}" Enter',
 			"Space@300ms 3",
 			f'Type "{DEFAULT_KEY}"',
 			SLEEP_TIME,
@@ -1557,7 +1605,7 @@ VHS_TAPES: list[VHSTape] = [
 			),
 		],
 		yazi_body=[
-			'Type "/cspell.json" Enter',
+			f'Type "/{FIRST_FILE_NAME}" Enter',
 			"Space@300ms 3",
 			f'Type "{DEFAULT_KEY}"',
 			SLEEP_TIME,
@@ -1565,7 +1613,7 @@ VHS_TAPES: list[VHSTape] = [
 			LONG_SLEEP_TIME,
 			'Type "yazi" Enter',
 			SLEEP_TIME,
-			'Type "/cspell.json" Enter',
+			f'Type "/{FIRST_FILE_NAME}" Enter',
 			"Space@300ms 3",
 			'Type "j"',
 			SLEEP_TIME,
@@ -1574,7 +1622,7 @@ VHS_TAPES: list[VHSTape] = [
 			LONG_SLEEP_TIME,
 			'Type "yazi" Enter',
 			SLEEP_TIME,
-			'Type "/cspell.json" Enter',
+			f'Type "/{FIRST_FILE_NAME}" Enter',
 			"Space@300ms 3",
 			'Type "k"',
 			SLEEP_TIME,
@@ -1592,7 +1640,7 @@ VHS_TAPES: list[VHSTape] = [
 			),
 		],
 		yazi_body=[
-			'Type "/cspell.json" Enter',
+			f'Type "/{FIRST_FILE_NAME}" Enter',
 			"Space@300ms 3",
 			SLEEP_TIME,
 			f'Type "{DEFAULT_KEY}"',
@@ -1637,22 +1685,17 @@ VHS_TAPES: list[VHSTape] = [
 	),
 	VHSTape(
 		name="Smart paste",
-		files_and_directories=["demo.txt"],
+		files_and_directories=[
+			"demo.txt",
+			"demo_1.txt",
+			"**/demo.txt",
+			"**/demo_1.txt",
+		],
 		scripts=[
 			VHSTape.edit_plugin_config("smart_paste", True),
 			Script(
 				setup="Type `echo '{}' ".format(DEFAULT_TEXT_FILE_CONTENT)
 				+ "> {0}` Enter",
-				clean_up="Type `rm {}` Enter".format(
-					" ".join(
-						[
-							'"./.git/{0}"',
-							'"./.git/branches/{0}"',
-							'"./.github/{0}"',
-							'"./.github/workflows/{0}"',
-						]
-					)
-				),
 			),
 		],
 		yazi_body=[
@@ -1665,9 +1708,11 @@ VHS_TAPES: list[VHSTape] = [
 			SLEEP_TIME,
 			'Type "l"',
 			SLEEP_TIME,
-			'Type "n"',
+			'Type "/{0}" Enter',
 			SLEEP_TIME,
-			'Type "gg"',
+			'Type "h"',
+			SLEEP_TIME,
+			'Type "j"',
 			SLEEP_TIME,
 			'Type "p"',
 			SLEEP_TIME,
@@ -1675,7 +1720,7 @@ VHS_TAPES: list[VHSTape] = [
 			SLEEP_TIME,
 			'Type "n"',
 			SLEEP_TIME,
-			'Type "hh"',
+			'Type "h"',
 			SLEEP_TIME,
 			'Type "j"',
 			SLEEP_TIME,
@@ -1691,7 +1736,13 @@ VHS_TAPES: list[VHSTape] = [
 			SLEEP_TIME,
 			'Type "l"',
 			SLEEP_TIME,
+			'Type "hh"',
+			SLEEP_TIME,
 			'Type "n"',
+			SLEEP_TIME,
+			'Type "p"',
+			SLEEP_TIME,
+			'Type "/{1}" Enter',
 		],
 	),
 	VHSTape(
@@ -1700,7 +1751,7 @@ VHS_TAPES: list[VHSTape] = [
 			VHSTape.edit_plugin_config("smart_tab_create", True),
 		],
 		yazi_body=[
-			'Type "/cspell.json" Enter',
+			f'Type "/{FIRST_FILE_NAME}" Enter',
 			SLEEP_TIME,
 			'Type "t"',
 			SLEEP_TIME,
@@ -1714,7 +1765,7 @@ VHS_TAPES: list[VHSTape] = [
 			SLEEP_TIME,
 			'Type "t"',
 			SLEEP_TIME,
-			'Type "hh"',
+			'Type "h"',
 			SLEEP_TIME,
 			'Type "j"',
 			SLEEP_TIME,
@@ -1730,15 +1781,13 @@ VHS_TAPES: list[VHSTape] = [
 			VHSTape.create_tab_switch_keymap_toml(),
 		],
 		yazi_body=[
-			'Type "j"',
-			SLEEP_TIME,
-			'Type "ll"',
+			'Type "l"',
 			SLEEP_TIME,
 			'Type "2"',
 			SLEEP_TIME,
 			'Type "]"',
 			SLEEP_TIME,
-			'Type "hh"',
+			'Type "h"',
 			SLEEP_TIME,
 			VHSTape.press_key_repeatedly("]", 4),
 			SLEEP_TIME,
@@ -1801,9 +1850,6 @@ VHS_TAPES: list[VHSTape] = [
 	),
 	VHSTape(
 		name="Wraparound arrow",
-		scripts=[
-			VHSTape.edit_plugin_config("wraparound_file_navigation", True),
-		],
 		yazi_body=[
 			VHSTape.press_key_repeatedly("j", 20),
 			SLEEP_TIME,
@@ -1814,7 +1860,6 @@ VHS_TAPES: list[VHSTape] = [
 		name="Smooth wraparound arrow",
 		scripts=[
 			VHSTape.edit_plugin_config("smooth_scrolling", True),
-			VHSTape.edit_plugin_config("wraparound_file_navigation", True),
 			VHSTape.create_keymap_toml_with_keymap(
 				{
 					"d": "arrow 10",
@@ -1889,9 +1934,6 @@ VHS_TAPES: list[VHSTape] = [
 	),
 	VHSTape(
 		name="Wraparound parent arrow",
-		scripts=[
-			VHSTape.edit_plugin_config("wraparound_file_navigation", True),
-		],
 		yazi_body=[
 			'Type "l"',
 			SHORT_SLEEP_TIME,
@@ -1906,7 +1948,6 @@ VHS_TAPES: list[VHSTape] = [
 		name="Smooth wraparound parent arrow",
 		scripts=[
 			VHSTape.edit_plugin_config("smooth_scrolling", True),
-			VHSTape.edit_plugin_config("wraparound_file_navigation", True),
 			VHSTape.create_keymap_toml_with_keymap(
 				{
 					"J": "parent_arrow 1",
@@ -1944,21 +1985,19 @@ VHS_TAPES: list[VHSTape] = [
 		name="Editor must have hovered item",
 		editor="nano",
 		yazi_body=[
-			'Type "l"',
-			SLEEP_TIME,
-			'Type "/COMMIT_EDITMSG" Enter',
+			f'Type "/{FIRST_FILE_NAME}" Enter',
 			SLEEP_TIME,
 			'Type "j"',
 			"Space@300ms 3",
 			SLEEP_TIME,
-			'Type "gg"',
+			f'Type "/{EMPTY_FOLDER}" Enter',
 			SLEEP_TIME,
 			'Type "l"',
 			'Type "o"',
 			LONG_SLEEP_TIME,
 			'Type "h"',
 			SLEEP_TIME,
-			'Type "n"',
+			f'Type "/{FIRST_FILE_NAME}" Enter',
 			SLEEP_TIME,
 			'Type "o"',
 			SLEEP_TIME,
@@ -1972,14 +2011,12 @@ VHS_TAPES: list[VHSTape] = [
 			VHSTape.edit_plugin_config("must_have_hovered_item", False),
 		],
 		yazi_body=[
-			'Type "l"',
-			SLEEP_TIME,
-			'Type "/COMMIT_EDITMSG" Enter',
+			f'Type "/{FIRST_FILE_NAME}" Enter',
 			SLEEP_TIME,
 			'Type "j"',
 			"Space@300ms 3",
 			SLEEP_TIME,
-			'Type "gg"',
+			f'Type "/{EMPTY_FOLDER}" Enter',
 			SLEEP_TIME,
 			'Type "l"',
 			SLEEP_TIME,
@@ -1993,7 +2030,7 @@ VHS_TAPES: list[VHSTape] = [
 			SLEEP_TIME,
 			'Type "h"',
 			SLEEP_TIME,
-			'Type "n"',
+			f'Type "/{FIRST_FILE_NAME}" Enter',
 			SLEEP_TIME,
 			'Type "o"',
 			SLEEP_TIME,
@@ -2007,7 +2044,7 @@ VHS_TAPES: list[VHSTape] = [
 			VHSTape.edit_plugin_config("prompt", True),
 		],
 		yazi_body=[
-			'Type "/cspell.json" Enter',
+			f'Type "/{FIRST_FILE_NAME}" Enter',
 			"Space@300ms 3",
 			'Type "o"',
 			SLEEP_TIME,
@@ -2040,7 +2077,7 @@ VHS_TAPES: list[VHSTape] = [
 		name="Editor behaviour",
 		editor="nano",
 		yazi_body=[
-			'Type "/cspell.json" Enter',
+			f'Type "/{FIRST_FILE_NAME}" Enter',
 			"Space@300ms 3",
 			SLEEP_TIME,
 			'Type "o"',
@@ -2067,21 +2104,19 @@ VHS_TAPES: list[VHSTape] = [
 	VHSTape(
 		name="Pager must have hovered item",
 		yazi_body=[
-			'Type "l"',
-			SLEEP_TIME,
-			'Type "/COMMIT_EDITMSG" Enter',
+			f'Type "/{FIRST_FILE_NAME}" Enter',
 			SLEEP_TIME,
 			'Type "j"',
 			"Space@300ms 3",
 			SLEEP_TIME,
-			'Type "gg"',
+			f'Type "/{EMPTY_FOLDER}" Enter',
 			SLEEP_TIME,
 			'Type "l"',
 			'Type "i"',
 			LONG_SLEEP_TIME,
 			'Type "h"',
 			SLEEP_TIME,
-			'Type "n"',
+			f'Type "/{FIRST_FILE_NAME}" Enter',
 			SLEEP_TIME,
 			'Type "i"',
 			SLEEP_TIME,
@@ -2096,14 +2131,12 @@ VHS_TAPES: list[VHSTape] = [
 			VHSTape.edit_plugin_config("must_have_hovered_item", False),
 		],
 		yazi_body=[
-			'Type "l"',
-			SLEEP_TIME,
-			'Type "/COMMIT_EDITMSG" Enter',
+			f'Type "/{FIRST_FILE_NAME}" Enter',
 			SLEEP_TIME,
 			'Type "j"',
 			"Space@300ms 3",
 			SLEEP_TIME,
-			'Type "gg"',
+			f'Type "/{EMPTY_FOLDER}" Enter',
 			SLEEP_TIME,
 			'Type "l"',
 			SLEEP_TIME,
@@ -2119,7 +2152,7 @@ VHS_TAPES: list[VHSTape] = [
 			SLEEP_TIME,
 			'Type "h"',
 			SLEEP_TIME,
-			'Type "n"',
+			f'Type "/{FIRST_FILE_NAME}" Enter',
 			SLEEP_TIME,
 			'Type "i"',
 			SLEEP_TIME,
@@ -2134,7 +2167,7 @@ VHS_TAPES: list[VHSTape] = [
 			VHSTape.edit_plugin_config("prompt", True),
 		],
 		yazi_body=[
-			'Type "/cspell.json" Enter',
+			f'Type "/{FIRST_FILE_NAME}" Enter',
 			"Space@300ms 3",
 			'Type "i"',
 			SLEEP_TIME,
@@ -2168,7 +2201,7 @@ VHS_TAPES: list[VHSTape] = [
 	VHSTape(
 		name="Pager behaviour",
 		yazi_body=[
-			'Type "/cspell.json" Enter',
+			f'Type "/{FIRST_FILE_NAME}" Enter',
 			"Space@300ms 3",
 			SLEEP_TIME,
 			'Type "i"',
@@ -2212,6 +2245,8 @@ VHS_TAPES: list[VHSTape] = [
 			"Escape 2",
 			'Type "gg"',
 			SLEEP_TIME,
+			'Type "u"',
+			SLEEP_TIME,
 			'Type "i"',
 			SLEEP_TIME,
 			'Type "j"',
@@ -2234,12 +2269,55 @@ async def main():
 	# Get the arguments to the script
 	args = get_command_line_arguments()
 
-	# Change directory to the working directory
-	os.chdir(WORKING_DIRECTORY)
+	# Create the demonstration directory if it does not exist
+	if not os.path.isdir(DEMONSTRATION_DIRECTORY):
+		os.mkdir(DEMONSTRATION_DIRECTORY)
+
+	# Change directory to the demonstration directory
+	os.chdir(DEMONSTRATION_DIRECTORY)
 
 	# Create the VHS tapes directory if it does not exist
 	if not os.path.isdir(VHS_TAPES_DIRECTORY):
 		os.mkdir(VHS_TAPES_DIRECTORY)
+
+	# Create the files and folders for the demonstration
+	for folder in [EMPTY_FOLDER, "."] + [
+		f"folder_{number}" for number in range(1, 4)
+	]:
+		#
+
+		# If the folder is the empty folder
+		if folder == EMPTY_FOLDER:
+			#
+
+			# Create the folder
+			os.mkdir(folder)
+
+			# Continue the loop
+			continue
+
+		# Create an inner folder
+		Path(f"{folder}/inner_folder/").mkdir(parents=True)
+
+		# Iterate over the files for the folder
+		for file_number in range(1, 11):
+			#
+
+			# Create the file with the demonstration text
+			_ = Path(f"{folder}/file_{file_number}.txt").write_text(
+				DEMONSTRATION_TEXT
+			)
+
+	# The path to the file in the folder with subdirectory
+	file_in_folder_with_subdirectory = Path(
+		f"./{FOLDER_WITH_SUBDIRECTORY}/subdirectory/hi_there.txt"
+	)
+
+	# Create the folder with the subdirectory
+	file_in_folder_with_subdirectory.parent.mkdir(parents=True)
+
+	# Write to the file in the folder with subdirectory
+	_ = file_in_folder_with_subdirectory.write_text("Skipped!")
 
 	# Get the current theme
 	darkman_result = subprocess.run(["darkman", "get"], capture_output=True)
@@ -2286,10 +2364,10 @@ async def main():
 		file_path = vhs_tape.get_file_path()
 
 		# Create the video for the VHS tape
-		_ = subprocess.run(["vhs", file_path])
+		_ = subprocess.run(["vhs", file_path], check=True)
 
-	# Remove the VHS tapes directory
-	shutil.rmtree(VHS_TAPES_DIRECTORY)
+	# Remove the demonstration directory
+	shutil.rmtree(DEMONSTRATION_DIRECTORY)
 
 	# Set the theme back to light if the theme was initially light
 	if initial_theme == "light":

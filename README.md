@@ -84,7 +84,7 @@ ya pack -u
 | `skip_single_subdirectory_on_leave` | `true` or `false`                                         | `true`    | Skip directories when there is only one subdirectory and no other files when leaving directories. This behaviour can be turned off by passing the `--no-skip` flag to the `leave` command.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | `smooth_scrolling`                  | `true` or `false`                                         | `false`   | Self-explanatory, this option enables smooth scrolling.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | `scroll_delay`                      | A floating point number, like `0.02`, `0.05`, `0.1`, etc. | `0.02`    | The delay, in seconds, between each call of the `arrow` command to scroll through the file list. The smaller the `scroll_delay`, the faster the file list is scrolled. Avoid setting a `scroll_delay` that is more than `1` second. This is due to the plugin being asynchronous, which will result in the plugin continuing to call the `arrow` command even when the directory has changed, or when you are in a different application that doesn't block Yazi, resulting in unexpected behaviour.                                                                                                                                                                                                                                                                                                                              |
-| `wraparound_file_navigation`        | `true` or `false`                                         | `false`   | Wrap around from the bottom to the top or from the top to the bottom when using the `arrow` or `parent_arrow` command to navigate.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `wraparound_file_navigation`        | `true` or `false`                                         | `true`    | Wrap around from the bottom to the top or from the top to the bottom when using the `arrow` or `parent_arrow` command to navigate.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 
 If you would like to use the default configuration, which is shown below,
 you don't need to add anything to your `~/.config/yazi/init.lua`
@@ -116,7 +116,7 @@ require("augment-command"):setup({
     skip_single_subdirectory_on_leave = true,
     smooth_scrolling = false,
     scroll_delay = 0.02,
-    wraparound_file_navigation = false,
+    wraparound_file_navigation = true,
 })
 ```
 
@@ -140,7 +140,7 @@ require("augment-command"):setup({
     enter_directory_after_creation = true,
     extract_retries = 5,
     smooth_scrolling = true,
-    wraparound_file_navigation = true,
+    wraparound_file_navigation = false,
 })
 ```
 
@@ -835,7 +835,9 @@ in your `keymap.toml` file.
 
   [smooth-wraparound-arrow-video]
 
-- Otherwise, it'll behave like the default `arrow` command.
+- Otherwise, it'll behave like the default `arrow 1` command.
+- `--no-wrap` flag to prevent the `arrow` command from wrapping around,
+  even when `wraparound_file_navigation` is set to `true`.
 
 ## New commands
 
@@ -893,6 +895,9 @@ in your `keymap.toml` file.
   run = ["leave", "arrow 1", "enter"]
   desc = "Move down in the parent directory"
   ```
+
+- `--no-wrap` flag to prevent the `parent_arrow` command from
+  wrapping around, even when `wraparound_file_navigation` is set to `true`.
 
 ### Editor (`editor`)
 
