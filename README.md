@@ -1280,7 +1280,7 @@ You can view the full licence in the [`LICENSE`][Licence] file.
 [archive-hovered-item-optional-video]: https://github.com/user-attachments/assets/213f82d2-fe70-4c42-8f24-b09c7d7d7dfe
 [archive-prompt-video]: https://github.com/user-attachments/assets/20366432-f195-4531-bb08-9b3f0e8f848e
 [archive-behaviour-video]: https://github.com/user-attachments/assets/dcbe9909-db40-4f96-8591-c1a104b63381
-[archive-encrypt-files-video]: https://github.com/user-attachments/assets/15286d95-608b-4102-8d8e-c37eadde445e
+[archive-encrypt-files-video]: https://github.com/user-attachments/assets/08b98e01-2cc2-486e-bd4d-bfbe9da792db
 [archive-reveal-created-archive-video]: https://github.com/user-attachments/assets/e908afb8-c431-4e6d-8834-c02216461076
 [archive-remove-archived-files-video]: https://github.com/user-attachments/assets/d0495292-6508-4417-b378-033e6acc0c4d
 
