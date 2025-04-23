@@ -1204,7 +1204,9 @@ You can view the full licence in the [`LICENSE`][Licence] file.
 [extract-recursively-extract-archives-video]: https://github.com/user-attachments/assets/d8978671-9149-45b7-9a92-21c1697baa7d
 [extract-encrypted-archive-video]: https://github.com/user-attachments/assets/24701662-0c19-4478-b576-75d9284cd695
 [extract-reveal-extracted-item-video]: https://github.com/user-attachments/assets/170bf187-dc2a-4310-aa86-5dc9a864aced
-[extract-remove-extracted-archive-video]: https://github.com/user-attachments/assets/767260c9-1ff4-4657-bf10-dbba467f1458
+[extract-remove-extracted-archive-video]: 
+https://github.com/user-attachments/assets/9b2e625a-a7f8-4678-8a26-265a7d3b8e0c
+
 
 <!-- Enter command -->
 
