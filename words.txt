@@ -40,6 +40,10 @@ Neighbour
 neighbour
 Stabilised
 stabilised
+Archiver
+archiver
+Archivers
+archivers
 Yazi
 yazi
 Hankertrix

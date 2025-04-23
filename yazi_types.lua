@@ -1380,7 +1380,7 @@
 ui = ui
 
 -- Type the Url global
----@type Url
+---@type fun(path: string): Url
 Url = Url
 
 -- Type the cx global
@@ -1404,7 +1404,7 @@ ps = ps
 fs = fs
 
 -- Type the Command global
----@type Command
+---@type Command | fun(command: string): Command
 Command = Command
 
 -- Type the rt global

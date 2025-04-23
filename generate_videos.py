@@ -135,15 +135,17 @@ class Script:
 	def __init__(
 		self,
 		*,
-		setup: str = "",
-		clean_up: str = "",
+		setup: str | list[str] = "",
+		clean_up: str | list[str] = "",
 		required_programs: list[str] | None = None,
 	):
 		"Initialise the script for a VHS tape"
 
 		# Save all the given variables
-		self.setup: str = setup
-		self.clean_up: str = clean_up
+		self.setup: str = setup if isinstance(setup, str) else "\n".join(setup)
+		self.clean_up: str = (
+			clean_up if isinstance(clean_up, str) else "\n".join(clean_up)
+		)
 		self.required_programs: list[str] = (
 			required_programs if required_programs is not None else []
 		)
@@ -284,10 +286,12 @@ class VHSTape:
 			CHANGE_TO_WORKING_DIRECTORY,
 			"\n".join(self.setup),
 			CLEAR_SCREEN,
-			"Show",
 
 			# Set the normal typing speed
 			NORMAL_TYPING_SPEED,
+
+			# Show the output
+			"Show",
 
 			# The shell body of the VHS tape
 			"\n".join(self.shell_body),
@@ -407,7 +411,7 @@ class VHSTape:
 		)
 
 		# The setup commands
-		setup_commands = "\n".join([edit_config_command, APPLY_CONFIG_COMMAND])
+		setup_commands = [edit_config_command, APPLY_CONFIG_COMMAND]
 
 		# The clean up command to undo the edit to the init.lua file
 		clean_up_edit_config_command = (
@@ -417,9 +421,7 @@ class VHSTape:
 		)
 
 		# The clean up commands
-		clean_up_commands = "\n".join(
-			[clean_up_edit_config_command, APPLY_CONFIG_COMMAND]
-		)
+		clean_up_commands = [clean_up_edit_config_command, APPLY_CONFIG_COMMAND]
 
 		# Return the script object
 		return Script(
@@ -485,16 +487,14 @@ class VHSTape:
 		)
 
 		# The command to create the nested archive
-		create_nested_archive_command = "\n".join(
-			[
-				"Type `echo '{}' > {}` Enter".format(
-					text_file_content, text_file_name
-				),
-				nested_archive_commands,
-				create_archive_command,
-				clean_up_commands,
-			]
-		)
+		create_nested_archive_command = [
+			"Type `echo '{}' > {}` Enter".format(
+				text_file_content, text_file_name
+			),
+			nested_archive_commands,
+			create_archive_command,
+			clean_up_commands,
+		]
 
 		# Return the script object
 		return Script(
@@ -537,7 +537,7 @@ class VHSTape:
 
 		# Return the script object
 		return Script(
-			setup="\n".join(setup_scripts),
+			setup=setup_scripts,
 			required_programs=required_programs,
 		)
 
@@ -571,7 +571,7 @@ class VHSTape:
 
 		# Return the script object
 		return Script(
-			setup="\n".join(create_encrypted_archive_commands),
+			setup=create_encrypted_archive_commands,
 			required_programs=["echo", "7z", "rm"],
 		)
 
@@ -1060,6 +1060,55 @@ VHS_TAPES: list[VHSTape] = [
 		],
 	),
 	VHSTape(
+		name="Extract reveal extracted item",
+		files_and_directories=[
+			"demo.zip",
+			"demo",
+			"demo_1",
+			"demo_2",
+		],
+		scripts=[
+			VHSTape.create_keymap_toml_with_keymap(
+				{DEFAULT_KEY: "extract --reveal"}
+			),
+			VHSTape.create_nested_archive(4, "{0}"),
+		],
+		yazi_body=[
+			'Type "/{0}" Enter',
+			SLEEP_TIME,
+			f'Type "{DEFAULT_KEY}"',
+			SLEEP_TIME,
+			'Type "h"',
+			SLEEP_TIME,
+			'Type "n"',
+			SLEEP_TIME,
+			f'Type "{DEFAULT_KEY}"',
+			SLEEP_TIME,
+			'Type "h"',
+			SLEEP_TIME,
+			'Type "n"',
+			SLEEP_TIME,
+			f'Type "{DEFAULT_KEY}"',
+		],
+	),
+	VHSTape(
+		name="Extract remove extracted archive",
+		files_and_directories=["demo.zip"],
+		scripts=[
+			VHSTape.create_keymap_toml_with_keymap(
+				{DEFAULT_KEY: "extract --remove"}
+			),
+			VHSTape.create_nested_archive(4, "{0}"),
+		],
+		yazi_body=[
+			'Type "/{0}" Enter',
+			SLEEP_TIME,
+			f'Type "{DEFAULT_KEY}"',
+			SLEEP_TIME,
+			'Type "/{0}" Enter',
+		],
+	),
+	VHSTape(
 		name="Smart enter",
 		yazi_body=[
 			'Type "l"',
@@ -1340,8 +1389,12 @@ VHS_TAPES: list[VHSTape] = [
 			"file_to_overwrite.txt",
 		],
 		scripts=[
-			Script(setup="Type `mkdir '{5}'` Enter"),
-			Script(setup="Type `touch '{6}'` Enter"),
+			Script(
+				setup="Type `mkdir '{5}'` Enter", required_programs=["mkdir"]
+			),
+			Script(
+				setup="Type `touch '{6}'` Enter", required_programs=["touch"]
+			),
 		],
 		yazi_body=[
 			'Type "_{0}" Enter',
@@ -1694,8 +1747,9 @@ VHS_TAPES: list[VHSTape] = [
 		scripts=[
 			VHSTape.edit_plugin_config("smart_paste", True),
 			Script(
-				setup="Type `echo '{}' ".format(DEFAULT_TEXT_FILE_CONTENT)
+				setup=f"Type `echo '{DEFAULT_TEXT_FILE_CONTENT}' "
 				+ "> {0}` Enter",
+				required_programs=["echo"],
 			),
 		],
 		yazi_body=[
@@ -1822,17 +1876,16 @@ VHS_TAPES: list[VHSTape] = [
 	VHSTape(
 		name="Smooth arrow",
 		scripts=[
+			VHSTape.edit_plugin_config("wraparound_file_navigation", False),
 			VHSTape.edit_plugin_config("smooth_scrolling", True),
 			VHSTape.create_keymap_toml_with_keymap(
 				{
-					"j": "arrow 25",
-					"k": "arrow -25",
+					"j": "arrow 10",
+					"k": "arrow -10",
 				}
 			),
 		],
 		yazi_body=[
-			"Type 'gh'",
-			SLEEP_TIME,
 			"Type 'j'",
 			SLEEP_TIME,
 			"Type 'j'",
@@ -1868,8 +1921,6 @@ VHS_TAPES: list[VHSTape] = [
 			),
 		],
 		yazi_body=[
-			"Type 'gh'",
-			SLEEP_TIME,
 			VHSTape.press_key_repeatedly("j", 5),
 			SLEEP_TIME,
 			"Type 'u'",
@@ -1887,6 +1938,9 @@ VHS_TAPES: list[VHSTape] = [
 	),
 	VHSTape(
 		name="Parent arrow",
+		scripts=[
+			VHSTape.edit_plugin_config("wraparound_file_navigation", False),
+		],
 		yazi_body=[
 			'Type "l"',
 			SHORT_SLEEP_TIME,
@@ -1907,14 +1961,12 @@ VHS_TAPES: list[VHSTape] = [
 			VHSTape.edit_plugin_config("smooth_scrolling", True),
 			VHSTape.create_keymap_toml_with_keymap(
 				{
-					"J": "parent_arrow 25",
-					"K": "parent_arrow -25",
+					"J": "parent_arrow 10",
+					"K": "parent_arrow -10",
 				}
 			),
 		],
 		yazi_body=[
-			"Type 'gh'",
-			SLEEP_TIME,
 			"Type 'l'",
 			SLEEP_TIME,
 			"Type 'J'",
@@ -1958,8 +2010,6 @@ VHS_TAPES: list[VHSTape] = [
 			),
 		],
 		yazi_body=[
-			"Type 'gh'",
-			SLEEP_TIME,
 			"Type 'l'",
 			SLEEP_TIME,
 			VHSTape.press_key_repeatedly("J", 5),
@@ -1970,7 +2020,9 @@ VHS_TAPES: list[VHSTape] = [
 			SLEEP_TIME,
 			"Type 'h'",
 			SLEEP_TIME,
-			"Type '/vm-stuff' Enter",
+			f'Type "/{FIRST_FILE_NAME}" Enter',
+			SLEEP_TIME,
+			"Type 'k'",
 			SLEEP_TIME,
 			"Type 'l'",
 			SLEEP_TIME,
@@ -1979,6 +2031,239 @@ VHS_TAPES: list[VHSTape] = [
 			"Type 'd'",
 			SLEEP_TIME,
 			"Type 'd'",
+		],
+	),
+	VHSTape(
+		name="Archive must have hovered item",
+		files_and_directories=["demo.zip"],
+		scripts=[
+			VHSTape.edit_plugin_config("reveal_created_archive", False),
+			VHSTape.create_keymap_toml_with_keymap({DEFAULT_KEY: "archive"}),
+		],
+		yazi_body=[
+			f'Type "/{FIRST_FILE_NAME}" Enter',
+			SLEEP_TIME,
+			'Type "j"',
+			"Space@300ms 3",
+			SLEEP_TIME,
+			f'Type "/{EMPTY_FOLDER}" Enter',
+			SLEEP_TIME,
+			'Type "l"',
+			SLEEP_TIME,
+			f'Type "{DEFAULT_KEY}"',
+			LONG_SLEEP_TIME,
+			'Type "h"',
+			SLEEP_TIME,
+			f'Type "/{FIRST_FILE_NAME}" Enter',
+			SLEEP_TIME,
+			f'Type "{DEFAULT_KEY}"',
+			SLEEP_TIME,
+			'Type "{0}" Enter',
+			SLEEP_TIME,
+			'Type "gg"',
+			SLEEP_TIME,
+			'Type "/{0}" Enter',
+		],
+	),
+	VHSTape(
+		name="Archive hovered item optional",
+		files_and_directories=["demo.zip", "**/demo.zip"],
+		scripts=[
+			VHSTape.edit_plugin_config("must_have_hovered_item", False),
+			VHSTape.edit_plugin_config("reveal_created_archive", False),
+			VHSTape.create_keymap_toml_with_keymap({DEFAULT_KEY: "archive"}),
+		],
+		yazi_body=[
+			f'Type "/{FIRST_FILE_NAME}" Enter',
+			SLEEP_TIME,
+			'Type "j"',
+			"Space@300ms 3",
+			SLEEP_TIME,
+			f'Type "/{EMPTY_FOLDER}" Enter',
+			SLEEP_TIME,
+			'Type "l"',
+			SLEEP_TIME,
+			f'Type "{DEFAULT_KEY}"',
+			SLEEP_TIME,
+			'Type "{0}" Enter',
+			SLEEP_TIME,
+			'Type "/{0}" Enter',
+			SLEEP_TIME,
+			'Type "h"',
+			SLEEP_TIME,
+			f'Type "/{FIRST_FILE_NAME}" Enter',
+			SLEEP_TIME,
+			f'Type "{DEFAULT_KEY}"',
+			SLEEP_TIME,
+			'Type "{0}" Enter',
+			SLEEP_TIME,
+			'Type "/{0}" Enter',
+		],
+	),
+	VHSTape(
+		name="Archive prompt",
+		files_and_directories=[
+			"demo.zip",
+			"demo-1.zip",
+			"demo-2.zip",
+		],
+		scripts=[
+			VHSTape.edit_plugin_config("prompt", True),
+			VHSTape.edit_plugin_config("reveal_created_archive", False),
+			VHSTape.create_keymap_toml_with_keymap({DEFAULT_KEY: "archive"}),
+		],
+		yazi_body=[
+			f'Type "/{FIRST_FILE_NAME}" Enter',
+			SLEEP_TIME,
+			'Type "j"',
+			"Space@300ms 3",
+			SLEEP_TIME,
+			f'Type "{DEFAULT_KEY}"',
+			SLEEP_TIME,
+			'Type "h" Enter',
+			SLEEP_TIME,
+			'Type "{0}" Enter',
+			SLEEP_TIME,
+			'Type "gg"',
+			SLEEP_TIME,
+			'Type "/{0}" Enter',
+			SLEEP_TIME,
+			f'Type "/{FIRST_FILE_NAME}" Enter',
+			'Type "jjjj"',
+			SLEEP_TIME,
+			f'Type "{DEFAULT_KEY}"',
+			SLEEP_TIME,
+			'Type "s" Enter',
+			SLEEP_TIME,
+			'Type "{1}" Enter',
+			SLEEP_TIME,
+			'Type "gg"',
+			SLEEP_TIME,
+			'Type "/{1}" Enter',
+			SLEEP_TIME,
+			f'Type "/{FIRST_FILE_NAME}" Enter',
+			'Type "jjjj"',
+			SLEEP_TIME,
+			f'Type "{DEFAULT_KEY}"',
+			SLEEP_TIME,
+			"Enter",
+			SLEEP_TIME,
+			'Type "{2}" Enter',
+			SLEEP_TIME,
+			'Type "gg"',
+			SLEEP_TIME,
+			'Type "/{2}" Enter',
+		],
+	),
+	VHSTape(
+		name="Archive behaviour",
+		files_and_directories=[
+			"demo.zip",
+			"demo-1.zip",
+			"demo-2.zip",
+		],
+		scripts=[
+			VHSTape.edit_plugin_config("reveal_created_archive", False),
+			VHSTape.create_keymap_toml_with_keymap({DEFAULT_KEY: "archive"}),
+		],
+		yazi_body=[
+			f'Type "/{FIRST_FILE_NAME}" Enter',
+			SLEEP_TIME,
+			'Type "j"',
+			"Space@300ms 3",
+			'Type "k"',
+			SLEEP_TIME,
+			f'Type "{DEFAULT_KEY}"',
+			SLEEP_TIME,
+			'Type "{0}" Enter',
+			SLEEP_TIME,
+			'Type "gg"',
+			SLEEP_TIME,
+			'Type "/{0}" Enter',
+			SLEEP_TIME,
+			f'Type "/{FIRST_FILE_NAME}" Enter',
+			SLEEP_TIME,
+			f'Type "{DEFAULT_KEY}"',
+			SLEEP_TIME,
+			'Type "{1}" Enter',
+			SLEEP_TIME,
+			'Type "gg"',
+			SLEEP_TIME,
+			'Type "/{1}" Enter',
+		],
+	),
+	VHSTape(
+		name="Archive encrypt files",
+		files_and_directories=["demo.7z"],
+		scripts=[
+			VHSTape.edit_plugin_config("reveal_created_archive", False),
+			VHSTape.create_keymap_toml_with_keymap(
+				{DEFAULT_KEY: "archive --encrypt --encrypt-headers"}
+			),
+		],
+		yazi_body=[
+			f'Type "/{FIRST_FILE_NAME}" Enter',
+			SLEEP_TIME,
+			f'Type "{DEFAULT_KEY}"',
+			SLEEP_TIME,
+			'Type "{0}" Enter',
+			SLEEP_TIME,
+			'Type "{0}" Enter',
+			SLEEP_TIME,
+			'Type "/{0}" Enter',
+		],
+	),
+	VHSTape(
+		name="Archive reveal created archive",
+		files_and_directories=["demo.zip"],
+		scripts=[
+			VHSTape.create_keymap_toml_with_keymap({DEFAULT_KEY: "archive"}),
+		],
+		yazi_body=[
+			f'Type "/{FIRST_FILE_NAME}" Enter',
+			SLEEP_TIME,
+			f'Type "{DEFAULT_KEY}"',
+			SLEEP_TIME,
+			'Type "{0}" Enter',
+		],
+	),
+	VHSTape(
+		name="Archive remove archived files",
+		files_and_directories=[
+			"demo.zip",
+			"demo-1.txt",
+			"demo-2.txt",
+			"demo-3.txt",
+			"demo-4.txt",
+			"demo-5.txt",
+		],
+		scripts=[
+			VHSTape.edit_plugin_config("reveal_created_archive", False),
+			VHSTape.create_keymap_toml_with_keymap(
+				{DEFAULT_KEY: "archive --remove"}
+			),
+			Script(
+				setup=[
+					f"Type `echo '{DEFAULT_TEXT_FILE_CONTENT}' > "
+					+ "{"
+					+ str(i)
+					+ "}` Enter"
+					for i in range(1, 6)
+				],
+				required_programs=["echo"],
+			),
+		],
+		yazi_body=[
+			'Type "/{1}" Enter',
+			SLEEP_TIME,
+			"Space@300ms 5",
+			'Type "k"',
+			SLEEP_TIME,
+			f'Type "{DEFAULT_KEY}"',
+			SLEEP_TIME,
+			'Type "{0}" Enter',
+			SLEEP_TIME,
+			'Type "/{1}" Enter',
 		],
 	),
 	VHSTape(

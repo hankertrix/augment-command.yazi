@@ -31,6 +31,7 @@ plugin.
   - [Arrow (`arrow`)](#arrow-arrow)
 - [New commands](#new-commands)
   - [Parent arrow (`parent_arrow`)](#parent-arrow-parent_arrow)
+  - [Archive (`archive`)](#archive-archive)
   - [Editor (`editor`)](#editor-editor)
   - [Pager (`pager`)](#pager-pager)
 - [Usage](#usage)
@@ -79,6 +80,10 @@ ya pack -u
 | `extract_retries`                   | An integer, like `1`, `3`, `10`, etc.                     | `3`       | This option determines how many times the plugin will retry opening an encrypted or password-protected archive when a wrong password is given. This value plus 1 is the total number of times the plugin will try opening an encrypted or password-protected archive.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | `recursively_extract_archives`      | `true` or `false`                                         | `true`    | This option determines whether the plugin will extract all archives inside an archive file recursively. If this option is set to `false`, archive files inside an archive will not be extracted, and you will have to manually extract them yourself.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | `preserve_file_permissions`         | `true` or `false`                                         | `false`   | This option determines whether to preserve the file permissions of the items in the extracted archive. Setting this option to `true` will preserve the file permissions of the extracted items. It requires the [`tar` command][gnu-tar-link] and will only work on `tar` archives, or tarballs, as [`7z`][7z-link] does not support preserving file permissions. You will receive a warning if you have this option set but [`tar`][gnu-tar-link] is not installed. Do note that there are significant security implications of setting this option to `true`, as any executable file or binary in an archive can be immediately executed after it is extracted, which can compromise your system if you extract a malicious archive. As such, the default value is `false`, and it is strongly recommended to leave it as such. |
+| `encrypt_archives`                  | `true` or `false`                                         | `false`   | This option determines whether the plugin will encrypt the archives it creates. If this option is set to `true`, the plugin will prompt for the archive password when creating an archive to encrypt it with.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| `encrypt_archive_headers`           | `true` or `false`                                         | `false`   | This option determines whether the plugin will encrypt the headers of the archives it creates. If this option is set to `true`, the plugin will encrypt the headers of all `7z` archives, which means the file list cannot be previewed and Yazi will not be able to preview the contents of the archive. This encryption is only available to `7z` archives, so the plugin will show a warning message when this option is used, but the selected archive file type, does not support header encryption, like a `zip` archive, but will continue with the creation of the encrypted archive. This option has no effect when the archive is not encrypted, which is when `encrypt_archives` is set to `false`.                                                                                                                    |
+| `reveal_created_archive`            | `true` or `false`                                         | `true`    | This option determines whether the plugin will automatically hover over the created archive once created.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `remove_archived_files`             | `true` or `false`                                         | `false`   | This option determines whether the plugin will automatically remove the files that were added to the created archive.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | `must_have_hovered_item`            | `true` or `false`                                         | `true`    | This option stops the plugin from executing any commands when there is no hovered item.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | `skip_single_subdirectory_on_enter` | `true` or `false`                                         | `true`    | Skip directories when there is only one subdirectory and no other files when entering directories. This behaviour can be turned off by passing the `--no-skip` flag to the `enter` or `open` commands.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | `skip_single_subdirectory_on_leave` | `true` or `false`                                         | `true`    | Skip directories when there is only one subdirectory and no other files when leaving directories. This behaviour can be turned off by passing the `--no-skip` flag to the `leave` command.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
@@ -111,6 +116,10 @@ require("augment-command"):setup({
     extract_retries = 3,
     recursively_extract_archives = true,
     preserve_file_permissions = false,
+    encrypt_archives = false,
+    encrypt_archive_headers = false,
+    reveal_created_archive = true,
+    remove_archived_files = false,
     must_have_hovered_item = true,
     skip_single_subdirectory_on_enter = true,
     skip_single_subdirectory_on_leave = true,
@@ -139,6 +148,7 @@ require("augment-command"):setup({
     open_file_after_creation = true,
     enter_directory_after_creation = true,
     extract_retries = 5,
+    encrypt_archives = true,
     smooth_scrolling = true,
     wraparound_file_navigation = false,
 })
@@ -148,7 +158,8 @@ require("augment-command"):setup({
 
 All commands that can operate on multiple files and directories,
 like `open`, `rename`, `remove` and `shell`,
-as well as the new commands `extract`, `editor` and `pager`,
+as well as the new commands `extract`, `archive`,
+`editor` and `pager`,
 now determine an item group to operate on.
 By default, the command will operate on the hovered item,
 unless the hovered item is also selected,
@@ -182,9 +193,11 @@ then it will operate on the selected items.
 
 - When `smart_enter` is set to `true`,
   it calls the `enter` command when the hovered item is a directory.
-- `--smart` flag to use one command to `open` files and `enter` directories.
-  This flag will cause the `open` command to call the `enter` command when
-  the hovered item is a directory even when `smart_enter` is set to `false`.
+- `--smart` flag to use one command to `open` files
+  and `enter` directories.
+  This flag will cause the `open` command to call
+  the `enter` command when the hovered item is a directory
+  even when `smart_enter` is set to `false`.
   This allows you to set a key to use this behaviour
   with the `open` command instead of using it for
   every `open` command.
@@ -221,16 +234,18 @@ then it will operate on the selected items.
 
 ### Extract (`extract`)
 
-- Technically this is a new command, as Yazi does not provide an `extract`
-  command. However, Yazi does provide a built-in plugin called `extract`,
+- Technically this is a new command,
+  as Yazi does not provide an `extract` command.
+  However, Yazi does provide a built-in plugin called `extract`,
   so this command is included in the
   [augmented commands section](#augmented-commands) instead of the
   [new commands section](#new-commands).
 - This command requires the [`7z` or `7zz` command][7z-link] to
   be present to extract the archives, as well as the
   [`file` command][file-command-link] to check if a file is an archive or not.
-- You are not meant to use this command directly. However, you can do so
-  if you like, as the extract command is also augmented as stated in
+- You are not meant to use this command directly.
+  However, you can do so if you like,
+  as the extract command is also augmented as stated in
   [this section above][augment-section].
 
   Videos:
@@ -251,21 +266,24 @@ then it will operate on the selected items.
 
     [extract-behaviour-video]
 
-- Instead, this command is intended to replace the built-in `extract` plugin,
-  which is used for the `extract` opener. This way, you can use the
+- Instead, this command is intended to replace the
+  built-in `extract` plugin, which is used for the `extract` opener.
+  This way, you can use the
   features that come with the augmented `extract` command, like
   recursively extracting archives, with the `open` command.
-  This is the intended way to use this command, as the `open` command is
-  meant to be the command that opens everything, so it is a bit
-  counterintuitive to have to use a separate key to extract archives.
+  This is the intended way to use this command,
+  as the `open` command is meant to be the command
+  that opens everything, so it is a bit counterintuitive
+  to have to use a separate key to extract archives.
 
   To replace the built-in `extract` plugin, copy the
   [`extract` openers section][yazi-yazi-toml-extract-openers]
   in [Yazi's default `yazi.toml`][yazi-yazi-toml] into your `yazi.toml`,
-  which is located at `~/.config/yazi/yazi.toml` for Linux and macOS, and
-  `%AppData%\yazi\config\yazi.toml` file on Windows.
-  Make sure that the `extract` openers are under the `opener` key in your
-  `yazi.toml`. Then replace `extract` with `augmented-extract`,
+  which is located at `~/.config/yazi/yazi.toml` for Linux and macOS,
+  and `%AppData%\yazi\config\yazi.toml` file on Windows.
+  Make sure that the `extract` openers are
+  under the `opener` key in your `yazi.toml`.
+  Then replace `extract` with `augmented-extract`,
   and you will be using the plugin's `extract` command instead of
   Yazi's built-in `extract` plugin.
 
@@ -282,7 +300,8 @@ then it will operate on the selected items.
   ]
   ```
 
-  If that exceeds your editor's line length limit, another way to do it is:
+  If that exceeds your editor's line length limit,
+  another way to do it is:
 
   ```toml
   # ~/.config/yazi/yazi.toml for Linux and macOS
@@ -331,7 +350,7 @@ then it will operate on the selected items.
 
   Video:
 
-  [extract-encrypted-archive]
+  [extract-encrypted-archive-video]
 
 - The `preserve_file_permissions` configuration option applies to
   the `extract` command, and requires the [`tar` command][gnu-tar-link]
@@ -353,24 +372,43 @@ then it will operate on the selected items.
   if it finds the [`gtar` command][gnu-tar-link] instead
   of the [Apple provided `tar` command][apple-tar-link].
 
-  Setting the `preserve_file_permissions` configuration option to `true`
-  will preserve the file permissions of the files contained in a `tar`
-  archive or tarball.
+  Setting the `preserve_file_permissions` configuration
+  option to `true` will preserve the file permissions
+  of the files contained in a `tar` archive or tarball.
 
-  This has considerable security implications, as executables extracted from
-  all `tar` archives can be immediately executed on your system, possibly
-  compromising your system if you extract a malicious `tar` archive.
-  Hence, this option is set to `false` by default, and should be left as such.
-  This option is provided for your convenience, but do seriously consider
-  if such convenience is worth the risk of extracting a malicious `tar`
-  archive that executes malware on your system.
+  This has considerable security implications,
+  as executables extracted from
+  all `tar` archives can be immediately executed on your system,
+  possibly compromising your system if you extract a
+  malicious `tar` archive.
+  Hence, this option is set to `false` by default,
+  and should be left as such.
+  This option is provided for your convenience,
+  but do seriously consider if such convenience
+  is worth the risk of extracting a malicious `tar` archive
+  that executes malware on your system.
+
+- `--reveal` flag to automatically hover the files
+  that have been extracted.
+
+  Video:
+
+  [extract-reveal-extracted-item-video]
+
+- `--remove` flag to automatically remove the archive
+  after the files have been extracted.
+
+  Video:
+
+  [extract-remove-extracted-archive-video]
 
 ### Enter (`enter`)
 
 - When `smart_enter` is set to `true`,
   it calls the `open` command when the hovered item is a file.
-- `--smart` flag to use one command to `enter` directories and `open` files.
-  This flag will cause the `enter` command to call the `open` command when
+- `--smart` flag to use one command to `enter`
+  directories and `open` files. This flag will cause
+  the `enter` command to call the `open` command when
   the selected items or the hovered item is a file,
   even when `smart_enter` is set to `false`.
   This allows you to set a key to use this behaviour
@@ -462,30 +500,36 @@ then it will operate on the selected items.
 
 ### Create (`create`)
 
-- You should use Yazi's default `create` command instead of this augmented
-  `create` command if you don't want the paths without file extensions to
-  be created as directories by default, and you don't care about automatically
+- You should use Yazi's default `create` command instead
+  of this augmented `create` command if you
+  don't want the paths without file extensions to be created
+  as directories by default, and you don't care about automatically
   opening and entering the created file and directory respectively.
-- The `create` command has a different behaviour from Yazi's `create` command.
+- The `create` command has a different behaviour from
+  Yazi's `create` command.
   When the path given to the command doesn't have a file extension,
   the `create` command will create a directory instead of a file,
   unlike Yazi's `create` command. Other that this major difference,
-  the `create` command functions identically to Yazi's `create` command,
+  the `create` command functions identically
+  to Yazi's `create` command,
   which means that you can use a trailing `/` on Linux and macOS,
   or `\` on Windows to create a directory. It will also recursively
   create directories to ensure that the path given exists.
-  It also supports all the options supported by Yazi's `create` command,
+  It also supports all the options supported
+  by Yazi's `create` command,
   so you can pass them to the command and expect the same behaviour.
 - The rationale for this behaviour is that creating a path without
-  a file extension usually means you intend to create a directory instead
-  of a file, as files usually have file extensions.
+  a file extension usually means you intend to
+  create a directory instead of a file,
+  as files usually have file extensions.
 
   Video:
 
   [create-behaviour-video]
 
-- When `open_file_after_creation` is set to `true`, the `create` command
-  will `open` the created file. This behaviour can also be enabled by
+- When `open_file_after_creation` is set to `true`,
+  the `create` command will `open` the created file.
+  This behaviour can also be enabled by
   passing the `--open` flag to the `create` command.
 
   Video:
@@ -501,16 +545,17 @@ then it will operate on the selected items.
 
   [create-and-enter-directories-video]
 
-  To enable both behaviours with flags, just pass both the `--open` flag
-  and the `--enter` flag to the `create` command.
+  To enable both behaviours with flags, just pass both the
+  `--open` flag and the `--enter` flag to the `create` command.
 
   Video:
 
   [create-and-open-files-and-directories-video]
 
 - If you would like to use the behaviour of Yazi's `create` command,
-  probably because you would like to automatically open and enter the created
-  file and directory respectively, you can either set
+  probably because you would like to automatically open
+  and enter the created file and directory respectively,
+  you can either set
   `use_default_create_behaviour` to `true`,
   or pass the `--default-behaviour` flag to the `create` command.
 
@@ -545,9 +590,9 @@ then it will operate on the selected items.
     [shell-behaviour-video]
 
 - To use this command, the syntax is exactly the same as the default
-  `shell` command provided by Yazi. You just provide the command you want and
-  provide any Yazi shell variable, which is documented
-  [here][yazi-shell-variables].
+  `shell` command provided by Yazi. You just provide
+  the command you want and provide any Yazi shell variable,
+  which is documented [here][yazi-shell-variables].
   The plugin will automatically replace the shell variable you give
   with the file paths for the item group before executing the command.
 
@@ -577,8 +622,10 @@ then it will operate on the selected items.
   desc = "Open the pager"
   ```
 
-  It is also used in the `editor` command, since you usually wouldn't use
-  your text editor to open directories, especially if you are already using
+  It is also used in the `editor` command,
+  since you usually wouldn't use
+  your text editor to open directories,
+  especially if you are already using
   a terminal file manager like [Yazi][yazi-link].
   The `editor` command is essentially:
 
@@ -598,12 +645,13 @@ then it will operate on the selected items.
 
 #### Passing arguments to the `shell` command
 
-Ideally, you will want to avoid using backslashes to escape the shell command
-arguments, so here are a few ways to do it:
+Ideally, you will want to avoid using backslashes to escape
+the shell command arguments, so here are a few ways to do it:
 
 1. Shell arguments that don't have special shell variables
-   on Linux and macOS, like `$SHELL`, or don't have special shell characters
-   like `>`, `|` or spaces, need not be quoted with double quotes `"`
+   on Linux and macOS, like `$SHELL`, or don't have
+   special shell characters like `>`, `|` or spaces,
+   need not be quoted with double quotes `"`
    or single quotes `'` respectively.
    For example:
 
@@ -616,15 +664,18 @@ arguments, so here are a few ways to do it:
    desc = "Open with bat"
    ```
 
-   Even though the `$@` argument above is considered a shell variable in Linux
-   and macOS, the plugin automatically replaces it with the full path
-   of the items in the item group, so it does not need to be quoted with
+   Even though the `$@` argument above is considered
+   a shell variable in Linux and macOS,
+   the plugin automatically replaces it with the full path
+   of the items in the item group,
+   so it does not need to be quoted with
    double quotes `"`, as it is expanded by the plugin,
    and not meant to be expanded by the shell.
 
-2. If the arguments to the `shell` command have special shell variables
-   on Linux and macOS, like `$SHELL`, or special shell characters like
-   `>`, `|`, or spaces, use `--` to denote the end of the flags and options
+2. If the arguments to the `shell` command have special
+   shell variables on Linux and macOS, like `$SHELL`,
+   or special shell characters like `>`, `|`, or spaces,
+   use `--` to denote the end of the flags and options
    passed to the `shell` command.
    For example:
 
@@ -646,10 +697,11 @@ arguments, so here are a few ways to do it:
    desc = "Open a shell and say hello inside the opened shell"
    ```
 
-3. If the arguments passed to the `shell` command themselves contain arguments
-   that have special shell variables on Linux and macOS, like `$SHELL`,
-   or special shell characters like `>`, `|`, or spaces,
-   use the triple single quote `'''` delimiter for the `run` string.
+3. If the arguments passed to the `shell` command themselves
+   contain arguments that have special shell variables on
+   Linux and macOS, like `$SHELL`, or special shell characters
+   like `>`, `|`, or spaces, use the triple single quote
+   `'''` delimiter for the `run` string.
 
    ```toml
    # ~/.config/yazi/keymap.toml on Linux and macOS
@@ -687,13 +739,16 @@ arguments, so here are a few ways to do it:
    desc = "Email files using Mozilla Thunderbird"
    ```
 
-   Once again, the `$@` variable above does not need to be quoted in double
-   quotes `"` as it is expanded by the plugin instead of the shell.
+   Once again, the `$@` variable above does not need to be quoted
+   in double quotes `"` as it is expanded by the plugin
+   instead of the shell.
 
-If the above few methods to avoid using backslashes within your shell command
-to escape the quotes are still insufficient for your use case,
-it is probably more appropriate to write a shell script in a separate file
-and execute that instead of writing the shell command inline
+If the above few methods to avoid using backslashes
+within your shell command to escape the quotes are
+still insufficient for your use case,
+it is probably more appropriate to write a shell script
+in a separate file and execute that instead of
+writing the shell command inline
 in your `keymap.toml` file.
 
 ### Paste (`paste`)
@@ -709,7 +764,8 @@ in your `keymap.toml` file.
 - `--smart` flag to enable pasting in the hovered directory
   without entering the directory.
   This flag will cause the `paste` command to paste items
-  into the hovered directory even when `smart_paste` is set to `false`.
+  into the hovered directory even
+  when `smart_paste` is set to `false`.
   This allows you to set a key to use this behaviour
   with the `paste` command instead of using it for
   every `paste` command.
@@ -784,26 +840,31 @@ in your `keymap.toml` file.
 
 ### Quit (`quit`)
 
-- You should use Yazi's default `quit` command instead of this augmented
-  command if you don't want to have a prompt when quitting Yazi
-  with multiple tabs open.
-  This command has a visual side effect of showing a confirmation prompt
-  for a split second before closing Yazi when quitting Yazi
-  with only 1 tab open, which can be annoying.
-  This confirmation prompt is due to the plugin still running for a bit
-  after the `quit` command is emitted, causing Yazi to prompt you for
+- You should use Yazi's default `quit` command instead of this
+  augmented command if you don't want to have a prompt
+  when quitting Yazi with multiple tabs open.
+  This command has a visual side effect of showing a
+  confirmation prompt for a split second before closing Yazi
+  when quitting Yazi with only 1 tab open,
+  which can be annoying.
+  This confirmation prompt is due to the plugin still running
+  for a bit after the `quit` command is emitted,
+  causing Yazi to prompt you for
   confirmation as there are tasks still running.
-  However, once the plugin has stopped running, which is a split second
-  after the `quit` command is emitted, Yazi will exit.
+  However, once the plugin has stopped running,
+  which is a split second after the `quit` command is emitted,
+  Yazi will exit.
   You can observe this visual effect in the video demonstration below.
-- When `confirm_on_quit` is set to `true`, the plugin will prompt you for
-  confirmation when there is more than 1 tab open. Otherwise, it will
-  immediately quit Yazi, just like the default `quit` command.
-- `--confirm` flag to get the plugin to prompt you for confirmation when
-  quitting with multiple tabs open.
-  This flag will cause the `quit` command to prompt you for confirmation
-  when quitting with multiple tabs open even when `confirm_on_quit` is
-  set to `false`.
+- When `confirm_on_quit` is set to `true`,
+  the plugin will prompt you for
+  confirmation when there is more than 1 tab open.
+  Otherwise, it will immediately quit Yazi,
+  just like the default `quit` command.
+- `--confirm` flag to get the plugin to prompt you
+  for confirmation when quitting with multiple tabs open.
+  This flag will cause the `quit` command to
+  prompt you for confirmation when quitting with multiple tabs open
+  even when `confirm_on_quit` is set to `false`.
   This allows you to set a specific key to use this behaviour with the
   `quit` command instead of using it for every `quit` command.
 
@@ -828,15 +889,17 @@ in your `keymap.toml` file.
 
   [wraparound-arrow-video]
 
-- When both `smooth_scrolling` and `wraparound_file_navigation` are set to
-  `true`, the command will smoothly scroll the wraparound transition as well.
+- When both `smooth_scrolling` and `wraparound_file_navigation`
+  are set to `true`,
+  the command will smoothly scroll the wraparound transition as well.
 
   Video:
 
   [smooth-wraparound-arrow-video]
 
 - Otherwise, it'll behave like the default `arrow 1` command.
-- `--no-wrap` flag to prevent the `arrow` command from wrapping around,
+- `--no-wrap` flag to prevent the `arrow` command
+  from wrapping around,
   even when `wraparound_file_navigation` is set to `true`.
 
 ## New commands
@@ -867,8 +930,9 @@ in your `keymap.toml` file.
 
   [wraparound-parent-arrow-video]
 
-- When both `smooth_scrolling` and `wraparound_file_navigation` are set to
-  `true`, the command will smoothly scroll the wraparound transition as well.
+- When both `smooth_scrolling` and `wraparound_file_navigation`
+  are set to `true`,
+  the command will smoothly scroll the wraparound transition as well.
 
   Video:
 
@@ -897,7 +961,69 @@ in your `keymap.toml` file.
   ```
 
 - `--no-wrap` flag to prevent the `parent_arrow` command from
-  wrapping around, even when `wraparound_file_navigation` is set to `true`.
+  wrapping around,
+  even when `wraparound_file_navigation` is set to `true`.
+
+### Archive (`archive`)
+
+- The `archive` command adds the selected or hovered items
+  to an archive, with the plugin prompting for an archive name.
+  The archive file extension given will be used to determine
+  the type of archive to create.
+- This command is also augmented as stated in
+  [this section above][augment-section].
+
+  Videos:
+
+  - When `must_have_hovered_item` is `true`:
+
+    [archive-must-have-hovered-item-video]
+
+  - When `must_have_hovered_item` is `false`:
+
+    [archive-hovered-item-optional-video]
+
+  - When `prompt` is set to `true`:
+
+    [archive-prompt-video]
+
+  - When `prompt` is set to `false`:
+
+    [archive-behaviour-video]
+
+- `--encrypt` flag to encrypt the archive with the given password,
+  which applies even when `encrypt_archives` is set to `false`.
+- `--encrypt-headers` flag to encrypt the archive headers,
+  which applies even when `encrypt_archive_headers`
+  is set to `false`.
+  Note that this option only works with `7z` archives,
+  other types of archives like `zip` archives
+  do not support header encryption.
+  The plugin will show a warning if the archive type
+  does not support header encryption and the flag is passed,
+  but will continue with the creation of the encrypted archive.
+  This option has no effect if either `encrypt_archives`
+  is set to `false` or the `--encrypt` flag isn't given.
+
+  Video:
+
+  [archive-encrypt-files-video]
+
+- `--reveal` flag to automatically hover the archive file
+  that is created, which applies even when
+  `reveal_created_archive` is set to `false`.
+
+  Video:
+
+  [archive-reveal-created-archive-video]
+
+- `--remove` flag to automatically remove the files
+  that are added to the archive, which applies even when
+  `remove_archived_files` is set to `false`.
+
+  Video:
+
+  [archive-remove-archived-files-video]
 
 ### Editor (`editor`)
 
@@ -1076,7 +1202,9 @@ You can view the full licence in the [`LICENSE`][Licence] file.
 [extract-prompt-video]: https://github.com/user-attachments/assets/40ad3b74-0036-4835-bfd8-cec6259504c4
 [extract-behaviour-video]: https://github.com/user-attachments/assets/6c7e7b3e-1be5-42ab-b7d9-987dcc10cc88
 [extract-recursively-extract-archives-video]: https://github.com/user-attachments/assets/6b5aef9d-9673-458b-8555-0c84570656dd
-[extract-encrypted-archive]: https://github.com/user-attachments/assets/9c1c1377-6693-409d-840e-1eb128cf3ccd
+[extract-encrypted-archive-video]: https://github.com/user-attachments/assets/9c1c1377-6693-409d-840e-1eb128cf3ccd
+[extract-reveal-extracted-item-video]: placeholder
+[extract-remove-extracted-archive-video]: placeholder
 
 <!-- Enter command -->
 
@@ -1145,6 +1273,16 @@ You can view the full licence in the [`LICENSE`][Licence] file.
 [smooth-parent-arrow-video]: https://github.com/user-attachments/assets/b62548eb-2f10-4f15-8c95-9127b90a364c
 [wraparound-parent-arrow-video]: https://github.com/user-attachments/assets/2fcc30b8-9a6a-44d2-84c4-d224e9c467d8
 [smooth-wraparound-parent-arrow-video]: https://github.com/user-attachments/assets/44b87884-58b7-41af-81e6-e4cf771665aa
+
+<!-- Archive command -->
+
+[archive-must-have-hovered-item-video]: placeholder
+[archive-hovered-item-optional-video]: placeholder
+[archive-prompt-video]: placeholder
+[archive-behaviour-video]: placeholder
+[archive-encrypt-files-video]: placeholder
+[archive-reveal-created-archive-video]: placeholder
+[archive-remove-archived-files-video]: placeholder
 
 <!-- Editor command -->
 

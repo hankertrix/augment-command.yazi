@@ -20,24 +20,32 @@
 -- The type of the command table
 ---@alias CommandTable table<SupportedCommands, CommandFunction>
 
--- The type for the extractor list items command
----@alias ExtractorListItemsCommand fun(
----	self: Extractor,
+-- The type for the archiver list items command
+---@alias Archiver.ListItemsCommand fun(
+---	self: Archiver,
 ---): output: CommandOutput|nil, error: Error|nil
 
--- The type for the extractor get items function
----@alias ExtractorGetItems fun(
----	self: Extractor,
+-- The type for the archiver get items function
+---@alias Archiver.GetItems fun(
+---	self: Archiver,
 ---): files: string[], directories: string[], error: string|nil
 
--- The type for the extractor extract function.
----@alias ExtractorExtract fun(
----	self: Extractor,
+-- The type for the archiver extract function
+---@alias Archiver.Extract fun(
+---	self: Archiver,
 ---	has_only_one_file: boolean|nil,
----): ExtractionResult
+---): Archiver.Result
 
--- The type for the extractor function
----@alias ExtractorCommand fun(): output: CommandOutput|nil, error: Error|nil
+-- The type for the archiver archive function
+---@alias Archiver.Archive fun(
+---	self: Archiver,
+---	item_paths: string[],
+---	password: string|nil,
+---	encrypt_headers: boolean|nil,
+---): Archiver.Result
+
+-- The type for the archiver command function
+---@alias Archiver.Command fun(): output: CommandOutput|nil, error: Error|nil
 
 -- Custom types
 
@@ -57,6 +65,10 @@
 ---@field enter_archives boolean Whether to enter archives
 ---@field extract_retries number How many times to retry extracting
 ---@field recursively_extract_archives boolean Extract inner archives or not
+---@field encrypt_archives boolean Whether to encrypt created archives
+---@field encrypt_archive_headers boolean Whether to encrypt archive headers
+---@field reveal_created_archive boolean Whether to reveal the created archive
+---@field remove_archived_files boolean Whether to remove archived files
 ---@field preserve_file_permissions boolean Whether to preserve file permissions
 ---@field must_have_hovered_item boolean Whether to stop when no item is hovered
 ---@field skip_single_subdirectory_on_enter boolean Skip single subdir on enter
@@ -72,16 +84,16 @@
 ---@class (exact) State
 ---@field config Configuration The configuration object
 
--- The type for the extractor function result
----@class (exact) ExtractionResult
----@field successful boolean Whether the extractor function was successful
----@field output string|nil The output of the extractor function
----@field cancelled boolean|nil boolean Whether the extraction was cancelled
+-- The type for the archiver function result
+---@class (exact) Archiver.Result
+---@field successful boolean Whether the archiver function was successful
+---@field output string|nil The output of the archiver function
+---@field cancelled boolean|nil boolean Whether the archiver was cancelled
 ---@field error string|nil The error message
 ---@field archive_path string|nil The path to the archive
 ---@field destination_path string|nil The path to the destination
 ---@field extracted_items_path string|nil The path to the extracted items
----@field extractor_name string|nil The name of the extractor
+---@field archiver_name string|nil The name of the archiver
 
 -- The name of the plugin
 ---@type string
@@ -104,6 +116,7 @@ local Commands = {
 	Quit = "quit",
 	Arrow = "arrow",
 	ParentArrow = "parent_arrow",
+	Archive = "archive",
 	Editor = "editor",
 	Pager = "pager",
 }
@@ -134,6 +147,10 @@ local DEFAULT_CONFIG = {
 	extract_retries = 3,
 	recursively_extract_archives = true,
 	preserve_file_permissions = false,
+	encrypt_archives = false,
+	encrypt_archive_headers = false,
+	reveal_created_archive = true,
+	remove_archived_files = false,
 	must_have_hovered_item = true,
 	skip_single_subdirectory_on_enter = true,
 	skip_single_subdirectory_on_leave = true,
@@ -181,9 +198,9 @@ local INPUT_OPTIONS_TABLE = {
 	[ItemGroup.None] = "(h/s)",
 }
 
--- The extractor names
----@enum ExtractorName
-local ExtractorName = {
+-- The archiver names
+---@enum ArchiverName
+local ArchiverName = {
 	SevenZip = "7-Zip",
 	Tar = "Tar",
 }
@@ -195,7 +212,7 @@ local ExtractBehaviour = {
 	Rename = "rename",
 }
 
--- The list of archive file extensions
+-- The table of archive file extensions
 ---@type table<string, boolean>
 local ARCHIVE_FILE_EXTENSIONS = {
 	["7z"] = true,
@@ -221,29 +238,35 @@ local ARCHIVE_FILE_EXTENSIONS = {
 	zip = true,
 }
 
--- The error for the base extractor class
+-- The table of archive file extensions that
+-- supports header encryption
+local ARCHIVE_FILE_EXTENSIONS_WITH_HEADER_ENCRYPTION = {
+	["7z"] = true,
+}
+
+-- The error for the base archiver class
 -- which is an abstract base class that
 -- does not implement any functionality
 ---@type string
-local BASE_EXTRACTOR_ERROR = table.concat({
+local BASE_ARCHIVER_ERROR = table.concat({
 	"The Extractor class is does not implement any functionality.",
 	"How did you even manage to get here?",
 }, "\n")
 
 -- Class definitions
 
--- The base extractor that all extractors inherit from
----@class Extractor
----@field name string The name of the extractor
----@field command string|nil The shell command for the extractor
----@field commands string[] The possible extractor commands
+-- The base archiver that all archivers inherit from
+---@class Archiver
+---@field name string The name of the archiver
+---@field command string|nil The shell command for the archiver
+---@field commands string[] The possible archiver commands
 ---
---- Whether the extractor supports preserving file permissions
+--- Whether the archiver supports preserving file permissions
 ---@field supports_file_permissions boolean
 ---
 --- The map of the extract behaviour strings to the command flags
 ---@field extract_behaviour_map table<ExtractBehaviour, string>
-local Extractor = {
+local Archiver = {
 	name = "BaseExtractor",
 	command = nil,
 	commands = {},
@@ -251,10 +274,10 @@ local Extractor = {
 	extract_behaviour_map = {},
 }
 
--- The function to create a subclass of the abstract base extractor
+-- The function to create a subclass of the abstract base archiver
 ---@param subclass table The subclass to create
----@return Extractor subclass Subclass of the base extractor
-function Extractor:subclass(subclass)
+---@return Archiver subclass Subclass of the base archiver
+function Archiver:subclass(subclass)
 	--
 
 	-- Create a new instance
@@ -268,23 +291,32 @@ function Extractor:subclass(subclass)
 end
 
 -- The method to get the archive items
----@type ExtractorGetItems
-function Extractor:get_items() return {}, {}, BASE_EXTRACTOR_ERROR end
+---@type Archiver.GetItems
+function Archiver:get_items() return {}, {}, BASE_ARCHIVER_ERROR end
 
 -- The method to extract the archive
----@type ExtractorExtract
-function Extractor:extract(_)
+---@type Archiver.Extract
+function Archiver:extract(_)
 	return {
 		successful = false,
-		error = BASE_EXTRACTOR_ERROR,
+		error = BASE_ARCHIVER_ERROR,
+	}
+end
+
+-- The method to add items to an archive
+---@type Archiver.Archive
+function Archiver:archive(_)
+	return {
+		successful = false,
+		error = BASE_ARCHIVER_ERROR,
 	}
 end
 
 -- The 7-Zip extractor
----@class SevenZip: Extractor
+---@class SevenZip: Archiver
 ---@field password string The password to the archive
-local SevenZip = Extractor:subclass({
-	name = ExtractorName.SevenZip,
+local SevenZip = Archiver:subclass({
+	name = ArchiverName.SevenZip,
 	commands = { "7z", "7zz" },
 
 	-- https://documentation.help/7-Zip/overwrite.htm
@@ -297,9 +329,9 @@ local SevenZip = Extractor:subclass({
 })
 
 -- The Tar extractor
----@class Tar: Extractor
-local Tar = Extractor:subclass({
-	name = ExtractorName.Tar,
+---@class Tar: Archiver
+local Tar = Archiver:subclass({
+	name = ArchiverName.Tar,
 	commands = { "gtar", "tar" },
 	supports_file_permissions = true,
 
@@ -314,20 +346,20 @@ local Tar = Extractor:subclass({
 })
 
 -- The default extractor, which is set to 7-Zip
----@class DefaultExtractor: SevenZip
-local DefaultExtractor = SevenZip:subclass({})
+---@class DefaultArchiver: SevenZip
+local DefaultArchiver = SevenZip:subclass({})
 
 -- The table of archive mime types
----@type table<string, Extractor>
-local ARCHIVE_MIME_TYPE_TO_EXTRACTOR_MAP = {
-	["application/zip"] = DefaultExtractor,
-	["application/gzip"] = DefaultExtractor,
+---@type table<string, Archiver>
+local ARCHIVE_MIME_TYPE_TO_ARCHIVER_MAP = {
+	["application/zip"] = DefaultArchiver,
+	["application/gzip"] = DefaultArchiver,
 	["application/tar"] = Tar,
-	["application/bzip"] = DefaultExtractor,
-	["application/bzip2"] = DefaultExtractor,
-	["application/7z-compressed"] = DefaultExtractor,
-	["application/rar"] = DefaultExtractor,
-	["application/xz"] = DefaultExtractor,
+	["application/bzip"] = DefaultArchiver,
+	["application/bzip2"] = DefaultArchiver,
+	["application/7z-compressed"] = DefaultArchiver,
+	["application/rar"] = DefaultArchiver,
+	["application/xz"] = DefaultArchiver,
 }
 
 -- Patterns
@@ -414,7 +446,7 @@ local function merge_tables(deep_or_target, target, ...)
 	end
 
 	-- Initialise the index variable
-	local index = 1
+	local index = #target_table + 1
 
 	-- Iterates over the tables given
 	for _, table in ipairs(args) do
@@ -882,7 +914,7 @@ local function is_archive_mime_type(mime_type)
 
 	-- Get the archive extractor for the mime type
 	local archive_extractor =
-		ARCHIVE_MIME_TYPE_TO_EXTRACTOR_MAP[standardised_mime_type]
+		ARCHIVE_MIME_TYPE_TO_ARCHIVER_MAP[standardised_mime_type]
 
 	-- Return if an extractor exists for the mime type
 	return archive_extractor ~= nil
@@ -965,11 +997,9 @@ local function get_temporary_directory_url(path, destination_given)
 	--
 
 	-- Get the url of the path given
-	---@type Url
 	local path_url = Url(path)
 
 	-- Initialise the parent directory to be the path given
-	---@type Url
 	local parent_directory_url = path_url
 
 	-- If the destination is not given
@@ -1351,10 +1381,10 @@ end
 
 -- The function to create a new instance of the extractor
 ---@param archive_path string The path to the archive
----@param destination_path string|nil The path to extract to
 ---@param config Configuration The configuration object
----@return Extractor|nil instance An instance of the extractor if available
-function Extractor:new(archive_path, destination_path, config)
+---@param destination_path string|nil The path to extract to
+---@return Archiver|nil instance An instance of the extractor if available
+function Archiver:new(archive_path, config, destination_path)
 	--
 
 	-- Initialise whether the extractor is available
@@ -1409,9 +1439,9 @@ end
 
 -- Function to retry the extractor
 ---@private
----@param extractor_function ExtractorCommand Extractor command to retry
+---@param extractor_function Archiver.Command Extractor command to retry
 ---@param clean_up_wanted boolean|nil Whether to clean up the destination path
----@return ExtractionResult result Result of the extractor function
+---@return Archiver.Result result Result of the extractor function
 function SevenZip:retry_extractor(extractor_function, clean_up_wanted)
 	--
 
@@ -1420,7 +1450,6 @@ function SevenZip:retry_extractor(extractor_function, clean_up_wanted)
 	local total_number_of_tries = self.config.extract_retries + 1
 
 	-- Get the url of the archive
-	---@type Url
 	local archive_url = Url(self.archive_path)
 
 	-- Get the archive name
@@ -1565,7 +1594,7 @@ function SevenZip:retry_extractor(extractor_function, clean_up_wanted)
 end
 
 -- Function to list the archive items with the command
----@type ExtractorListItemsCommand
+---@type Archiver.ListItemsCommand
 function SevenZip:list_items_command()
 	--
 
@@ -1597,7 +1626,7 @@ function SevenZip:list_items_command()
 end
 
 -- Function to get the items in the archive
----@type ExtractorGetItems
+---@type Archiver.GetItems
 function SevenZip:get_items()
 	--
 
@@ -1729,7 +1758,7 @@ function SevenZip:extract_command(extract_files_only, extract_behaviour)
 		"-o" .. self.destination_path,
 	}
 
-	-- Return the command to extract the archive
+	-- Return the output of the command
 	return Command(self.command)
 		:args(arguments)
 		:stdout(Command.PIPED)
@@ -1738,7 +1767,7 @@ function SevenZip:extract_command(extract_files_only, extract_behaviour)
 end
 
 -- Function to extract the archive
----@type ExtractorExtract
+---@type Archiver.Extract
 function SevenZip:extract(has_only_one_file)
 	--
 
@@ -1752,8 +1781,81 @@ function SevenZip:extract(has_only_one_file)
 	return result
 end
 
+-- Function to call the command to add items to an archive
+---@param item_paths string[] The path to the items being added to the archive
+---@param password string|nil The password to encrypt the archive with
+---@param encrypt_headers boolean|nil Whether to encrypt the archive headers
+---@return CommandOutput|nil output The output of the command
+---@return Error|nil error The error if any
+function SevenZip:archive_command(item_paths, password, encrypt_headers)
+	--
+
+	-- Initialise the arguments for the command
+	local arguments = {
+
+		-- Add to the archive
+		"a",
+
+		-- Use UTF-8 encoding for console input and output
+		"-sccUTF-8",
+	}
+
+	-- If the password is given, add the password
+	if password then table.insert(arguments, "-p" .. password) end
+
+	-- If encrypting headers is wanted,
+	-- add the argument to encrypt the headers
+	if encrypt_headers then table.insert(arguments, "-mhe") end
+
+	-- Add the archive path and the item paths
+	merge_tables(arguments, {
+		self.archive_path,
+		table.unpack(item_paths),
+	})
+
+	-- Return the output of the command
+	return Command(self.command)
+		:args(arguments)
+		:stdout(Command.PIPED)
+		:stderr(Command.PIPED)
+		:output()
+end
+
+-- Function to add items to an archive
+---@type Archiver.Archive
+function SevenZip:archive(item_paths, password, encrypt_headers)
+	--
+
+	-- Get the output of the command
+	local output, error =
+		self:archive_command(item_paths, password, encrypt_headers)
+
+	-- If there is no output, return the archiver result
+	if not output then
+		return {
+			successful = false,
+			error = tostring(error),
+		}
+	end
+
+	-- If the output status code is not 0
+	-- return the archiver result
+	if output.status.code ~= 0 then
+		return {
+			successful = false,
+			error = tostring(output.stderr),
+		}
+	end
+
+	-- Otherwise, return successful and the archive path
+	return {
+		successful = true,
+		archive_path = self.archive_path,
+	}
+end
+
 -- Function to list the archive items with the command
----@type ExtractorListItemsCommand
+---@type Archiver.ListItemsCommand
 function Tar:list_items_command()
 	--
 
@@ -1779,7 +1881,7 @@ function Tar:list_items_command()
 end
 
 -- Function to get the items in the archive
----@type ExtractorGetItems
+---@type Archiver.GetItems
 function Tar:get_items()
 	--
 
@@ -1893,7 +1995,7 @@ end
 -- Tar automatically decompresses and extracts the archive
 -- in one command, so there's no need to run it twice to
 -- extract compressed tarballs.
----@type ExtractorExtract
+---@type Archiver.Extract
 function Tar:extract(_)
 	--
 
@@ -1926,71 +2028,135 @@ function Tar:extract(_)
 	}
 end
 
+-- Function to call the command to add items to an archive
+---@param item_paths string[] The path to the items being added to the archive
+function Tar:archive_command(item_paths)
+	--
+
+	-- Initialise the arguments to the command
+	local arguments = {
+
+		-- Add the items to an archive
+		"-rf",
+
+		-- The archive path
+		self.archive_path,
+
+		-- The item paths
+		table.unpack(item_paths),
+	}
+
+	-- Return the output of the command
+	return Command(self.command)
+		:args(arguments)
+		:stdout(Command.PIPED)
+		:stderr(Command.PIPED)
+		:output()
+end
+
+-- Function to add items to an archive
+---@type Archiver.Archive
+function Tar:archive(item_paths)
+	--
+
+	-- Get the output of the command
+	local output, error = self:archive_command(item_paths)
+
+	-- If there is no output, return the archiver result
+	if not output then
+		return {
+			successful = false,
+			error = tostring(error),
+		}
+	end
+
+	-- If the output status code is not 0
+	-- return the archiver result
+	if output.status.code ~= 0 then
+		return {
+			successful = false,
+			error = tostring(output.stderr),
+		}
+	end
+
+	-- Otherwise, return successful and the archive path
+	return {
+		successful = true,
+		archive_path = self.archive_path,
+	}
+end
+
 -- Functions for the commands
 
--- Function to get the extractor for the file type
+-- Function to get the archiver for the file type
 ---@param archive_path string The path to the archive file
----@param destination_path string The path to the destination directory
+---@param command SupportedCommands The command the archiver is used for
 ---@param config Configuration The configuration for the plugin
----@return ExtractionResult result The results of getting the extractor
----@return Extractor|nil extractor The extractor for the file type
-local function get_extractor(archive_path, destination_path, config)
+---@param destination_path string|nil The path to the destination directory
+---@return Archiver|nil archiver The archiver for the file type
+---@return Archiver.Result result The results of getting the archiver
+local function get_archiver(archive_path, command, config, destination_path)
 	--
 
 	-- Get the mime type of the archive file
 	local mime_type = get_mime_type(archive_path)
 
-	-- Get the extractor for the mime type
-	local extractor = ARCHIVE_MIME_TYPE_TO_EXTRACTOR_MAP[mime_type]
+	-- Get the archiver for the mime type
+	local archiver = command == Commands.Archive and DefaultArchiver
+		or ARCHIVE_MIME_TYPE_TO_ARCHIVER_MAP[mime_type]
 
-	-- If there is no extractor,
+	-- If there is no archiver,
 	-- return that it is not successful,
 	-- but that it has been cancelled
 	-- as the mime type is not an archive
-	if not extractor then
-		return {
+	if not archiver then
+		return archiver, {
 			successful = false,
 			cancelled = true,
 		}
 	end
 
-	-- Instantiate an instance of the extractor
-	local extractor_instance =
-		extractor:new(archive_path, destination_path, config)
+	-- Instantiate an instance of the archiver
+	local archiver_instance =
+		archiver:new(archive_path, config, destination_path)
 
 	-- While the extractor instance failed to be created
-	while not extractor_instance do
+	while not archiver_instance do
 		--
 
-		-- If the extractor instance is the default extractor,
+		-- If the archiver instance is the default archiver,
 		-- then return an error telling the user to install the
 		-- default extractor
-		if extractor.name == DefaultExtractor.name then
-			return {
-				successful = false,
-				error = table.concat({
-					string.format(
-						"%s is not installed,",
-						DefaultExtractor.name
-					),
-					"please install it before using the 'extract' command",
-				}, " "),
-			}
+		if archiver.name == DefaultArchiver.name then
+			return archiver_instance,
+				{
+					successful = false,
+					error = table.concat({
+						string.format(
+							"%s is not installed,",
+							DefaultArchiver.name
+						),
+						string.format(
+							"please install it before using the '%s' command",
+							command
+						),
+					}, " "),
+				}
 		end
 
-		-- Try instantiating the default extractor
-		extractor_instance =
-			DefaultExtractor:new(archive_path, destination_path, config)
+		-- Try instantiating the default archiver
+		archiver_instance =
+			DefaultArchiver:new(archive_path, config, destination_path)
 	end
 
 	-- If the user wants to preserve file permissions,
-	-- and the target extractor for the mime type supports
-	-- preserving file permissions, but the extractor
+	-- and the target archiver for the mime type supports
+	-- preserving file permissions, but the archiver
 	-- instantiated does not, show a warning to the user
 	if
 		config.preserve_file_permissions
-		and extractor.supports_file_permissions
-		and not extractor_instance.supports_file_permissions
+		and archiver.supports_file_permissions
+		and not archiver_instance.supports_file_permissions
 	then
 		--
 
@@ -1998,12 +2164,12 @@ local function get_extractor(archive_path, destination_path, config)
 		local warning = table.concat({
 			string.format(
 				"%s is not installed, defaulting to %s.",
-				extractor.name,
-				extractor_instance.name
+				archiver.name,
+				archiver_instance.name
 			),
 			string.format(
 				"However, %s does not support preserving file permissions.",
-				extractor_instance.name
+				archiver_instance.name
 			),
 		}, "\n")
 
@@ -2012,13 +2178,13 @@ local function get_extractor(archive_path, destination_path, config)
 	end
 
 	-- Return the extractor instance
-	return { successful = true }, extractor_instance
+	return archiver_instance, { successful = true }
 end
 
 -- Function to move the extracted items out of the temporary directory
 ---@param archive_url Url The url of the archive
 ---@param destination_url Url The url of the destination
----@return ExtractionResult result The result of the move
+---@return Archiver.Result result The result of the move
 local function move_extracted_items(archive_url, destination_url)
 	--
 
@@ -2026,7 +2192,7 @@ local function move_extracted_items(archive_url, destination_url)
 	-- and return the extractor result in the event of an error
 	---@param error string The error message to return
 	---@param empty_dir_only boolean|nil Whether to remove the empty dir only
-	---@return ExtractionResult
+	---@return Archiver.Result
 	local function fail(error, empty_dir_only)
 		--
 
@@ -2034,7 +2200,7 @@ local function move_extracted_items(archive_url, destination_url)
 		fs.remove(empty_dir_only and "dir" or "dir_all", destination_url)
 
 		-- Return the extractor result
-		---@type ExtractionResult
+		---@type Archiver.Result
 		return {
 			successful = false,
 			error = error,
@@ -2165,7 +2331,7 @@ end
 ---@param args Arguments The arguments passed to the plugin
 ---@param config Configuration The configuration object
 ---@param destination_path string|nil The destination path to extract to
----@return ExtractionResult extraction_result The extraction results
+---@return Archiver.Result extraction_result The extraction results
 local function recursively_extract_archive(
 	archive_path,
 	args,
@@ -2195,13 +2361,17 @@ local function recursively_extract_archive(
 		}
 	end
 
-	-- Get an extractor for the archive
-	local get_extractor_result, extractor =
-		get_extractor(archive_path, tostring(temporary_directory_url), config)
+	-- Get an the archiver for the archive
+	local archiver, get_archiver_result = get_archiver(
+		archive_path,
+		Commands.Extract,
+		config,
+		tostring(temporary_directory_url)
+	)
 
-	-- If there is no extractor, return the result
-	if not extractor then
-		return merge_tables({}, get_extractor_result, {
+	-- If there is no archiver, return the result
+	if not archiver then
+		return merge_tables({}, get_archiver_result, {
 			archive_path = archive_path,
 			destination_path = destination_path,
 		})
@@ -2212,26 +2382,26 @@ local function recursively_extract_archive(
 	--      - The archive path
 	--      - The destination path
 	--      - The name of the extractor
-	---@param result ExtractionResult The result to add the paths to
-	---@return ExtractionResult modified_result The result with the paths added
+	---@param result Archiver.Result The result to add the paths to
+	---@return Archiver.Result modified_result The result with the paths added
 	local function add_additional_info(result)
 		return merge_tables({}, result, {
 			archive_path = archive_path,
 			destination_path = destination_path,
-			extractor_name = extractor.name,
+			extractor_name = archiver.name,
 		})
 	end
 
 	-- Get the list of archive files and directories,
 	-- the error message and the password
-	local archive_files, archive_directories, error = extractor:get_items()
+	local archive_files, archive_directories, error = archiver:get_items()
 
 	-- If there are no are no archive files and directories
 	if #archive_files == 0 and #archive_directories == 0 then
 		--
 
 		-- The extraction result
-		---@type ExtractionResult
+		---@type Archiver.Result
 		local extraction_result = {
 			successful = false,
 			error = error or "Archive is empty",
@@ -2246,7 +2416,7 @@ local function recursively_extract_archive(
 		and #archive_directories == 0
 
 	-- Extract the given archive
-	local extraction_result = extractor:extract(archive_has_only_one_file)
+	local extraction_result = archiver:extract(archive_has_only_one_file)
 
 	-- If the extraction result is not successful, return it
 	if not extraction_result.successful then
@@ -2273,7 +2443,6 @@ local function recursively_extract_archive(
 	end
 
 	-- Get the url of the extracted items path
-	---@type Url
 	local extracted_items_url = Url(extracted_items_path)
 
 	-- Initialise the base url for the extracted items
@@ -2287,7 +2456,7 @@ local function recursively_extract_archive(
 		--
 
 		-- Modify the move result with a custom error
-		---@type ExtractionResult
+		---@type Archiver.Result
 		local modified_move_result = merge_tables({}, move_result, {
 			error = "Archive has no parent directory",
 			archive_path = archive_path,
@@ -2347,36 +2516,49 @@ local function recursively_extract_archive(
 	return add_additional_info(move_result)
 end
 
--- Function to show an extraction error
----@param extraction_result ExtractionResult The extraction result
+-- Function to show an archiver error
+---@param archiver_result Archiver.Result The result from the archiver
 ---@return nil
-local function show_extraction_error(extraction_result)
+local function show_archiver_error(archiver_result)
 	--
 
 	-- The line for the error
-	local error_line = string.format("Error: %s", extraction_result.error)
+	local error_line = string.format("Error: %s", archiver_result.error)
 
 	-- If the extractor name exists
-	if extraction_result.extractor_name then
+	if archiver_result.archiver_name then
 		--
 
 		-- Add the extractor's name to the error
 		error_line = string.format(
 			"%s error: %s",
-			extraction_result.extractor_name,
-			extraction_result.error
+			archiver_result.archiver_name,
+			archiver_result.error
 		)
 	end
 
-	-- Show the extraction error
-	return show_error(table.concat({
-		string.format(
-			"Failed to extract archive at: %s",
-			extraction_result.archive_path
-		),
-		string.format("Destination: %s", extraction_result.destination_path),
-		error_line,
-	}, "\n"))
+	-- Initialise the error
+	local error_string = nil
+
+	-- If the destination path exists,
+	-- show the extraction error
+	if archiver_result.destination_path then
+		error_string = table.concat({
+			string.format(
+				"Failed to extract archive at: %s",
+				archiver_result.archive_path
+			),
+			string.format("Destination: %s", archiver_result.destination_path),
+			error_line,
+		}, "\n")
+
+	-- Otherwise, just show the archiver error
+	else
+		error_string = error_line
+	end
+
+	-- Show the error
+	show_error(error_string)
 end
 
 -- Function to handle the open command
@@ -2440,7 +2622,6 @@ local function handle_open(args, config)
 	if not archive_path then return end
 
 	-- Get the parent directory of the hovered item
-	---@type Url
 	local parent_directory_url = Url(archive_path).parent
 
 	-- If the parent directory doesn't exist, then exit the function
@@ -2559,7 +2740,7 @@ local function handle_extract(args, config)
 
 	-- If the extraction is not successful, notify the user
 	if not extraction_result.successful or not extracted_items_path then
-		return show_extraction_error(extraction_result)
+		return show_archiver_error(extraction_result)
 	end
 
 	-- Get the url of the archive
@@ -2574,7 +2755,6 @@ local function handle_extract(args, config)
 		--
 
 		-- Get the url of the extracted items
-		---@type Url
 		local extracted_items_url = Url(extracted_items_path)
 
 		-- Get the parent directory of the extracted items
@@ -2704,7 +2884,6 @@ local function handle_leave(args, config)
 		if #directory_items ~= 1 then break end
 
 		-- Get the parent directory of the current directory
-		---@type Url|nil
 		local parent_directory = Url(directory).parent
 
 		-- If the parent directory is nil,
@@ -2873,7 +3052,6 @@ local function handle_create(args, config)
 	if not user_input or event ~= 1 then return end
 
 	-- Get the current working directory as a url
-	---@type Url
 	local current_working_directory = Url(get_current_directory())
 
 	-- Get whether the url ends with a path delimiter
@@ -2884,7 +3062,6 @@ local function handle_create(args, config)
 	local is_directory = ends_with_path_delimiter or dir_flag
 
 	-- Get the url from the user's input
-	---@type Url
 	local item_url = Url(user_input)
 
 	-- If the user does not want to use the default Yazi create behaviour
@@ -3717,6 +3894,159 @@ local function handle_parent_arrow(args, config)
 	)
 end
 
+-- Function to check if an archive supports header encryption
+---@param archive_path string The path to the archive
+---@param wanted boolean Whether header encryption is wanted
+---@return boolean supports_header_encryption Header encryption supported or not
+local function archive_supports_header_encryption(archive_path, wanted)
+	--
+
+	-- If header encryption isn't wanted, immediately return false
+	if not wanted then return false end
+
+	-- Otherwise, get the extension of the archive
+	local archive_extension = Url(archive_path).ext
+
+	-- If the extension doesn't support header encryption
+	local supports_header_encryption =
+		ARCHIVE_FILE_EXTENSIONS_WITH_HEADER_ENCRYPTION[archive_extension]
+
+	-- If the archive extension does not support header encryption,
+	-- show a warning
+	if not supports_header_encryption then
+		show_warning(table.concat({
+			string.format(
+				"'.%s' does not support header encryption,",
+				archive_extension
+			),
+			"continuing archival process without header encryption.",
+		}, " "))
+	end
+
+	-- Return if the archive supports header encryption
+	return supports_header_encryption
+end
+
+-- Function to remove files and directories
+---@param item_paths string[] The paths to the items to remove
+---@return nil
+local function remove_items(item_paths)
+	--
+
+	-- Iterate over the item paths
+	for _, item_path in ipairs(item_paths) do
+		--
+
+		-- Get the url of the item
+		local item_url = Url(item_path)
+
+		-- Get the cha of the item
+		local item_cha = fs.cha(item_url, false)
+
+		-- If the item is a directory
+		if item_cha and item_cha.is_dir then
+			--
+
+			-- Remove everything
+			fs.remove("dir_all", item_url)
+
+		-- Otherwise, remove the item
+		else
+			fs.remove("file", item_url)
+		end
+	end
+end
+
+-- Function to handle the archive command
+---@type CommandFunction
+local function handle_archive(args, config)
+	--
+
+	-- Get the item group
+	local item_group = get_item_group()
+
+	-- If there is no item group, exit the function
+	if not item_group then return end
+
+	-- Initialise the paths to the items to add to the archive
+	local item_paths = nil
+
+	-- If the item group is the selected items
+	if item_group == ItemGroup.Selected then
+		item_paths = get_paths_of_selected_items()
+
+	-- Otherwise, the item group is the hovered item
+	else
+		--
+
+		-- Get the hovered item
+		local hovered_item_path = get_path_of_hovered_item()
+
+		-- If the hovered item is nil somehow, then exit the function
+		if hovered_item_path == nil then return end
+
+		-- Otherwise, set the item paths to the hovered item
+		item_paths = { hovered_item_path }
+	end
+
+	-- If the item paths is nil, exit the function
+	if not item_paths then return end
+
+	-- Get the path to the archive
+	local archive_path = get_user_input("Archive name:")
+
+	-- If the archive path isn't given, exit the function
+	if not archive_path then return end
+
+	-- Get the archiver
+	local archiver, get_archiver_results =
+		get_archiver(archive_path, Commands.Archive, config)
+
+	-- If the archiver can't be instantiated,
+	-- show the error and exit the function
+	if not archiver then return show_archiver_error(get_archiver_results) end
+
+	-- Initialise the password
+	local password = nil
+
+	-- If the user wants to encrypt the archive,
+	-- get the password from the user
+	if config.encrypt_archives or table_pop(args, "encrypt", false) then
+		password = get_user_input("Archive password:")
+	end
+
+	-- Get whether to encrypt the headers or not
+	local encrypt_headers = archive_supports_header_encryption(
+		archive_path,
+		password
+			and (
+				config.encrypt_archive_headers
+				or table_pop(args, "encrypt_headers", false)
+			)
+	)
+
+	-- Call the function to add items to an archive
+	local archiver_result =
+		archiver:archive(item_paths, password, encrypt_headers)
+
+	-- If the archiver is not successful,
+	-- show the error and exit the function
+	if not archiver_result.successful then
+		return show_archiver_error(archiver_result)
+	end
+
+	-- If the user wants to reveal the created archive,
+	-- then reveal the created archive
+	if config.reveal_created_archive or table_pop(args, "reveal", false) then
+		ya.mgr_emit("reveal", { archive_path })
+	end
+
+	-- If the user wants to remove archived files, remove them
+	if config.remove_archived_files or table_pop(args, "remove", false) then
+		remove_items(item_paths)
+	end
+end
+
 -- Function to handle the editor command
 ---@type CommandFunction
 local function handle_editor(args, config)
@@ -3788,6 +4118,7 @@ local function run_command_func(command, args, config)
 		[Commands.Quit] = handle_quit,
 		[Commands.Arrow] = handle_arrow,
 		[Commands.ParentArrow] = handle_parent_arrow,
+		[Commands.Archive] = handle_archive,
 		[Commands.Editor] = handle_editor,
 		[Commands.Pager] = handle_pager,
 	}
