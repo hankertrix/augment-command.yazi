@@ -696,6 +696,66 @@ local function get_user_input(prompt, options)
 	}))
 end
 
+-- Function to get a password from the user
+---@param prompt string The prompt to show to the user
+---@param confirmation_prompt string|nil The confirmation prompt
+---@param options YaziInputOptions|nil Options for the input
+---@return string|nil password The password or nil if the user cancelled
+---@return InputEvent|nil event The event for the input function
+local function get_password(prompt, confirmation_prompt, options)
+	--
+
+	-- If reconfirmation for the password is not wanted,
+	-- just obtain the user's password and return it
+	if not confirmation_prompt then return get_user_input(prompt, options) end
+
+	-- Otherwise, initialise the password and the event
+	local password = nil
+	local event = nil
+
+	-- While the password isn't set
+	while not password do
+		--
+
+		-- Get the initial password from the user
+		local initial_password, initial_event = get_user_input(prompt, options)
+
+		-- If the initial password is nil, exit the function
+		if initial_password == nil then
+			return initial_password, initial_event
+		end
+
+		-- Get the confirmation password from the user
+		local confirmation_password, confirmation_event =
+			get_user_input(confirmation_prompt, options)
+
+		-- If the confirmation password is nil, exit the function
+		if confirmation_password == nil then
+			return confirmation_password, confirmation_event
+		end
+
+		-- If the initial password and the confirmation password matches
+		if initial_password == confirmation_password then
+			--
+
+			-- Set the password to the confirmation password
+			password = confirmation_password
+
+			-- Set the event to the confirmation event
+			event = confirmation_event
+
+			-- Break out of the loop
+			break
+		end
+
+		-- Otherwise, tell the user their passwords don't match
+		show_error("Passwords do not match")
+	end
+
+	-- Return the password and event
+	return password, event
+end
+
 -- Function to get the user's confirmation
 ---@param title string|ui.Line The title of the confirmation prompt
 ---@param content string|ui.Text The content of the confirmation prompt
@@ -1550,8 +1610,9 @@ function SevenZip:retry_extractor(extractor_function, clean_up_wanted)
 		end
 
 		-- Ask the user for the password
-		local user_input, event = get_user_input(
+		local user_input, event = get_password(
 			password_prompt,
+			nil,
 			merge_tables(
 				true,
 				{},
@@ -4012,7 +4073,8 @@ local function handle_archive(args, config)
 	-- If the user wants to encrypt the archive,
 	-- get the password from the user
 	if config.encrypt_archives or table_pop(args, "encrypt", false) then
-		password = get_user_input("Archive password:")
+		password =
+			get_password("Archive password:", "Confirm archive password:")
 	end
 
 	-- Get whether to encrypt the headers or not

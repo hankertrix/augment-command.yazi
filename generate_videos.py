@@ -2210,6 +2210,8 @@ VHS_TAPES: list[VHSTape] = [
 			SLEEP_TIME,
 			'Type "{0}" Enter',
 			SLEEP_TIME,
+			'Type "{0}" Enter',
+			SLEEP_TIME,
 			'Type "/{0}" Enter',
 		],
 	),
