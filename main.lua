@@ -3656,47 +3656,43 @@ local function smoothly_scroll(steps, scroll_delay, scroll_func)
 end
 
 -- Function to do the wraparound for the arrow command
----@type fun(
----	args: Arguments,    -- The arguments passed to the plugin
----): nil
-local wraparound_arrow = ya.sync(function(_, args)
+---@param args Arguments -- The arguments passed to the plugin
+---@return nil
+local function wraparound_arrow(args)
 	--
-
-	-- Get the current tab
-	local current_tab = cx.active.current
 
 	-- Get the number of steps from the arguments given
 	local steps = table.remove(args, 1) or 1
 
-	-- If the step isn't a number,
+	-- If the number of steps isn't a number,
 	-- immediately emit the arrow command
 	-- and exit the function
 	if type(steps) ~= "number" then
 		return ya.mgr_emit("arrow", merge_tables({ steps }, args))
 	end
 
-	-- Get the number of files in the current tab
-	local number_of_files = #current_tab.files
+	-- Initialise the arrow command to use
+	local arrow_command = "next"
 
-	-- If there are no files in the current tab, exit the function
-	if number_of_files == 0 then return end
+	-- If the number of steps is negative,
+	if steps < 0 then
+		--
 
-	-- Get the new cursor index,
-	-- which is the current cursor position plus the step given
-	-- to the arrow function, modulus the number of files in
-	-- the current tab
-	local new_cursor_index = (current_tab.cursor + steps) % number_of_files
+		-- Change the number of steps to positive
+		steps = -steps
 
-	-- Get the url of the item at the new cursor index.
-	--
-	-- The plus one is needed to convert the cursor index,
-	-- which is 0-based, to a 1-based index,
-	-- which is what is used to index into the list of files.
-	local item_url = current_tab.files[new_cursor_index + 1].url
+		-- Set the arrow command to "prev"
+		arrow_command = "prev"
+	end
 
-	-- Emit the reveal command
-	ya.mgr_emit("reveal", merge_tables({ item_url }, args))
-end)
+	-- Iterate over the number of steps
+	for _ = 1, steps do
+		--
+
+		-- Emit the arrow command
+		ya.mgr_emit("arrow", merge_tables({ arrow_command }, args))
+	end
+end
 
 -- Function to handle the arrow command
 ---@type CommandFunction
@@ -3730,18 +3726,9 @@ local function handle_arrow(args, config)
 		then
 			--
 
-			-- Set the scroll function to use the arrow previous
-			-- or arrow next commands
+			-- Use the wraparound arrow function
 			function scroll_func(step)
-				--
-
-				-- If the step is negative, then call the arrow previous command
-				if step < 0 then
-					return ya.mgr_emit("arrow", merge_tables({ "prev" }, args))
-				end
-
-				-- Otherwise, call the arrow next command
-				return ya.mgr_emit("arrow", merge_tables({ "next" }, args))
+				wraparound_arrow(merge_tables({ step }, args))
 			end
 		end
 
