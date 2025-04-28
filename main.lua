@@ -403,7 +403,7 @@ local bat_command_pattern = "%f[%a]bat%f[%A]"
 --
 -- Pass true as the first parameter to get the function
 -- to merge the tables recursively.
----@param deep_or_target table<any, any>|boolean Whether to merge recursively
+---@param deep_or_target table<any, any>|boolean|nil Recursively merge or not
 ---@param target table<any, any> The target table to merge
 ---@param ... table<any, any>[] The tables to merge
 ---@return table<any, any> merged_table The merged table
@@ -419,13 +419,13 @@ local function merge_tables(deep_or_target, target, ...)
 	-- Initialise the recursive variable
 	local recursive = false
 
-	-- If the deep or target variable not a table
-	if type(deep_or_target) ~= "table" then
+	-- If the deep or target variable is a boolean
+	if type(deep_or_target) == "boolean" then
 		--
 
 		-- Set the recursive variable to the boolean value of the
 		-- deep or target variable
-		recursive = not not deep_or_target
+		recursive = deep_or_target
 
 		-- Set the target table to the target variable
 		target_table = target
@@ -433,12 +433,14 @@ local function merge_tables(deep_or_target, target, ...)
 		-- Set the arguments to the rest of the arguments
 		args = { ... }
 
-	-- Otherwise, the deep or target variable is a table
+	-- Otherwise, the deep or target variable is not a boolean,
+	-- and is most likely a table.
 	else
 		--
 
 		-- Set the target table to the deep or target variable
-		target_table = deep_or_target
+		-- if it is a table, otherwise, set it to an empty table
+		target_table = type(deep_or_target) == "table" and deep_or_target or {}
 
 		-- Set the arguments to the target variable
 		-- and the rest of the arguments
@@ -1570,6 +1572,9 @@ function SevenZip:retry_extractor(extractor_function, clean_up_wanted)
 			}
 		end
 
+		-- Clean up the extracted files
+		clean_up()
+
 		-- Set the error message to the standard error
 		error_message = output.stderr
 
@@ -1584,9 +1589,6 @@ function SevenZip:retry_extractor(extractor_function, clean_up_wanted)
 			) or tries == total_number_of_tries
 		then
 			--
-
-			-- Clean up the extracted files
-			clean_up()
 
 			-- Return the extractor function result
 			return {
@@ -1627,12 +1629,9 @@ function SevenZip:retry_extractor(extractor_function, clean_up_wanted)
 		if event == 1 and user_input ~= nil then
 			self.password = user_input
 
-		-- Otherwise
+		-- Otherwise, the user has cancelled the input
 		else
 			--
-
-			-- Call the clean up function
-			clean_up()
 
 			-- Return the result of the extractor command
 			return {
