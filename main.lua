@@ -3025,9 +3025,6 @@ local function enter_or_open_created_item(item_url, is_directory, args, config)
 		return
 	end
 
-	-- Otherwise, call the function to reveal the created file
-	ya.mgr_emit("reveal", { item_url })
-
 	-- Wait for Yazi to finish loading
 	wait_until_yazi_is_loaded()
 
@@ -3089,6 +3086,9 @@ local function execute_create(item_url, is_directory, args, config)
 		-- show the error message and exit the function
 		if not successful then return show_error(error_message) end
 	end
+
+	-- Reveal the created item
+	ya.mgr_emit("reveal", { tostring(item_url) })
 
 	-- Call the function to enter or open the created item
 	enter_or_open_created_item(item_url, is_directory, args, config)
