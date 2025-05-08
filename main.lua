@@ -4040,10 +4040,10 @@ local function handle_archive(args, config)
 	if not item_paths then return end
 
 	-- Get the path to the archive
-	local archive_path = get_user_input("Archive name:")
+	local archive_path = get_user_input("Archive name:") or ""
 
-	-- If the archive path isn't given, exit the function
-	if not archive_path then return end
+	-- If the archive path is empty, exit the function
+	if #string_trim(archive_path) < 1 then return end
 
 	-- Get the archiver
 	local archiver, get_archiver_results =
