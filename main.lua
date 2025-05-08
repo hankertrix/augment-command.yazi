@@ -3087,6 +3087,9 @@ local function execute_create(item_url, is_directory, args, config)
 		if not successful then return show_error(error_message) end
 	end
 
+	-- Wait for a tiny bit for the file to be created
+	ya.sleep(0.1)
+
 	-- Reveal the created item
 	ya.mgr_emit("reveal", { tostring(item_url) })
 
