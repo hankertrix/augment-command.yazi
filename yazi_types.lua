@@ -667,13 +667,18 @@
 ---@class (exact) Position
 ---@field x integer|nil The x offset from the origin position.
 ---@field y integer|nil The y offset from the origin position.
----@field w integer The width of the component.
+---@field w integer|nil The width of the component.
 ---@field h integer|nil The height of the component.
+
+-- The type of the input position object
+---@class (exact) YaziInputPosition
+---@field w integer The width of the component.
 
 -- The type of the input options
 ---@class (exact) YaziInputOptions
----@field position Position The position of the input.
----@field title string|ui.Line The title of the input.
+---@field position YaziInputPosition|nil The position of the input.
+---@field title string|nil The title of the input.
+---@field realtime boolean|nil Whether the input is in real time or not.
 
 -- The type of the input event
 --
@@ -685,9 +690,9 @@
 ---@alias InputEvent integer
 
 -- The type of the receiver object
----@class (exact) InputReceiver
+---@class (exact) Ya.InputReceiver
 ---@field recv fun(
----	self: InputReceiver,
+---	self: Ya.InputReceiver,
 ---): integer|nil, InputEvent Receive an input event.
 
 -- The type of the confirm position object
@@ -696,9 +701,9 @@
 
 -- The type of the confirm options
 ---@class (exact) YaziConfirmOptions
----@field pos YaziConfirmPosition The position of the confirmation prompt.
----@field title string|ui.Line The title of the confirmation prompt.
----@field content string|ui.Text The content of the confirmation prompt.
+---@field pos YaziConfirmPosition|nil The position of the confirmation prompt.
+---@field title string|ui.Line|nil The title of the confirmation prompt.
+---@field content string|ui.Text|nil The content of the confirmation prompt.
 
 -- The type of the notification level
 ---@alias NotificationLevel
