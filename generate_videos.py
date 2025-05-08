@@ -98,7 +98,7 @@ CLEAR_SCREEN: str = "Type 'clear' Enter"
 
 # The command to apply the configuration
 APPLY_CONFIG_COMMAND: str = (
-	"Type 'NO_ROOTMOI=true chezmoi apply --force' Enter Wait"
+	"Type 'chezmoi apply --force' Enter Wait"
 )
 
 
