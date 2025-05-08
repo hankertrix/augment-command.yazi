@@ -97,7 +97,9 @@ CHANGE_TO_WORKING_DIRECTORY: str = f'Type "cd {DEMONSTRATION_DIRECTORY}" Enter'
 CLEAR_SCREEN: str = "Type 'clear' Enter"
 
 # The command to apply the configuration
-APPLY_CONFIG_COMMAND: str = "Type 'chezmoi apply --force' Enter Wait"
+APPLY_CONFIG_COMMAND: str = (
+	"Type 'NO_ROOTMOI=true chezmoi apply --force' Enter Wait"
+)
 
 
 # Function to create the argument parser and parse the command line arguments
