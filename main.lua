@@ -15,7 +15,8 @@
 --	config: The configuration object
 ---@alias CommandFunction fun(
 ---	args: Arguments,
----	config: Configuration): nil
+---	config: Configuration,
+---): nil
 
 -- The type of the command table
 ---@alias CommandTable table<SupportedCommands, CommandFunction>
@@ -46,6 +47,9 @@
 
 -- The type for the archiver command function
 ---@alias Archiver.Command fun(): output: CommandOutput|nil, error: Error|nil
+
+-- The type of the function to get the password options
+---@alias GetPasswordOptions fun(is_confirm_password: boolean): YaziInputOptions
 
 -- Custom types
 
@@ -79,6 +83,7 @@
 
 -- The full configuration for the plugin
 ---@class (exact) Configuration: UserConfiguration
+---@field sudo_edit_supported boolean Whether sudo edit is supported
 
 -- The type for the state
 ---@class (exact) State
@@ -95,6 +100,10 @@
 ---@field extracted_items_path string|nil The path to the extracted items
 ---@field archiver_name string|nil The name of the archiver
 
+-- The module table
+---@class AugmentCommandPlugin
+local M = {}
+
 -- The name of the plugin
 ---@type string
 local PLUGIN_NAME = "augment-command"
@@ -108,6 +117,7 @@ local Commands = {
 	Leave = "leave",
 	Rename = "rename",
 	Remove = "remove",
+	Copy = "copy",
 	Create = "create",
 	Shell = "shell",
 	Paste = "paste",
@@ -117,6 +127,7 @@ local Commands = {
 	Arrow = "arrow",
 	ParentArrow = "parent_arrow",
 	Archive = "archive",
+	Emit = "emit",
 	Editor = "editor",
 	Pager = "pager",
 }
@@ -128,6 +139,34 @@ local ItemGroup = {
 	Selected = "selected",
 	None = "none",
 	Prompt = "prompt",
+}
+
+-- Initialise the enum of components for the theme configuration
+local ConfigurableComponents = {
+
+	---@enum BuiltInComponents
+	BuiltIn = {
+		Create = "create",
+		Overwrite = "overwrite",
+	},
+
+	---@enum PluginComponents
+	Plugin = {
+		ItemGroup = "item_group",
+		ExtractPassword = "extract_password",
+		Quit = "quit",
+		Archive = "archive",
+		ArchivePassword = "archive_password",
+		Emit = "emit",
+	},
+}
+
+-- The theme options for the input and confirm prompts
+local INPUT_AND_CONFIRM_OPTIONS = {
+	"title",
+	"origin",
+	"offset",
+	"content",
 }
 
 -- The default configuration for the plugin
@@ -161,7 +200,7 @@ local DEFAULT_CONFIG = {
 
 -- The default input options for this plugin
 local DEFAULT_INPUT_OPTIONS = {
-	position = { "top-center", x = 0, y = 2, w = 50, h = 3 },
+	pos = { "top-center", x = 0, y = 2, w = 50, h = 3 },
 }
 
 -- The default confirm options for this plugin
@@ -249,7 +288,7 @@ local ARCHIVE_FILE_EXTENSIONS_WITH_HEADER_ENCRYPTION = {
 -- does not implement any functionality
 ---@type string
 local BASE_ARCHIVER_ERROR = table.concat({
-	"The Extractor class is does not implement any functionality.",
+	"The Archiver class is does not implement any functionality.",
 	"How did you even manage to get here?",
 }, "\n")
 
@@ -267,7 +306,7 @@ local BASE_ARCHIVER_ERROR = table.concat({
 --- The map of the extract behaviour strings to the command flags
 ---@field extract_behaviour_map table<ExtractBehaviour, string>
 local Archiver = {
-	name = "BaseExtractor",
+	name = "BaseArchiver",
 	command = nil,
 	commands = {},
 	supports_file_permissions = false,
@@ -312,7 +351,7 @@ function Archiver:archive(_)
 	}
 end
 
--- The 7-Zip extractor
+-- The 7-Zip archiver
 ---@class SevenZip: Archiver
 ---@field password string The password to the archive
 local SevenZip = Archiver:subclass({
@@ -328,7 +367,7 @@ local SevenZip = Archiver:subclass({
 	password = "",
 })
 
--- The Tar extractor
+-- The Tar archiver
 ---@class Tar: Archiver
 local Tar = Archiver:subclass({
 	name = ArchiverName.Tar,
@@ -345,7 +384,7 @@ local Tar = Archiver:subclass({
 	},
 })
 
--- The default extractor, which is set to 7-Zip
+-- The default archiver, which is set to 7-Zip
 ---@class DefaultArchiver: SevenZip
 local DefaultArchiver = SevenZip:subclass({})
 
@@ -687,29 +726,138 @@ local function show_error(error_message, options)
 	)
 end
 
--- Function to get the user's input
----@param prompt string The prompt to show to the user
----@param options YaziInputOptions|nil Options for the input
----@return string|nil user_input The user's input
----@return InputEvent event The event for the input function
-local function get_user_input(prompt, options)
-	return ya.input(merge_tables({}, DEFAULT_INPUT_OPTIONS, options or {}, {
-		title = prompt,
-	}))
+-- Function to throw an error
+---@param error_message any The error message as a format string
+---@param ... any The items to substitute into the error message given
+local function throw_error(error_message, ...)
+	return error(string.format(error_message, ...))
+end
+
+-- Function to get the theme from an async function
+---@type fun(): Th The theme object
+local get_theme = ya.sync(function(state) return state.theme end)
+
+-- Function to get the component option string
+---@param component BuiltInComponents|PluginComponents The component name
+---@param option string The option
+---@return string component_option The component option string
+local function get_component_option_string(component, option)
+	return string.format("%s_%s", component, option)
+end
+
+-- Function to get the user's configuration for the input or confirm components.
+---@param component BuiltInComponents|PluginComponents The name of the component
+---@param defaults {
+---		prompts: string|string[],    -- The default prompts
+---		content: string|ui.Line|ui.Text|nil,    -- The default contents
+---		origin: string|nil,    -- The default origin
+---		offset: Position|nil,    -- The default offset
+---}
+---@param is_plugin_options boolean|nil Whether the options are plugin specific
+---@param is_confirm boolean|nil Whether the component is the confirm component
+---@param title_index integer|nil The index to get the title
+---@return YaziInputOptions|YaziConfirmOptions options The resolved options
+local function get_user_input_or_confirm_options(
+	component,
+	defaults,
+	is_plugin_options,
+	is_confirm,
+	title_index
+)
+	--
+
+	-- Initialise the default prompts
+	local default_prompts = type(defaults.prompts) == "string"
+			and { defaults.prompts }
+		or defaults.prompts
+
+	-- Initialise the title index
+	title_index = title_index or 1
+
+	-- Get the theme object
+	local theme = get_theme() or {}
+
+	-- Initialise the theme configuration
+	---@diagnostic disable-next-line: undefined-field
+	local theme_config = is_plugin_options and (theme.augment_command or {})
+		or theme
+
+	-- Get the default options
+	local default_options = (
+		is_confirm and DEFAULT_CONFIRM_OPTIONS or DEFAULT_INPUT_OPTIONS
+	).pos
+
+	-- Initialise the list of options
+	local option_list = {}
+
+	-- Initialise the list of option suffixes
+	local option_suffixes = merge_tables({}, INPUT_AND_CONFIRM_OPTIONS)
+
+	-- If the component is not the confirm component, remove the last suffix
+	if not is_confirm then table.remove(option_suffixes) end
+
+	-- Create the list of options
+	for _, option_suffix in ipairs(option_suffixes) do
+		table.insert(
+			option_list,
+			get_component_option_string(component, option_suffix)
+		)
+	end
+
+	-- Unpack the options
+	local title_option, origin_option, offset_option, content_option =
+		table.unpack(option_list)
+
+	-- Get the value of all the options
+	---@type string|string[]
+	local raw_title = theme_config[title_option or ""] or {}
+	local origin = theme_config[origin_option or ""]
+		or defaults.origin
+		or default_options[1]
+	local offset = theme_config[offset_option or ""] or {}
+	local content = theme_config[content_option or ""] or defaults.content
+
+	-- Get the title
+	local title = type(raw_title) == "string" and raw_title
+		or raw_title[title_index]
+		or default_prompts[title_index]
+
+	-- Get the position object
+	local position = {
+		origin,
+		x = offset.x or default_options.x,
+		y = offset.y or default_options.y,
+		w = offset.w or default_options.w,
+		h = offset.h or default_options.h,
+	}
+
+	-- Return the options
+	return {
+		title = title,
+		[is_confirm and "pos" or "position"] = position,
+		content = content,
+	}
 end
 
 -- Function to get a password from the user
----@param prompt string The prompt to show to the user
----@param confirmation_prompt string|nil The confirmation prompt
----@param options YaziInputOptions|nil Options for the input
+---@param get_password_options GetPasswordOptions Get password options function
+---@param want_confirmation boolean|nil Whether to get a confirmation password
 ---@return string|nil password The password or nil if the user cancelled
 ---@return InputEvent|nil event The event for the input function
-local function get_password(prompt, confirmation_prompt, options)
+local function get_password(get_password_options, want_confirmation)
 	--
+
+	-- Merge the obscure option with the password options
+	local password_options =
+		merge_tables(get_password_options(false), { obscure = true })
 
 	-- If reconfirmation for the password is not wanted,
 	-- just obtain the user's password and return it
-	if not confirmation_prompt then return get_user_input(prompt, options) end
+	if not want_confirmation then return ya.input(password_options) end
+
+	-- Merge the obscure option with the confirm password options
+	local confirm_password_options =
+		merge_tables(get_password_options(true), { obscure = true })
 
 	-- Otherwise, initialise the password and the event
 	local password = nil
@@ -720,7 +868,7 @@ local function get_password(prompt, confirmation_prompt, options)
 		--
 
 		-- Get the initial password from the user
-		local initial_password, initial_event = get_user_input(prompt, options)
+		local initial_password, initial_event = ya.input(password_options)
 
 		-- If the initial password is nil, exit the function
 		if initial_password == nil then
@@ -729,7 +877,7 @@ local function get_password(prompt, confirmation_prompt, options)
 
 		-- Get the confirmation password from the user
 		local confirmation_password, confirmation_event =
-			get_user_input(confirmation_prompt, options)
+			ya.input(confirm_password_options)
 
 		-- If the confirmation password is nil, exit the function
 		if confirmation_password == nil then
@@ -751,28 +899,68 @@ local function get_password(prompt, confirmation_prompt, options)
 		end
 
 		-- Otherwise, tell the user their passwords don't match
-		show_error("Passwords do not match")
+		show_error("Passwords do not match, please try again")
 	end
 
 	-- Return the password and event
 	return password, event
 end
 
--- Function to get the user's confirmation
----@param title string|ui.Line The title of the confirmation prompt
----@param content string|ui.Text The content of the confirmation prompt
----@return boolean confirmation Whether the user has confirmed or not
-local function get_user_confirmation(title, content)
+-- Function to show an overwrite prompt
+---@param file_path_to_overwrite string|Url The file path to overwrite
+---@return boolean overwrite Whether the user chooses to overwrite the file
+local function show_overwrite_prompt(file_path_to_overwrite)
 	--
 
-	-- Get the user's confirmation
-	local confirmation = ya.confirm(merge_tables({}, DEFAULT_CONFIRM_OPTIONS, {
-		title = title,
-		content = content,
-	}))
+	-- Get the user's configuration for the overwrite prompt
+	local overwrite_confirm_options = get_user_input_or_confirm_options(
+		ConfigurableComponents.BuiltIn.Overwrite,
+		{
+			prompts = "Overwrite file?",
+			content = ui.Line("Will overwrite the following file:"),
+		},
+		false,
+		true
+	)
 
-	-- Return the result of the confirmation
-	return confirmation
+	-- Get the type of the overwrite content
+	local overwrite_content_type = type(overwrite_confirm_options.content)
+
+	-- Initialise the first line of the content
+	local first_line = nil
+
+	-- If the content section is a string
+	if
+		overwrite_content_type == "string"
+		or overwrite_content_type == "table"
+	then
+		--
+
+		-- Wrap the string in a line and align it to the center.
+		first_line = ui.Line(overwrite_confirm_options.content)
+			:align(ui.Line.CENTER)
+
+		-- Otherwise, just set the first line to the content given
+	else
+		first_line = overwrite_confirm_options.content
+	end
+
+	-- Create the content for the overwrite prompt
+	---@cast first_line ui.Line|ui.Span
+	overwrite_confirm_options.content = ui.Text({
+		first_line,
+		ui.Line(string.rep("─", overwrite_confirm_options.pos.w - 2))
+			:style(ui.Style(th.confirm.border))
+			:align(ui.Line.LEFT),
+		ui.Line(tostring(file_path_to_overwrite)):align(ui.Line.LEFT),
+	}):wrap(ui.Text.WRAP_TRIM)
+
+	-- Get the user's confirmation for
+	-- whether they want to overwrite the item
+	local user_confirmation = ya.confirm(overwrite_confirm_options)
+
+	-- Return whether the user wants to overwrite the file or not
+	return user_confirmation
 end
 
 -- Function to merge the given configuration table with the default one
@@ -834,38 +1022,122 @@ local function merge_configuration(config)
 	return merged_config
 end
 
+-- Function to get whether sudo edit is supported
+---@return boolean sudo_edit_supported Whether sudo edit is supported
+local function get_sudo_edit_supported()
+	--
+
+	-- Call the "sudo --help" command and get the handle
+	--
+	-- The "2>&1" redirects the standard error
+	-- to the file descriptor of the standard output.
+	--
+	-- Since Yazi displays its UI on standard error,
+	-- we don't want the command to output to the standard error,
+	-- which will mess up Yazi's UI, so we redirect
+	-- the standard error output to the standard output.
+	--
+	-- References:
+	-- https://stackoverflow.com/questions/10508843/what-is-dev-null-21
+	-- https://stackoverflow.com/questions/818255/what-does-21-mean
+	-- https://www.gnu.org/software/bash/manual/html_node/Redirections.html
+	local handle = io.popen("sudo --help 2>&1")
+
+	-- If the call fails, return false
+	if not handle then return false end
+
+	-- Otherwise, get the output of the command
+	local output = handle:read("*a")
+
+	-- Close the handle
+	handle:close()
+
+	-- If the output contains the edit flag,
+	-- sudo edit is supported, otherwise, it isn't
+	local sudo_edit_supported = output:match("%-e, %-%-edit") ~= nil
+
+	-- Return whether sudo edit is supported
+	return sudo_edit_supported
+end
+
 -- Function to initialise the configuration
 ---@type fun(
----	user_config: Configuration|nil,    -- The configuration object
+---	user_config: UserConfiguration|nil,    -- The configuration object
 ---): Configuration The initialised configuration object
 local initialise_config = ya.sync(function(state, user_config)
 	--
 
 	-- Merge the default configuration with the user given one,
-	-- as well as the additional data given,
-	-- and set it to the state.
-	state.config = merge_configuration(user_config)
+	-- as well as the additional data given.
+	local config = merge_configuration(user_config)
+
+	-- Set the sudo_edit_supported property
+	---@cast config Configuration
+	config.sudo_edit_supported = get_sudo_edit_supported()
+
+	-- Set the configuration to the state
+	state.config = config
 
 	-- Return the configuration object for async functions
 	return state.config
+end)
+
+-- Function to initialise the theme configuration
+---@type fun(): Th
+local initialise_theme = ya.sync(function(state)
+	--
+
+	-- Initialise the theme configuration table
+	local theme_config = {}
+
+	-- Iterate over all the built-in components
+	for _, component in pairs(ConfigurableComponents.BuiltIn) do
+		--
+
+		-- Iterate over all the options
+		for _, option in ipairs(INPUT_AND_CONFIRM_OPTIONS) do
+			--
+
+			-- Get the component's option
+			local component_option =
+				get_component_option_string(component, option)
+
+			-- Get the value for the option
+			local value = th[component_option]
+
+			-- If the value isn't nil, add it to the theme configuration
+			if value ~= nil then theme_config[component_option] = value end
+		end
+	end
+
+	-- Add the plugin specific theme configuration to the theme configuration
+	---@diagnostic disable-next-line: undefined-field
+	theme_config.augment_command = th.augment_command
+
+	-- Set the theme configuration to the state
+	state.theme = theme_config
+
+	-- Return the theme object
+	return state.theme
 end)
 
 -- Function to try if a shell command exists
 ---@param shell_command string The shell command to check
 ---@param args string[]|nil The arguments to the shell command
 ---@return boolean shell_command_exists Whether the shell command exists
+---@return CommandOutput|nil output The output of the shell command
 local function async_shell_command_exists(shell_command, args)
 	--
 
 	-- Get the output of the shell command with the given arguments
 	local output = Command(shell_command)
-		:args(args or {})
+		:arg(args or {})
 		:stdout(Command.PIPED)
 		:stderr(Command.PIPED)
 		:output()
 
 	-- Return true if there's an output and false otherwise
-	return output ~= nil
+	return output ~= nil, output
 end
 
 -- Function to emit a command from this plugin
@@ -885,7 +1157,7 @@ local function emit_augmented_command(command, args)
 	end
 
 	-- Emit the augmented command
-	return ya.mgr_emit("plugin", {
+	return ya.emit("plugin", {
 		PLUGIN_NAME,
 		string.format("%s %s", command, arguments),
 	})
@@ -915,8 +1187,9 @@ local subscribe_to_augmented_extract_event = ya.sync(function(_)
 end)
 
 -- Function to initialise the plugin
----@param opts Configuration|nil The options given to the plugin
+---@param opts UserConfiguration|nil The options given to the plugin
 ---@return Configuration config The initialised configuration object
+---@return Th theme The saved theme object
 local function initialise_plugin(opts)
 	--
 
@@ -926,8 +1199,11 @@ local function initialise_plugin(opts)
 	-- Initialise the configuration object
 	local config = initialise_config(opts)
 
+	-- Add the theme configuration to the config
+	local theme = initialise_theme()
+
 	-- Return the configuration object
-	return config
+	return config, theme
 end
 
 -- Function to standardise the mime type of a file.
@@ -974,12 +1250,11 @@ local function is_archive_mime_type(mime_type)
 	-- Standardise the mime type
 	local standardised_mime_type = standardise_mime_type(mime_type)
 
-	-- Get the archive extractor for the mime type
-	local archive_extractor =
-		ARCHIVE_MIME_TYPE_TO_ARCHIVER_MAP[standardised_mime_type]
+	-- Get the archiver for the mime type
+	local archiver = ARCHIVE_MIME_TYPE_TO_ARCHIVER_MAP[standardised_mime_type]
 
-	-- Return if an extractor exists for the mime type
-	return archive_extractor ~= nil
+	-- Return if an archiver exists for the mime type
+	return archiver ~= nil
 end
 
 -- Function to check if a given file extension
@@ -1013,7 +1288,7 @@ local function get_mime_type(file_path)
 
 	-- Get the output of the file command
 	local output, _ = Command("file")
-		:args({
+		:arg({
 
 			-- Don't prepend file names to the output
 			"-b",
@@ -1085,12 +1360,7 @@ end
 
 -- Function to get the configuration from an async function
 ---@type fun(): Configuration The configuration object
-local get_config = ya.sync(function(state)
-	--
-
-	-- Returns the configuration object
-	return state.config
-end)
+local get_config = ya.sync(function(state) return state.config end)
 
 -- Function to get the current working directory
 ---@type fun(): string Returns the current working directory as a string
@@ -1206,21 +1476,6 @@ local get_tab_preferences = ya.sync(function(_)
 	return tab_preferences
 end)
 
--- Function to get if Yazi is loading
----@type fun(): boolean
-local yazi_loaded = ya.sync(function(_)
-	local stage = cx.active.current.stage
-	local loaded, _ = stage()
-	return loaded
-end)
-
--- Function to wait until Yazi is loaded
----@return nil
-local function wait_until_yazi_is_loaded()
-	while not yazi_loaded() do
-	end
-end
-
 -- Function to choose which group of items to operate on.
 -- It returns ItemGroup.Hovered for the hovered item,
 -- ItemGroup.Selected for the selected items,
@@ -1288,16 +1543,26 @@ local function prompt_for_desired_item_group()
 	---@type ItemGroup|nil
 	local default_item_group = config.default_item_group_for_prompt
 
-	-- Get the input options
+	-- Get the input options, which the (h/s) options
 	local input_options = INPUT_OPTIONS_TABLE[default_item_group]
 
-	-- If the default item group is None, then set it to nil
+	-- If the default item group is none, then set it to nil
 	if default_item_group == ItemGroup.None then default_item_group = nil end
 
-	-- Prompt the user for their input
-	local user_input, event = get_user_input(
-		"Operate on hovered or selected items? " .. input_options
+	-- Get the user's input options for the item group prompt
+	local item_group_input_options = get_user_input_or_confirm_options(
+		ConfigurableComponents.Plugin.ItemGroup,
+		{ prompts = "Operate on hovered or selected items?" },
+		true
 	)
+
+	-- Add the input options to the title
+	item_group_input_options.title =
+		string.format("%s %s", item_group_input_options.title, input_options)
+
+	-- Prompt the user for their input
+	---@cast item_group_input_options YaziInputOptions
+	local user_input, event = ya.input(item_group_input_options)
 
 	-- If the user input is empty, then exit the function
 	if not user_input then return end
@@ -1436,23 +1701,23 @@ local function skip_single_child_directories(initial_directory_path)
 	end
 
 	-- Emit the change directory command to change to the directory variable
-	ya.mgr_emit("cd", { directory })
+	ya.emit("cd", { directory })
 end
 
 -- Class implementations
 
--- The function to create a new instance of the extractor
+-- The function to create a new instance of the archiver
 ---@param archive_path string The path to the archive
 ---@param config Configuration The configuration object
 ---@param destination_path string|nil The path to extract to
----@return Archiver|nil instance An instance of the extractor if available
+---@return Archiver|nil instance An instance of the archiver if available
 function Archiver:new(archive_path, config, destination_path)
 	--
 
-	-- Initialise whether the extractor is available
+	-- Initialise whether the archiver is available
 	local available = self.command ~= nil
 
-	-- If the extractor has not been initialised
+	-- If the archiver has not been initialised
 	if not available then
 		--
 
@@ -1480,7 +1745,7 @@ function Archiver:new(archive_path, config, destination_path)
 		end
 	end
 
-	-- If none of the commands for the extractor are available,
+	-- If none of the commands for the archiver are available,
 	-- then return nil
 	if not available then return nil end
 
@@ -1499,12 +1764,12 @@ function Archiver:new(archive_path, config, destination_path)
 	return instance
 end
 
--- Function to retry the extractor
+-- Function to retry the archiver
 ---@private
----@param extractor_function Archiver.Command Extractor command to retry
+---@param archiver_function Archiver.Command Archiver command to retry
 ---@param clean_up_wanted boolean|nil Whether to clean up the destination path
----@return Archiver.Result result Result of the extractor function
-function SevenZip:retry_extractor(extractor_function, clean_up_wanted)
+---@return Archiver.Result result Result of the archiver function
+function SevenZip:retry_archiver(archiver_function, clean_up_wanted)
 	--
 
 	-- Initialise the number of tries
@@ -1518,7 +1783,7 @@ function SevenZip:retry_extractor(extractor_function, clean_up_wanted)
 	local archive_name = archive_url.name
 
 	-- If the archive name is nil,
-	-- return the result of the extractor function
+	-- return the result of the archiver function
 	if not archive_name then
 		return {
 			successful = false,
@@ -1545,8 +1810,8 @@ function SevenZip:retry_extractor(extractor_function, clean_up_wanted)
 	for tries = 0, total_number_of_tries do
 		--
 
-		-- Execute the extractor function
-		local output, error = extractor_function()
+		-- Execute the archiver function
+		local output, error = archiver_function()
 
 		-- If there is no output
 		if not output then
@@ -1555,7 +1820,7 @@ function SevenZip:retry_extractor(extractor_function, clean_up_wanted)
 			-- Clean up the extracted files
 			clean_up()
 
-			-- Return the result of the extractor function
+			-- Return the result of the archiver function
 			return {
 				successful = false,
 				error = tostring(error),
@@ -1564,7 +1829,7 @@ function SevenZip:retry_extractor(extractor_function, clean_up_wanted)
 
 		-- If the output status code is 0,
 		-- which means the command was successful,
-		-- return the result of the extractor function
+		-- return the result of the archiver function
 		if output.status.code == 0 then
 			return {
 				successful = true,
@@ -1590,7 +1855,7 @@ function SevenZip:retry_extractor(extractor_function, clean_up_wanted)
 		then
 			--
 
-			-- Return the extractor function result
+			-- Return the archiver function result
 			return {
 				successful = false,
 				error = error_message,
@@ -1602,7 +1867,7 @@ function SevenZip:retry_extractor(extractor_function, clean_up_wanted)
 			or wrong_password_prompt
 
 		-- Initialise the width of the input element
-		local input_width = DEFAULT_INPUT_OPTIONS.position.w
+		local input_width = DEFAULT_INPUT_OPTIONS.pos.w
 
 		-- If the length of the password prompt is larger
 		-- than the default input with, set the input width
@@ -1611,17 +1876,30 @@ function SevenZip:retry_extractor(extractor_function, clean_up_wanted)
 			input_width = #password_prompt + 1
 		end
 
-		-- Ask the user for the password
-		local user_input, event = get_password(
-			password_prompt,
-			nil,
-			merge_tables(
-				true,
-				{},
-				DEFAULT_INPUT_OPTIONS,
-				{ position = { w = input_width } }
+		-- Function to get the user's input option
+		-- for the extract password prompt
+		---@type GetPasswordOptions
+		local function get_user_extract_password_options(_)
+			--
+
+			-- Get the password input options
+			local password_input_options = get_user_input_or_confirm_options(
+				ConfigurableComponents.Plugin.ExtractPassword,
+				{ prompts = password_prompt },
+				true
 			)
-		)
+
+			-- Set the width of the component to the input width
+			---@cast password_input_options YaziInputOptions
+			password_input_options.position.w = input_width
+
+			-- Return the password input options
+			return password_input_options
+		end
+
+		-- Ask the user for the password
+		local user_input, event =
+			get_password(get_user_extract_password_options)
 
 		-- If the user has confirmed the input,
 		-- and the user input is not nil,
@@ -1633,7 +1911,7 @@ function SevenZip:retry_extractor(extractor_function, clean_up_wanted)
 		else
 			--
 
-			-- Return the result of the extractor command
+			-- Return the result of the archiver command
 			return {
 				successful = false,
 				cancelled = true,
@@ -1646,7 +1924,7 @@ function SevenZip:retry_extractor(extractor_function, clean_up_wanted)
 	-- call the clean up function
 	clean_up()
 
-	-- Return the result of the extractor command
+	-- Return the result of the archiver command
 	return {
 		successful = false,
 		error = error_message,
@@ -1679,7 +1957,7 @@ function SevenZip:list_items_command()
 
 	-- Return the result of the command to list the items in the archive
 	return Command(self.command)
-		:args(arguments)
+		:arg(arguments)
 		:stdout(Command.PIPED)
 		:stderr(Command.PIPED)
 		:output()
@@ -1698,23 +1976,23 @@ function SevenZip:get_items()
 	---@type string[]
 	local directories = {}
 
-	-- Call the function to retry the extractor command
+	-- Call the function to retry the archiver command
 	-- with the list items in the archive function
-	local extractor_result = self:retry_extractor(
+	local archiver_result = self:retry_archiver(
 		function() return self:list_items_command() end
 	)
 
 	-- Get the output
-	local output = extractor_result.output
+	local output = archiver_result.output
 
 	-- Get the error
-	local error = extractor_result.error
+	local error = archiver_result.error
 
-	-- If the extractor command was not successful,
+	-- If the archiver command was not successful,
 	-- or the output was nil,
 	-- then return nil the error message,
 	-- and nil as the correct password
-	if not extractor_result.successful or not output then
+	if not archiver_result.successful or not output then
 		return files, directories, error
 	end
 
@@ -1820,7 +2098,7 @@ function SevenZip:extract_command(extract_files_only, extract_behaviour)
 
 	-- Return the output of the command
 	return Command(self.command)
-		:args(arguments)
+		:arg(arguments)
 		:stdout(Command.PIPED)
 		:stderr(Command.PIPED)
 		:output()
@@ -1831,13 +2109,13 @@ end
 function SevenZip:extract(has_only_one_file)
 	--
 
-	-- Extract the archive with the extractor command
-	local result = self:retry_extractor(
+	-- Extract the archive with the extract command
+	local result = self:retry_archiver(
 		function() return self:extract_command(has_only_one_file) end,
 		true
 	)
 
-	-- Return the extractor result
+	-- Return the archiver result
 	return result
 end
 
@@ -1875,7 +2153,7 @@ function SevenZip:archive_command(item_paths, password, encrypt_headers)
 
 	-- Return the output of the command
 	return Command(self.command)
-		:args(arguments)
+		:arg(arguments)
 		:stdout(Command.PIPED)
 		:stderr(Command.PIPED)
 		:output()
@@ -1934,7 +2212,7 @@ function Tar:list_items_command()
 
 	-- Return the result of the command
 	return Command(self.command)
-		:args(arguments)
+		:arg(arguments)
 		:stdout(Command.PIPED)
 		:stderr(Command.PIPED)
 		:output()
@@ -2039,12 +2317,12 @@ function Tar:extract_command(extract_behaviour)
 	--
 	-- The error here is ignored because if there
 	-- is an error creating the directory,
-	-- then the extractor will fail anyway.
+	-- then the archiver will fail anyway.
 	fs.create("dir_all", Url(self.destination_path))
 
 	-- Return the output of the command
 	return Command(self.command)
-		:args(arguments)
+		:arg(arguments)
 		:stdout(Command.PIPED)
 		:stderr(Command.PIPED)
 		:output()
@@ -2108,7 +2386,7 @@ function Tar:archive_command(item_paths)
 
 	-- Return the output of the command
 	return Command(self.command)
-		:args(arguments)
+		:arg(arguments)
 		:stdout(Command.PIPED)
 		:stderr(Command.PIPED)
 		:output()
@@ -2180,13 +2458,13 @@ local function get_archiver(archive_path, command, config, destination_path)
 	local archiver_instance =
 		archiver:new(archive_path, config, destination_path)
 
-	-- While the extractor instance failed to be created
+	-- While the archiver instance failed to be created
 	while not archiver_instance do
 		--
 
 		-- If the archiver instance is the default archiver,
 		-- then return an error telling the user to install the
-		-- default extractor
+		-- default archiver
 		if archiver.name == DefaultArchiver.name then
 			return archiver_instance,
 				{
@@ -2237,7 +2515,7 @@ local function get_archiver(archive_path, command, config, destination_path)
 		show_warning(warning)
 	end
 
-	-- Return the extractor instance
+	-- Return the archiver instance
 	return archiver_instance, { successful = true }
 end
 
@@ -2249,7 +2527,7 @@ local function move_extracted_items(archive_url, destination_url)
 	--
 
 	-- The function to clean up the destination directory
-	-- and return the extractor result in the event of an error
+	-- and return the archiver result in the event of an error
 	---@param error string The error message to return
 	---@param empty_dir_only boolean|nil Whether to remove the empty dir only
 	---@return Archiver.Result
@@ -2259,7 +2537,7 @@ local function move_extracted_items(archive_url, destination_url)
 		-- Clean up the destination path
 		fs.remove(empty_dir_only and "dir" or "dir_all", destination_url)
 
-		-- Return the extractor result
+		-- Return the archiver result
 		---@type Archiver.Result
 		return {
 			successful = false,
@@ -2377,7 +2655,7 @@ local function move_extracted_items(archive_url, destination_url)
 	-- Clean up the destination directory
 	fs.remove(move_successful and "dir" or "dir_all", destination_url)
 
-	-- Return the extractor result with the target path as the
+	-- Return the archiver result with the target path as the
 	-- path to the extracted items
 	return {
 		successful = move_successful,
@@ -2441,14 +2719,14 @@ local function recursively_extract_archive(
 	-- The additional information are:
 	--      - The archive path
 	--      - The destination path
-	--      - The name of the extractor
+	--      - The name of the archiver
 	---@param result Archiver.Result The result to add the paths to
 	---@return Archiver.Result modified_result The result with the paths added
 	local function add_additional_info(result)
 		return merge_tables({}, result, {
 			archive_path = archive_path,
 			destination_path = destination_path,
-			extractor_name = archiver.name,
+			archiver_name = archiver.name,
 		})
 	end
 
@@ -2579,17 +2857,17 @@ end
 -- Function to show an archiver error
 ---@param archiver_result Archiver.Result The result from the archiver
 ---@return nil
-local function show_archiver_error(archiver_result)
+local function throw_archiver_error(archiver_result)
 	--
 
 	-- The line for the error
 	local error_line = string.format("Error: %s", archiver_result.error)
 
-	-- If the extractor name exists
+	-- If the archiver name exists
 	if archiver_result.archiver_name then
 		--
 
-		-- Add the extractor's name to the error
+		-- Add the archiver's name to the error
 		error_line = string.format(
 			"%s error: %s",
 			archiver_result.archiver_name,
@@ -2617,8 +2895,8 @@ local function show_archiver_error(archiver_result)
 		error_string = error_line
 	end
 
-	-- Show the error
-	show_error(error_string)
+	-- Throw the error
+	throw_error(error_string)
 end
 
 -- Function to handle the open command
@@ -2638,7 +2916,7 @@ local function handle_open(args, config)
 		--
 
 		-- Emit the command and exit the function
-		return ya.mgr_emit("open", args)
+		return ya.emit("open", args)
 	end
 
 	-- If the hovered item is a directory
@@ -2670,7 +2948,7 @@ local function handle_open(args, config)
 		-- opening only the hovered item
 		-- as the item group is the hovered item,
 		-- and exit the function
-		return ya.mgr_emit("open", merge_tables({}, args, { hovered = true }))
+		return ya.emit("open", merge_tables({}, args, { hovered = true }))
 	end
 
 	-- Otherwise, the hovered item is an archive
@@ -2800,7 +3078,7 @@ local function handle_extract(args, config)
 
 	-- If the extraction is not successful, notify the user
 	if not extraction_result.successful or not extracted_items_path then
-		return show_archiver_error(extraction_result)
+		return throw_archiver_error(extraction_result)
 	end
 
 	-- Get the url of the archive
@@ -2848,12 +3126,12 @@ local function handle_extract(args, config)
 			--
 
 			-- Reveal the item and exit the function
-			return ya.mgr_emit("reveal", { extracted_items_url })
+			return ya.emit("reveal", { extracted_items_url })
 		end
 
 		-- Otherwise, change the directory to the extracted item.
 		-- Note that extracted_items_url is destroyed here.
-		ya.mgr_emit("cd", { extracted_items_url })
+		ya.emit("cd", { extracted_items_url })
 
 		-- If the user wants to skip single subdirectories on enter,
 		-- and the no skip flag is not passed
@@ -2890,7 +3168,7 @@ local function handle_enter(args, config)
 	end
 
 	-- Otherwise, always emit the enter command,
-	ya.mgr_emit("enter", args)
+	ya.emit("enter", args)
 
 	-- If the user doesn't want to skip single subdirectories on enter,
 	-- or one of the arguments passed is no skip,
@@ -2913,7 +3191,7 @@ local function handle_leave(args, config)
 	--
 
 	-- Always emit the leave command
-	ya.mgr_emit("leave", args)
+	ya.emit("leave", args)
 
 	-- If the user doesn't want to skip single subdirectories on leave,
 	-- or one of the arguments passed is no skip,
@@ -2955,7 +3233,7 @@ local function handle_leave(args, config)
 	end
 
 	-- Emit the change directory command to change to the directory variable
-	ya.mgr_emit("cd", { directory })
+	ya.emit("cd", { directory })
 end
 
 -- Function to handle a Yazi command
@@ -2976,14 +3254,14 @@ local function handle_yazi_command(command, args)
 		--
 
 		-- Emit the command to operate on the selected items
-		ya.mgr_emit(command, args)
+		ya.emit(command, args)
 
 	-- If the item group is the hovered item
 	elseif item_group == ItemGroup.Hovered then
 		--
 
 		-- Emit the command with the hovered option
-		ya.mgr_emit(command, merge_tables({}, args, { hovered = true }))
+		ya.emit(command, merge_tables({}, args, { hovered = true }))
 	end
 end
 
@@ -3012,7 +3290,7 @@ local function enter_or_open_created_item(item_url, is_directory, args, config)
 		end
 
 		-- Otherwise, call the function change to the created directory
-		return ya.mgr_emit("cd", { item_url })
+		return ya.emit("cd", { item_url })
 	end
 
 	-- Otherwise, the item is a file
@@ -3025,11 +3303,8 @@ local function enter_or_open_created_item(item_url, is_directory, args, config)
 		return
 	end
 
-	-- Wait for Yazi to finish loading
-	wait_until_yazi_is_loaded()
-
 	-- Call the function to open the file
-	return ya.mgr_emit("open", { hovered = true })
+	return ya.emit("open", { hovered = true })
 end
 
 -- Function to execute the create command
@@ -3046,7 +3321,7 @@ local function execute_create(item_url, is_directory, args, config)
 	-- If the parent directory doesn't exist,
 	-- then show an error and exit the function
 	if not parent_directory_url then
-		return show_error(
+		return throw_error(
 			"Parent directory of the item to create doesn't exist"
 		)
 	end
@@ -3060,7 +3335,7 @@ local function execute_create(item_url, is_directory, args, config)
 
 		-- If the function is not successful,
 		-- show the error message and exit the function
-		if not successful then return show_error(error_message) end
+		if not successful then return throw_error(error_message) end
 
 	-- Otherwise, the item to create is a file
 	else
@@ -3076,7 +3351,7 @@ local function execute_create(item_url, is_directory, args, config)
 
 			-- If the function is not successful,
 			-- show the error message and exit the function
-			if not successful then return show_error(error_message) end
+			if not successful then return throw_error(error_message) end
 		end
 
 		-- Otherwise, create the file
@@ -3084,14 +3359,14 @@ local function execute_create(item_url, is_directory, args, config)
 
 		-- If the function is not successful,
 		-- show the error message and exit the function
-		if not successful then return show_error(error_message) end
+		if not successful then return throw_error(error_message) end
 	end
 
 	-- Wait for a tiny bit for the file to be created
-	ya.sleep(0.1)
+	ya.sleep(10e-2)
 
 	-- Reveal the created item
-	ya.mgr_emit("reveal", { tostring(item_url) })
+	ya.emit("reveal", { tostring(item_url) })
 
 	-- Call the function to enter or open the created item
 	enter_or_open_created_item(item_url, is_directory, args, config)
@@ -3105,9 +3380,18 @@ local function handle_create(args, config)
 	-- Get the directory flag
 	local dir_flag = table_pop(args, "dir", false)
 
+	-- Get the user's input options for the create command
+	local create_input_options = get_user_input_or_confirm_options(
+		ConfigurableComponents.BuiltIn.Create,
+		{ prompts = { "Create:", "Create (dir):" } },
+		false,
+		false,
+		dir_flag and 2 or 1
+	)
+
 	-- Get the user's input for the item to create
-	local user_input, event =
-		get_user_input(dir_flag and "Create (dir):" or "Create:")
+	---@cast create_input_options YaziInputOptions
+	local user_input, event = ya.input(create_input_options)
 
 	-- If the user input is nil,
 	-- or if the user did not confirm the input,
@@ -3152,23 +3436,12 @@ local function handle_create(args, config)
 	if fs.cha(full_url, false) and not table_pop(args, "force", false) then
 		--
 
-		-- Get the user's confirmation for
-		-- whether they want to overwrite the item
-		local user_confirmation = get_user_confirmation(
-			"Overwrite file?",
-			ui.Text({
-				ui.Line("Will overwrite the following file:")
-					:align(ui.Line.CENTER),
-				ui.Line(string.rep("─", DEFAULT_CONFIRM_OPTIONS.pos.w - 2))
-					:style(ui.Style(th.confirm.border))
-					:align(ui.Line.LEFT),
-				ui.Line(tostring(full_url)):align(ui.Line.LEFT),
-			}):wrap(ui.Text.WRAP_TRIM)
-		)
+		-- Get whether the user wants to overwrite the file
+		local should_overwrite = show_overwrite_prompt(full_url)
 
-		-- If the user did not confirm the overwrite,
+		-- If the user does not want to overwrite the file,
 		-- then exit the function
-		if not user_confirmation then return end
+		if not should_overwrite then return end
 	end
 
 	-- Call the function to execute the create command
@@ -3360,14 +3633,12 @@ local function handle_shell(args, _)
 	-- If the command isn't a string,
 	-- show an error message and exit the function
 	if command_type ~= "string" then
-		return show_error(
-			string.format(
-				"Shell command given is not a string, "
-					.. "instead it is a '%s', "
-					.. "with value '%s'",
-				command_type,
-				tostring(command)
-			)
+		return throw_error(
+			"Shell command given is not a string, "
+				.. "instead it is a '%s', "
+				.. "with value '%s'",
+			command_type,
+			tostring(command)
 		)
 	end
 
@@ -3458,7 +3729,7 @@ local function handle_shell(args, _)
 	args = merge_tables({ command }, args)
 
 	-- Emit the command to operate on the hovered item
-	ya.mgr_emit("shell", args)
+	ya.emit("shell", args)
 end
 
 -- Function to handle the paste command
@@ -3475,17 +3746,17 @@ local function handle_paste(args, config)
 
 		-- Just paste the items inside the current directory
 		-- and exit the function
-		return ya.mgr_emit("paste", args)
+		return ya.emit("paste", args)
 	end
 
 	-- Otherwise, enter the directory
-	ya.mgr_emit("enter", {})
+	ya.emit("enter", {})
 
 	-- Paste the items inside the directory
-	ya.mgr_emit("paste", args)
+	ya.emit("paste", args)
 
 	-- Leave the directory
-	ya.mgr_emit("leave", {})
+	ya.emit("leave", {})
 end
 
 -- Function to execute the tab create command
@@ -3513,12 +3784,12 @@ local execute_tab_create = ya.sync(function(state, args)
 
 		-- Emit the command to create a new tab with the arguments
 		-- and exit the function
-		return ya.mgr_emit("tab_create", args)
+		return ya.emit("tab_create", args)
 	end
 
 	-- Otherwise, emit the command to create a new tab
 	-- with the hovered item's url
-	ya.mgr_emit("tab_create", { hovered_item.url })
+	ya.emit("tab_create", { hovered_item.url })
 end)
 
 -- Function to handle the tab create command
@@ -3551,7 +3822,7 @@ local execute_tab_switch = ya.sync(function(state, args)
 	if
 		not (state.config.smart_tab_switch or table_pop(args, "smart", false))
 	then
-		return ya.mgr_emit("tab_switch", args)
+		return ya.emit("tab_switch", args)
 	end
 
 	-- Get the current tab
@@ -3560,28 +3831,25 @@ local execute_tab_switch = ya.sync(function(state, args)
 	-- Get the number of tabs currently open
 	local number_of_open_tabs = #cx.tabs
 
-	-- Save the current tab's current working directory
-	local current_working_directory = tostring(current_tab.cwd)
-
 	-- Iterate from the number of current open tabs
 	-- to the given tab number
 	for _ = number_of_open_tabs, tab_index - 1 do
 		--
 
 		-- Call the tab create command
-		ya.mgr_emit("tab_create", { current_working_directory })
+		ya.emit("tab_create", { current_tab.cwd })
 
 		-- If there is a hovered item
 		if current_tab.hovered then
 			--
 
 			-- Reveal the hovered item
-			ya.mgr_emit("reveal", { tostring(current_tab.hovered.url) })
+			ya.emit("reveal", { current_tab.hovered.url })
 		end
 	end
 
 	-- Switch to the given tab index
-	ya.mgr_emit("tab_switch", args)
+	ya.emit("tab_switch", args)
 end)
 
 -- Function to handle the tab switch command
@@ -3604,24 +3872,41 @@ local function handle_quit(args, config)
 	-- If the user doesn't want the confirm on quit functionality,
 	-- or if the number of tabs is 1 or less,
 	-- then emit the quit command
-	if not (config.confirm_on_quit or args.confirm) or number_of_tabs <= 1 then
-		return ya.mgr_emit("quit", args)
+	if
+		not (config.confirm_on_quit or table_pop(args, "confirm", false))
+		or number_of_tabs <= 1
+	then
+		return ya.emit("quit", args)
 	end
 
-	-- Otherwise, get the user's confirmation for quitting
-	local user_confirmation = get_user_confirmation(
-		"Quit?",
-		ui.Text({
-			"There are multiple tabs open.",
-			"Are you sure you want to quit?",
-		}):wrap(ui.Text.WRAP_TRIM)
-	)
+	-- Otherwise, get the user's confirm options
+	local quit_confirm_options =
+		get_user_input_or_confirm_options(ConfigurableComponents.Plugin.Quit, {
+			prompts = "Quit?",
+			content = ui.Text({
+				"There are multiple tabs open.",
+				"Are you sure you want to quit?",
+			}):wrap(ui.Text.WRAP_TRIM),
+		}, true, true)
+
+	-- Get the type of the quit content
+	local quit_content_type = type(quit_confirm_options.content)
+
+	-- If the type of the quit content is a string or a list of strings
+	if quit_content_type == "string" or quit_content_type == "table" then
+		quit_confirm_options.content = ui.Text(quit_confirm_options.content)
+			:wrap(ui.Text.WRAP_TRIM)
+	end
+
+	-- Get the user's confirmation for quitting
+	---@cast quit_confirm_options YaziConfirmOptions
+	local user_confirmation = ya.confirm(quit_confirm_options)
 
 	-- If the user didn't confirm, then exit the function
 	if not user_confirmation then return end
 
 	-- Otherwise, emit the quit command
-	ya.mgr_emit("quit", args)
+	ya.emit("quit", args)
 end
 
 -- Function to handle smooth scrolling
@@ -3670,7 +3955,7 @@ local function wraparound_arrow(args)
 	-- immediately emit the arrow command
 	-- and exit the function
 	if type(steps) ~= "number" then
-		return ya.mgr_emit("arrow", merge_tables({ steps }, args))
+		return ya.emit("arrow", merge_tables({ steps }, args))
 	end
 
 	-- Initialise the arrow command to use
@@ -3692,7 +3977,7 @@ local function wraparound_arrow(args)
 		--
 
 		-- Emit the arrow command
-		ya.mgr_emit("arrow", merge_tables({ arrow_command }, args))
+		ya.emit("arrow", merge_tables({ arrow_command }, args))
 	end
 end
 
@@ -3712,12 +3997,12 @@ local function handle_arrow(args, config)
 		-- immediately emit the arrow command
 		-- and exit the function
 		if type(steps) ~= "number" then
-			return ya.mgr_emit("arrow", merge_tables({ steps }, args))
+			return ya.emit("arrow", merge_tables({ steps }, args))
 		end
 
 		-- Initialise the function to the regular arrow command
 		local function scroll_func(step)
-			ya.mgr_emit("arrow", merge_tables({ step }, args))
+			ya.emit("arrow", merge_tables({ step }, args))
 		end
 
 		-- If wraparound file navigation is wanted
@@ -3751,7 +4036,7 @@ local function handle_arrow(args, config)
 	end
 
 	-- Otherwise, emit the regular arrow command
-	ya.mgr_emit("arrow", args)
+	ya.emit("arrow", args)
 end
 
 -- Function to get the directory items in the parent directory
@@ -3815,14 +4100,12 @@ local execute_parent_arrow = ya.sync(function(state, args)
 	-- then show an error that the offset is not a number
 	-- and exit the function
 	if offset_type ~= "number" then
-		return show_error(
-			string.format(
-				"The given offset is not of the type 'number', "
-					.. "instead it is a '%s', "
-					.. "with value '%s'",
-				offset_type,
-				tostring(offset)
-			)
+		return throw_error(
+			"The given offset is not of the type 'number', "
+				.. "instead it is a '%s', "
+				.. "with value '%s'",
+			offset_type,
+			tostring(offset)
 		)
 	end
 
@@ -3918,7 +4201,7 @@ local execute_parent_arrow = ya.sync(function(state, args)
 
 			-- Emit the command to change directory to
 			-- the directory item and exit the function
-			return ya.mgr_emit("cd", { directory_item.url })
+			return ya.emit("cd", { directory_item.url })
 		end
 	end
 end)
@@ -4042,11 +4325,57 @@ local function handle_archive(args, config)
 	-- If the item paths is nil, exit the function
 	if not item_paths then return end
 
-	-- Get the path to the archive
-	local archive_path = get_user_input("Archive name:") or ""
+	-- Get the user's archive input options
+	local archive_input_options = get_user_input_or_confirm_options(
+		ConfigurableComponents.Plugin.Archive,
+		{ prompts = "Archive name:" },
+		true
+	)
 
-	-- If the archive path is empty, exit the function
-	if #string_trim(archive_path) < 1 then return end
+	-- Get the user's input
+	---@cast archive_input_options YaziInputOptions
+	local user_input, event = ya.input(archive_input_options)
+
+	-- If the user did not confirm the input,
+	-- exit the function
+	if event ~= 1 then return end
+
+	-- Get the archive path
+	local archive_path = user_input or ""
+
+	-- If the archive path is empty
+	if #string_trim(archive_path) < 1 then
+		--
+
+		-- If the item group is not the hovered item,
+		-- exit the function
+		if item_group ~= ItemGroup.Hovered then return end
+
+		-- Otherwise, get the path of the hovered item
+		local hovered_item_path = table.unpack(item_paths)
+
+		-- Set the archive name to the hovered item path
+		-- plus the zip extension
+		archive_path = hovered_item_path .. ".zip"
+	end
+
+	-- If the archive path doesn't have a file extension,
+	-- add the ".zip" file extension
+	if not Url(archive_path).ext then archive_path = archive_path .. ".zip" end
+
+	-- Get the full url of the archive path
+	local archive_url = Url(get_current_directory()):join(archive_path)
+
+	-- If the archive already exists and the force flag isn't passed
+	if fs.cha(archive_url, false) and not table_pop(args, "force", false) then
+		--
+
+		-- Get whether the user wants to overwrite the existing file
+		local should_overwrite = show_overwrite_prompt(archive_url)
+
+		-- If the user doesn't want to overwrite the file, exit the function
+		if not should_overwrite then return end
+	end
 
 	-- Get the archiver
 	local archiver, get_archiver_results =
@@ -4054,16 +4383,41 @@ local function handle_archive(args, config)
 
 	-- If the archiver can't be instantiated,
 	-- show the error and exit the function
-	if not archiver then return show_archiver_error(get_archiver_results) end
+	if not archiver then return throw_archiver_error(get_archiver_results) end
 
 	-- Initialise the password
 	local password = nil
 
-	-- If the user wants to encrypt the archive,
-	-- get the password from the user
+	-- If the user wants to encrypt the archive
 	if config.encrypt_archives or table_pop(args, "encrypt", false) then
-		password =
-			get_password("Archive password:", "Confirm archive password:")
+		--
+
+		-- Function to get the user's archive password options
+		---@type GetPasswordOptions
+		local function get_user_archive_password_options(is_confirm_password)
+			--
+
+			-- Get the user's archive password options
+			local archive_password_options = get_user_input_or_confirm_options(
+				ConfigurableComponents.Plugin.ArchivePassword,
+				{
+					prompts = {
+						"Archive password:",
+						"Confirm archive password:",
+					},
+				},
+				true,
+				false,
+				is_confirm_password and 2 or 1
+			)
+
+			-- Return the user's archive password options
+			---@cast archive_password_options YaziInputOptions
+			return archive_password_options
+		end
+
+		-- Get the user's password
+		password = get_password(get_user_archive_password_options, true)
 	end
 
 	-- Get whether to encrypt the headers or not
@@ -4083,19 +4437,139 @@ local function handle_archive(args, config)
 	-- If the archiver is not successful,
 	-- show the error and exit the function
 	if not archiver_result.successful then
-		return show_archiver_error(archiver_result)
-	end
-
-	-- If the user wants to reveal the created archive,
-	-- then reveal the created archive
-	if config.reveal_created_archive or table_pop(args, "reveal", false) then
-		ya.mgr_emit("reveal", { archive_path })
+		return throw_archiver_error(archiver_result)
 	end
 
 	-- If the user wants to remove archived files, remove them
 	if config.remove_archived_files or table_pop(args, "remove", false) then
 		remove_items(item_paths)
 	end
+
+	-- If the user wants to reveal the created archive
+	if config.reveal_created_archive or table_pop(args, "reveal", false) then
+		--
+
+		-- Wait for a tiny bit for the archive to be created
+		ya.sleep(10e-2)
+
+		-- Reveal the archive
+		ya.emit("reveal", { archive_path })
+	end
+end
+
+-- Function to handle the emit command
+---@type CommandFunction
+local function handle_emit(args)
+	--
+
+	-- Get the command to emit given by the user
+	local given_command = table.remove(args, 1)
+
+	-- Get whether the user wants a plugin command
+	local is_plugin_command = args.plugin
+
+	-- Get whether the user wants an augmented command
+	local is_augmented_command = args.augmented
+
+	-- Initialise the emit title index
+	local emit_title_index = nil
+
+	-- Initialise the command function
+	---@type fun(command: string, arguments: Arguments): nil
+	local function command_function(_, _) end
+
+	-- If the user wants an augmented command
+	if is_augmented_command then
+		--
+
+		-- Set the emit title index to 3
+		emit_title_index = 3
+
+		-- Set the command function to emit an augmented command
+		function command_function(command, arguments)
+			emit_augmented_command(command, arguments)
+		end
+
+	-- Otherwise, if the user wants a plugin command
+	elseif is_plugin_command then
+		--
+
+		-- Set the emit title index to 2
+		emit_title_index = 2
+
+		-- Set the command function to emit a plugin command
+		function command_function(command, arguments)
+			ya.emit(
+				"plugin",
+				{ command, convert_arguments_to_string(arguments) }
+			)
+		end
+
+	-- Otherwise, the user wants a regular Yazi command
+	else
+		--
+
+		-- Set the emit title index to 1
+		emit_title_index = 1
+
+		-- Set the command function to emit a Yazi command
+		function command_function(command, arguments)
+			ya.emit(command, arguments)
+		end
+	end
+
+	-- If the command isn't given
+	if not given_command then
+		--
+
+		-- Get the user's options for the emit input
+		local emit_input_options = get_user_input_or_confirm_options(
+			ConfigurableComponents.Plugin.Emit,
+			{
+				prompts = {
+					"Yazi command:",
+					"Plugin command:",
+					"Augmented command:",
+				},
+			},
+			true,
+			false,
+			emit_title_index
+		)
+
+		-- If the emit input options is nil, exit the function
+		if not emit_input_options then return end
+
+		-- Prompt the user for the command
+		---@cast emit_input_options YaziInputOptions
+		given_command = ya.input(emit_input_options) or ""
+
+		-- If the given command is empty, then exit the function
+		if #string_trim(given_command) < 1 then return end
+
+		-- Emit the command to call the plugin's emit function
+		-- with the user's command
+		return emit_augmented_command(
+			"emit",
+
+			-- The arguments that are being propagated
+			-- needs to come before the command,
+			-- otherwise, if the command contains a --,
+			-- then the wrong command will be emitted by the plugin
+			string.format(
+				"%s %s",
+				convert_arguments_to_string(args),
+				given_command
+			)
+		)
+	end
+
+	-- Remove the plugin and augmented flag from the arguments
+	table_pop(args, "plugin")
+	table_pop(args, "augmented")
+
+	-- Call the command function
+	command_function(given_command, args)
 end
 
 -- Function to handle the editor command
@@ -4109,11 +4583,27 @@ local function handle_editor(args, config)
 	-- If the editor not set, exit the function
 	if not editor then return end
 
+	-- Initialise the shell command
+	local shell_command = string.format(editor .. " $@")
+
+	-- Get the cha object of the hovered file
+	local hovered_item_cha = fs.cha(
+		Url(get_path_of_hovered_item() or ""),
+		false
+	) or {}
+
+	-- If the user ID of the file is root,
+	-- and sudo edit is supported,
+	-- set the shell command to "sudo -e"
+	if config.sudo_edit_supported and hovered_item_cha.uid == 0 then
+		shell_command = "sudo -e $@"
+	end
+
 	-- Call the handle shell function
-	-- with the editor command
+	-- with the shell command to open the editor
 	handle_shell(
 		merge_tables({
-			editor .. " $@",
+			shell_command,
 			block = true,
 			exit_if_dir = true,
 		}, args),
@@ -4161,6 +4651,7 @@ local function run_command_func(command, args, config)
 		[Commands.Leave] = handle_leave,
 		[Commands.Rename] = function(_) handle_yazi_command("rename", args) end,
 		[Commands.Remove] = function(_) handle_yazi_command("remove", args) end,
+		[Commands.Copy] = function(_) handle_yazi_command("copy", args) end,
 		[Commands.Create] = handle_create,
 		[Commands.Shell] = handle_shell,
 		[Commands.Paste] = handle_paste,
@@ -4170,6 +4661,7 @@ local function run_command_func(command, args, config)
 		[Commands.Arrow] = handle_arrow,
 		[Commands.ParentArrow] = handle_parent_arrow,
 		[Commands.Archive] = handle_archive,
+		[Commands.Emit] = handle_emit,
 		[Commands.Editor] = handle_editor,
 		[Commands.Pager] = handle_pager,
 	}
@@ -4188,10 +4680,9 @@ local function run_command_func(command, args, config)
 end
 
 -- The setup function to setup the plugin
----@param _ any
----@param opts Configuration|nil The options given to the plugin
+---@param opts UserConfiguration|nil The options given to the plugin
 ---@return nil
-local function setup(_, opts)
+function M:setup(opts)
 	--
 
 	-- Initialise the plugin
@@ -4199,10 +4690,9 @@ local function setup(_, opts)
 end
 
 -- Function to be called to use the plugin
----@param _ any
 ---@param job { args: Arguments } The job object given by Yazi
 ---@return nil
-local function entry(_, job)
+function M:entry(job)
 	--
 
 	-- Get the arguments to the plugin
@@ -4227,9 +4717,5 @@ local function entry(_, job)
 	run_command_func(command, args, config)
 end
 
--- Returns the table required for Yazi to run the plugin
----@return { setup: fun(): nil, entry: fun(): nil }
-return {
-	setup = setup,
-	entry = entry,
-}
+-- Return the module table
+return M

@@ -97,9 +97,7 @@ CHANGE_TO_WORKING_DIRECTORY: str = f'Type "cd {DEMONSTRATION_DIRECTORY}" Enter'
 CLEAR_SCREEN: str = "Type 'clear' Enter"
 
 # The command to apply the configuration
-APPLY_CONFIG_COMMAND: str = (
-	"Type 'chezmoi apply --force' Enter Wait"
-)
+APPLY_CONFIG_COMMAND: str = "Type 'chezmoi apply --force' Enter Wait"
 
 
 # Function to create the argument parser and parse the command line arguments
@@ -714,6 +712,16 @@ class VHSTape:
 		return VHSTape.create_keymap_toml_with_keymap(keymap)
 
 	@staticmethod
+	def copy_text_to_clipboard(text: str = "Hello, world!") -> Script:
+		"Copy the given text to the clipboard."
+
+		# The command to copy the given text to the clipboard
+		command = f"Copy '{text}'"
+
+		# Return the scrip to copy the given text to the clipboard
+		return Script(setup=[command])
+
+	@staticmethod
 	def press_key_repeatedly(
 		key: str,
 		number_of_times: int,
@@ -1054,6 +1062,16 @@ VHS_TAPES: list[VHSTape] = [
 			SLEEP_TIME,
 			'Type "LET ME IN!1!1!1!" Enter',
 			SLEEP_TIME,
+			'Type "w"',
+			SLEEP_TIME,
+			"Enter",
+			SLEEP_TIME,
+			'Type "q"',
+			SLEEP_TIME,
+			'Type "x"',
+			SLEEP_TIME,
+			"Ctrl+c",
+			SLEEP_TIME,
 			f'Type "{DEFAULT_KEY}"',
 			SLEEP_TIME,
 			'Type "{0}" Enter',
@@ -1248,6 +1266,7 @@ VHS_TAPES: list[VHSTape] = [
 			'Type "r"',
 			SLEEP_TIME,
 			"Enter",
+			SLEEP_TIME,
 			"Escape",
 			'Type "b"',
 			SLEEP_TIME,
@@ -1323,6 +1342,10 @@ VHS_TAPES: list[VHSTape] = [
 			"Ctrl+c",
 			SLEEP_TIME,
 			'Type "h"',
+			SLEEP_TIME,
+			'Type "x"',
+			SLEEP_TIME,
+			"Ctrl+c",
 		],
 	),
 	VHSTape(
@@ -1375,6 +1398,147 @@ VHS_TAPES: list[VHSTape] = [
 			'Type "kk"',
 			SLEEP_TIME,
 			'Type "x"',
+			SLEEP_TIME,
+			"Ctrl+c",
+		],
+	),
+	VHSTape(
+		name="Copy must have hovered item",
+		scripts=[
+			VHSTape.copy_text_to_clipboard(),
+		],
+		yazi_body=[
+			f'Type "/{FIRST_FILE_NAME}" Enter',
+			SLEEP_TIME,
+			'Type "j"',
+			"Space@300ms 3",
+			SLEEP_TIME,
+			f'Type "/{EMPTY_FOLDER}" Enter',
+			SLEEP_TIME,
+			'Type "l"',
+			SLEEP_TIME,
+			'Type "cf"',
+			SLEEP_TIME,
+			'Type ":" Escape',
+			'Type "p"',
+			SLEEP_TIME,
+			"Ctrl+c",
+			SLEEP_TIME,
+			'Type "h"',
+			SLEEP_TIME,
+			'Type "cf"',
+			SLEEP_TIME,
+			'Type ":" Escape',
+			'Type "p"',
+			SLEEP_TIME,
+			"Ctrl+c",
+		],
+	),
+	VHSTape(
+		name="Copy hovered item optional",
+		scripts=[
+			VHSTape.copy_text_to_clipboard(),
+			VHSTape.edit_plugin_config("must_have_hovered_item", False),
+		],
+		yazi_body=[
+			f'Type "/{FIRST_FILE_NAME}" Enter',
+			SLEEP_TIME,
+			'Type "j"',
+			"Space@300ms 3",
+			SLEEP_TIME,
+			f'Type "/{EMPTY_FOLDER}" Enter',
+			SLEEP_TIME,
+			'Type "l"',
+			SLEEP_TIME,
+			'Type "cf"',
+			SLEEP_TIME,
+			'Type ":" Escape',
+			'Type "p"',
+			SLEEP_TIME,
+			"Ctrl+c",
+			SLEEP_TIME,
+			'Type "h"',
+			SLEEP_TIME,
+			'Type "cf"',
+			SLEEP_TIME,
+			'Type ":" Escape',
+			'Type "p"',
+			SLEEP_TIME,
+			"Ctrl+c",
+		],
+	),
+	VHSTape(
+		name="Copy prompt",
+		scripts=[
+			VHSTape.copy_text_to_clipboard(),
+			VHSTape.edit_plugin_config("prompt", True),
+		],
+		yazi_body=[
+			f'Type "/{FIRST_FILE_NAME}" Enter',
+			"Space@300ms 3",
+			'Type "cf"',
+			SLEEP_TIME,
+			'Type "h"',
+			SLEEP_TIME,
+			"Enter",
+			SLEEP_TIME,
+			'Type ":" Escape',
+			'Type "p"',
+			SLEEP_TIME,
+			"Ctrl+c",
+			SLEEP_TIME,
+			'Type "cf"',
+			SLEEP_TIME,
+			'Type "s"',
+			SLEEP_TIME,
+			"Enter",
+			SLEEP_TIME,
+			'Type ":" Escape',
+			'Type "p"',
+			SLEEP_TIME,
+			"Ctrl+c",
+			SLEEP_TIME,
+			'Type "cf"',
+			SLEEP_TIME,
+			"Enter",
+			SLEEP_TIME,
+			'Type ":" Escape',
+			'Type "p"',
+			SLEEP_TIME,
+			"Ctrl+c",
+		],
+	),
+	VHSTape(
+		name="Copy behaviour",
+		scripts=[
+			VHSTape.copy_text_to_clipboard(),
+		],
+		yazi_body=[
+			f'Type "/{FIRST_FILE_NAME}" Enter',
+			"Space@300ms 3",
+			SLEEP_TIME,
+			'Type "cf"',
+			SLEEP_TIME,
+			'Type ":" Escape',
+			'Type "p"',
+			SLEEP_TIME,
+			"Ctrl+c",
+			SLEEP_TIME,
+			'Type "j"',
+			SLEEP_TIME,
+			'Type "cf"',
+			SLEEP_TIME,
+			'Type ":" Escape',
+			'Type "p"',
+			SLEEP_TIME,
+			"Ctrl+c",
+			SLEEP_TIME,
+			'Type "kk"',
+			SLEEP_TIME,
+			'Type "cf"',
+			SLEEP_TIME,
+			'Type ":" Escape',
+			'Type "p"',
 			SLEEP_TIME,
 			"Ctrl+c",
 		],
@@ -1960,11 +2124,12 @@ VHS_TAPES: list[VHSTape] = [
 	VHSTape(
 		name="Smooth parent arrow",
 		scripts=[
+			VHSTape.edit_plugin_config("wraparound_file_navigation", False),
 			VHSTape.edit_plugin_config("smooth_scrolling", True),
 			VHSTape.create_keymap_toml_with_keymap(
 				{
-					"J": "parent_arrow 10",
-					"K": "parent_arrow -10",
+					"J": "parent_arrow 5",
+					"K": "parent_arrow -5",
 				}
 			),
 		],
@@ -1973,16 +2138,16 @@ VHS_TAPES: list[VHSTape] = [
 			SLEEP_TIME,
 			"Type 'J'",
 			SLEEP_TIME,
+			"Type 'K'",
+			SLEEP_TIME,
 			"Type 'J'",
 			SLEEP_TIME,
 			"Type 'K'",
 			SLEEP_TIME,
+			"Type 'J'",
 			"Type 'K'",
 			SLEEP_TIME,
 			"Type 'J'",
-			"Type 'J'",
-			SLEEP_TIME,
-			"Type 'K'",
 			"Type 'K'",
 		],
 	),
@@ -2006,8 +2171,8 @@ VHS_TAPES: list[VHSTape] = [
 				{
 					"J": "parent_arrow 1",
 					"K": "parent_arrow -1",
-					"d": "parent_arrow 10",
-					"u": "parent_arrow -10",
+					"d": "parent_arrow 5",
+					"u": "parent_arrow -5",
 				}
 			),
 		],
@@ -2162,11 +2327,23 @@ VHS_TAPES: list[VHSTape] = [
 		files_and_directories=[
 			"demo.zip",
 			"demo-1.zip",
+			"demo.txt",
+			"demo.txt.zip",
+			"demo-2",
 			"demo-2.zip",
+			"archive_to_overwrite.zip",
 		],
 		scripts=[
 			VHSTape.edit_plugin_config("reveal_created_archive", False),
 			VHSTape.create_keymap_toml_with_keymap({DEFAULT_KEY: "archive"}),
+			VHSTape.create_nested_archive(4, "{6}"),
+			Script(
+				setup=[
+					f"Type `echo '{DEFAULT_TEXT_FILE_CONTENT}' > "
+					+ "{2}` Enter"
+				],
+				required_programs=["echo"],
+			),
 		],
 		yazi_body=[
 			f'Type "/{FIRST_FILE_NAME}" Enter',
@@ -2192,6 +2369,34 @@ VHS_TAPES: list[VHSTape] = [
 			'Type "gg"',
 			SLEEP_TIME,
 			'Type "/{1}" Enter',
+			SLEEP_TIME,
+			'Type "/{2}" Enter',
+			SLEEP_TIME,
+			f'Type "{DEFAULT_KEY}"',
+			SLEEP_TIME,
+			"Enter",
+			SLEEP_TIME,
+			'Type "gg"',
+			SLEEP_TIME,
+			'Type "/{3}" Enter',
+			SLEEP_TIME,
+			f'Type "/{FIRST_FILE_NAME}" Enter',
+			SLEEP_TIME,
+			f'Type "{DEFAULT_KEY}"',
+			SLEEP_TIME,
+			'Type "{4}" Enter',
+			SLEEP_TIME,
+			'Type "/{5}" Enter',
+			SLEEP_TIME,
+			f'Type "/{FIRST_FILE_NAME}" Enter',
+			SLEEP_TIME,
+			f'Type "{DEFAULT_KEY}"',
+			SLEEP_TIME,
+			'Type "{6}" Enter',
+			SLEEP_TIME,
+			"Ctrl+c",
+			SLEEP_TIME,
+			'Type "/{6}" Enter',
 		],
 	),
 	VHSTape(
@@ -2268,6 +2473,45 @@ VHS_TAPES: list[VHSTape] = [
 			'Type "{0}" Enter',
 			SLEEP_TIME,
 			'Type "/{1}" Enter',
+		],
+	),
+	VHSTape(
+		name="Emit Yazi command",
+		scripts=[VHSTape.create_keymap_toml_with_keymap({DEFAULT_KEY: "emit"})],
+		yazi_body=[
+			f'Type "{DEFAULT_KEY}"',
+			SLEEP_TIME,
+			'Type "arrow next" Enter',
+		],
+	),
+	VHSTape(
+		name="Emit plugin command",
+		scripts=[
+			VHSTape.create_keymap_toml_with_keymap(
+				{DEFAULT_KEY: "emit --plugin"}
+			)
+		],
+		yazi_body=[
+			'Type "l"',
+			SLEEP_TIME,
+			f'Type "{DEFAULT_KEY}"',
+			SLEEP_TIME,
+			'Type "augment-command -- parent_arrow 1" Enter',
+		],
+	),
+	VHSTape(
+		name="Emit augmented command",
+		scripts=[
+			VHSTape.create_keymap_toml_with_keymap(
+				{DEFAULT_KEY: "emit --augmented"}
+			)
+		],
+		yazi_body=[
+			'Type "l"',
+			SLEEP_TIME,
+			f'Type "{DEFAULT_KEY}"',
+			SLEEP_TIME,
+			'Type "parent_arrow 1" Enter',
 		],
 	),
 	VHSTape(
@@ -2409,8 +2653,6 @@ VHS_TAPES: list[VHSTape] = [
 			SLEEP_TIME,
 			'Type "i"',
 			SLEEP_TIME,
-			'Type "G"',
-			SLEEP_TIME,
 			'Type "q"',
 		],
 	),
@@ -2444,8 +2686,6 @@ VHS_TAPES: list[VHSTape] = [
 			f'Type "/{FIRST_FILE_NAME}" Enter',
 			SLEEP_TIME,
 			'Type "i"',
-			SLEEP_TIME,
-			'Type "G"',
 			SLEEP_TIME,
 			'Type "q"',
 		],
