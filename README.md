@@ -644,7 +644,7 @@ then it will operate on the selected items.
   # ~/.config/yazi/keymap.toml on Linux and macOS
   # %AppData%\yazi\config\keymap.toml on Windows
 
-  [[manager.prepend_keymap]]
+  [[mgr.prepend_keymap]]
   on = "i"
   run = "plugin augment-command -- shell '$PAGER $@' --block --exit-if-dir"
   desc = "Open the pager"
@@ -661,7 +661,7 @@ then it will operate on the selected items.
   # ~/.config/yazi/keymap.toml on Linux and macOS
   # %AppData%\yazi\config\keymap.toml on Windows
 
-  [[manager.prepend_keymap]]
+  [[mgr.prepend_keymap]]
   on = "o"
   run = "plugin augment-command -- shell '$EDITOR $@' --block --exit-if-dir"
   desc = "Open the editor"
@@ -686,7 +686,7 @@ the shell command arguments, so here are a few ways to do it:
    ```toml
    # ~/.config/yazi/keymap.toml on Linux and macOS
    # %AppData%\yazi\config\keymap.toml on Windows
-   [[manager.prepend_keymap]]
+   [[mgr.prepend_keymap]]
    on = "i"
    run = "plugin augment-command -- shell --block 'bat -p --pager less $@'"
    desc = "Open with bat"
@@ -710,7 +710,7 @@ the shell command arguments, so here are a few ways to do it:
    ```toml
    # ~/.config/yazi/keymap.toml on Linux and macOS
    # %AppData%\yazi\config\keymap.toml on Windows
-   [[manager.prepend_keymap]]
+   [[mgr.prepend_keymap]]
    on = "<C-s>"
    run = 'plugin augment-command -- shell --block -- sh -c "$SHELL"'
    desc = "Open a shell inside of a shell here"
@@ -719,7 +719,7 @@ the shell command arguments, so here are a few ways to do it:
    ```toml
    # ~/.config/yazi/keymap.toml on Linux and macOS
    # %AppData%\yazi\config\keymap.toml on Windows
-   [[manager.prepend_keymap]]
+   [[mgr.prepend_keymap]]
    on = "<C-s>"
    run = "plugin augment-command -- shell --block -- sh -c 'echo hello'"
    desc = "Open a shell and say hello inside the opened shell"
@@ -734,7 +734,7 @@ the shell command arguments, so here are a few ways to do it:
    ```toml
    # ~/.config/yazi/keymap.toml on Linux and macOS
    # %AppData%\yazi\config\keymap.toml on Windows
-   [[manager.prepend_keymap]]
+   [[mgr.prepend_keymap]]
    on = "<C-s>"
    run = '''plugin augment-command -- shell --block -- sh -c 'sh -c "$SHELL"''''
    desc = "Open a shell inside of a shell inside of a shell here"
@@ -743,7 +743,7 @@ the shell command arguments, so here are a few ways to do it:
    ```toml
    # ~/.config/yazi/keymap.toml on Linux and macOS
    # %AppData%\yazi\config\keymap.toml on Windows
-   [[manager.prepend_keymap]]
+   [[mgr.prepend_keymap]]
    on = "<C-s>"
    run = '''plugin augment-command --
        shell --block -- sh -c "$SHELL -c 'echo hello'"
@@ -757,7 +757,7 @@ the shell command arguments, so here are a few ways to do it:
    ```toml
    # ~/.config/yazi/keymap.toml on Linux and macOS
    # %AppData%\yazi\config\keymap.toml on Windows
-   [[manager.prepend_keymap]]
+   [[mgr.prepend_keymap]]
    on = "<C-e>"
    run = '''plugin augment-command --
        shell --
@@ -975,14 +975,14 @@ in your `keymap.toml` file.
   # %AppData%\yazi\config\keymap.toml on Windows
 
   # Use K to move up in the parent directory
-  [[manager.prepend_keymap]]
+  [[mgr.prepend_keymap]]
   on = "K"
   run = ["leave", "arrow -1", "enter"]
   desc = "Move up in the parent directory"
 
 
   # Use J to move down in the parent directory
-  [[manager.prepend_keymap]]
+  [[mgr.prepend_keymap]]
   on = "J"
   run = ["leave", "arrow 1", "enter"]
   desc = "Move down in the parent directory"
@@ -1178,7 +1178,7 @@ on Windows, in this format:
 # ~/.config/yazi/keymap.toml on Linux and macOS
 # %AppData%\yazi\config\keymap.toml on Windows
 
-[[manager.prepend_keymap]]
+[[mgr.prepend_keymap]]
 on = "key"
 run = "plugin augment-command -- command arguments --flags --options=42"
 desc = "Description"
@@ -1190,7 +1190,7 @@ For example, to use the augmented `enter` command:
 # ~/.config/yazi/keymap.toml on Linux and macOS
 # %AppData%\yazi\config\keymap.toml on Windows
 
-[[manager.prepend_keymap]]
+[[mgr.prepend_keymap]]
 on = "l"
 run = "plugin augment-command -- enter"
 desc = "Enter a directory and skip directories with only a single subdirectory"
@@ -1203,22 +1203,22 @@ are also supported, for example:
 # ~/.config/yazi/keymap.toml on Linux and macOS
 # %AppData%\yazi\config\keymap.toml on Windows
 
-[[manager.prepend_keymap]]
+[[mgr.prepend_keymap]]
 on = "k"
 run = "plugin augment-command -- arrow -1"
 desc = "Move cursor up"
 
-[[manager.prepend_keymap]]
+[[mgr.prepend_keymap]]
 on = "r"
 run = "plugin augment-command -- rename --cursor=before_ext"
 desc = "Rename a file or directory"
 
-[[manager.prepend_keymap]]
+[[mgr.prepend_keymap]]
 on = "D"
 run = "plugin augment-command -- remove --permanently"
 desc = "Permanently delete the files"
 
-[[manager.prepend_keymap]]
+[[mgr.prepend_keymap]]
 on = ["g", "j"]
 run = "plugin augment-command -- parent_arrow 1"
 ```
