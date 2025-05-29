@@ -21,6 +21,7 @@ plugin.
   - [Leave (`leave`)](#leave-leave)
   - [Rename (`rename`)](#rename-rename)
   - [Remove (`remove`)](#remove-remove)
+  - [Copy (`copy`)](#copy-copy)
   - [Create (`create`)](#create-create)
   - [Shell (`shell`)](#shell-shell)
     - [Passing arguments to the `shell` command](#passing-arguments-to-the-shell-command)
@@ -32,16 +33,20 @@ plugin.
 - [New commands](#new-commands)
   - [Parent arrow (`parent_arrow`)](#parent-arrow-parent_arrow)
   - [Archive (`archive`)](#archive-archive)
+  - [Emit (`emit`)](#emit-emit)
   - [Editor (`editor`)](#editor-editor)
   - [Pager (`pager`)](#pager-pager)
 - [Usage](#usage)
   - [Using the `extract` command as an opener](#using-the-extract-command-as-an-opener)
+  - [Configuring the plugin's prompts](#configuring-the-plugins-prompts)
+    - [Input prompts](#input-prompts)
+    - [Confirmation prompts](#confirmation-prompts)
   - [Full configuration example](#full-configuration-example)
-- [Licence](#licence)
+- [Licence]
 
 ## Requirements
 
-- [Yazi][yazi-link] v25.4.8+
+- [Yazi][yazi-link] v25.5.28+
 - [`7z` or `7zz` command][7z-link]
 - [`file` command][file-command-link]
 
@@ -53,13 +58,13 @@ plugin.
 
 ```sh
 # Add the plugin
-ya pack -a hankertrix/augment-command
+ya pkg add hankertrix/augment-command
 
 # Install plugin
-ya pack -i
+ya pkg install
 
 # Update plugin
-ya pack -u
+ya pkg upgrade
 ```
 
 ## Configuration
@@ -498,6 +503,29 @@ then it will operate on the selected items.
 
     [remove-behaviour-video]
 
+### Copy (`copy`)
+
+- The `copy` command is augmented as stated in
+  [this section above][augment-section].
+
+  Videos:
+
+  - When `must_have_hovered_item` is `true`:
+
+    [copy-must-have-hovered-item-video]
+
+  - When `must_have_hovered_item` is `false`:
+
+    [copy-hovered-item-optional-video]
+
+  - When `prompt` is set to `true`:
+
+    [copy-prompt-video]
+
+  - When `prompt` is set to `false`:
+
+    [copy-behaviour-video]
+
 ### Create (`create`)
 
 - You should use Yazi's default `create` command instead
@@ -616,7 +644,7 @@ then it will operate on the selected items.
   # ~/.config/yazi/keymap.toml on Linux and macOS
   # %AppData%\yazi\config\keymap.toml on Windows
 
-  [[manager.prepend_keymap]]
+  [[mgr.prepend_keymap]]
   on = "i"
   run = "plugin augment-command -- shell '$PAGER $@' --block --exit-if-dir"
   desc = "Open the pager"
@@ -633,7 +661,7 @@ then it will operate on the selected items.
   # ~/.config/yazi/keymap.toml on Linux and macOS
   # %AppData%\yazi\config\keymap.toml on Windows
 
-  [[manager.prepend_keymap]]
+  [[mgr.prepend_keymap]]
   on = "o"
   run = "plugin augment-command -- shell '$EDITOR $@' --block --exit-if-dir"
   desc = "Open the editor"
@@ -658,7 +686,7 @@ the shell command arguments, so here are a few ways to do it:
    ```toml
    # ~/.config/yazi/keymap.toml on Linux and macOS
    # %AppData%\yazi\config\keymap.toml on Windows
-   [[manager.prepend_keymap]]
+   [[mgr.prepend_keymap]]
    on = "i"
    run = "plugin augment-command -- shell --block 'bat -p --pager less $@'"
    desc = "Open with bat"
@@ -682,7 +710,7 @@ the shell command arguments, so here are a few ways to do it:
    ```toml
    # ~/.config/yazi/keymap.toml on Linux and macOS
    # %AppData%\yazi\config\keymap.toml on Windows
-   [[manager.prepend_keymap]]
+   [[mgr.prepend_keymap]]
    on = "<C-s>"
    run = 'plugin augment-command -- shell --block -- sh -c "$SHELL"'
    desc = "Open a shell inside of a shell here"
@@ -691,7 +719,7 @@ the shell command arguments, so here are a few ways to do it:
    ```toml
    # ~/.config/yazi/keymap.toml on Linux and macOS
    # %AppData%\yazi\config\keymap.toml on Windows
-   [[manager.prepend_keymap]]
+   [[mgr.prepend_keymap]]
    on = "<C-s>"
    run = "plugin augment-command -- shell --block -- sh -c 'echo hello'"
    desc = "Open a shell and say hello inside the opened shell"
@@ -706,7 +734,7 @@ the shell command arguments, so here are a few ways to do it:
    ```toml
    # ~/.config/yazi/keymap.toml on Linux and macOS
    # %AppData%\yazi\config\keymap.toml on Windows
-   [[manager.prepend_keymap]]
+   [[mgr.prepend_keymap]]
    on = "<C-s>"
    run = '''plugin augment-command -- shell --block -- sh -c 'sh -c "$SHELL"''''
    desc = "Open a shell inside of a shell inside of a shell here"
@@ -715,7 +743,7 @@ the shell command arguments, so here are a few ways to do it:
    ```toml
    # ~/.config/yazi/keymap.toml on Linux and macOS
    # %AppData%\yazi\config\keymap.toml on Windows
-   [[manager.prepend_keymap]]
+   [[mgr.prepend_keymap]]
    on = "<C-s>"
    run = '''plugin augment-command --
        shell --block -- sh -c "$SHELL -c 'echo hello'"
@@ -729,7 +757,7 @@ the shell command arguments, so here are a few ways to do it:
    ```toml
    # ~/.config/yazi/keymap.toml on Linux and macOS
    # %AppData%\yazi\config\keymap.toml on Windows
-   [[manager.prepend_keymap]]
+   [[mgr.prepend_keymap]]
    on = "<C-e>"
    run = '''plugin augment-command --
        shell --
@@ -947,14 +975,14 @@ in your `keymap.toml` file.
   # %AppData%\yazi\config\keymap.toml on Windows
 
   # Use K to move up in the parent directory
-  [[manager.prepend_keymap]]
+  [[mgr.prepend_keymap]]
   on = "K"
   run = ["leave", "arrow -1", "enter"]
   desc = "Move up in the parent directory"
 
 
   # Use J to move down in the parent directory
-  [[manager.prepend_keymap]]
+  [[mgr.prepend_keymap]]
   on = "J"
   run = ["leave", "arrow 1", "enter"]
   desc = "Move down in the parent directory"
@@ -970,6 +998,16 @@ in your `keymap.toml` file.
   to an archive, with the plugin prompting for an archive name.
   The archive file extension given will be used to determine
   the type of archive to create.
+- When the archive name given has no file extension, the `.zip`
+  file extension will be automatically added by default
+  to create a `zip` archive.
+- When the item group is determined to be the hovered item,
+  the `archive` command will create a `.zip` archive with the
+  name of the hovered item if no archive name is given
+  and the input is confirmed by using the `<Enter>` key.
+- The `archive` command will also prompt for an overwrite confirmation,
+  if the archive being created already exists,
+  just like the `create` command.
 - This command is also augmented as stated in
   [this section above][augment-section].
 
@@ -991,6 +1029,8 @@ in your `keymap.toml` file.
 
     [archive-behaviour-video]
 
+- `--force` flag to always overwrite the existing archive
+  without showing the confirmation prompt.
 - `--encrypt` flag to encrypt the archive with the given password,
   which applies even when `encrypt_archives` is set to `false`.
 - `--encrypt-headers` flag to encrypt the archive headers,
@@ -1025,10 +1065,55 @@ in your `keymap.toml` file.
 
   [archive-remove-archived-files-video]
 
+### Emit (`emit`)
+
+- The `emit` command allows you to emit any Yazi command
+  by typing the command into an input prompt.
+  The syntax of the command is exactly the same as
+  the commands in the `keymap.toml` file.
+  For example, if the input is `arrow next`,
+  then that will be the command that is emitted by the plugin.
+
+  Video:
+
+  [emit-yazi-command-video]
+
+- `--plugin` flag to emit a plugin command.
+  This flag essentially just emits Yazi's `plugin` command
+  with the input passed as the first argument.
+  For example, if the input is `augment-command -- parent_arrow 1`,
+  then the full command being emitted by the plugin is
+  `plugin augment-command -- parent_arrow 1`.
+
+  Video:
+
+  [emit-plugin-command-video]
+
+- `--augmented` flag to emit an augmented command.
+  This flag is a shortcut for emitting a command from this plugin.
+  For example, if the command given is `parent_arrow 1`,
+  the full command emitted by the plugin is
+  `plugin augment-command -- parent_arrow 1`.
+
+  Video:
+
+  [emit-augmented-command-video]
+
+- If `--augmented` flag is passed together with the `--plugin` flag,
+  the `--augmented` flag will take precedence over the `--plugin` flag,
+  and the command emitted will be from this plugin
+  instead of being a `plugin` command.
+  In any case, you should not be passing
+  both the `--plugin` and `--augmented` flags.
+
 ### Editor (`editor`)
 
 - The `editor` command opens the default editor set by the
   `$EDITOR` environment variable.
+- When the file being edited is owned by the root user on Unix systems,
+  like Linux and macOS, the `editor` command will automatically call
+  `sudo -e` to edit the file instead of using the `$EDITOR`
+  environment variable.
 - The command is also augmented as stated in
   [this section above][augment-section].
 
@@ -1093,7 +1178,7 @@ on Windows, in this format:
 # ~/.config/yazi/keymap.toml on Linux and macOS
 # %AppData%\yazi\config\keymap.toml on Windows
 
-[[manager.prepend_keymap]]
+[[mgr.prepend_keymap]]
 on = "key"
 run = "plugin augment-command -- command arguments --flags --options=42"
 desc = "Description"
@@ -1105,7 +1190,7 @@ For example, to use the augmented `enter` command:
 # ~/.config/yazi/keymap.toml on Linux and macOS
 # %AppData%\yazi\config\keymap.toml on Windows
 
-[[manager.prepend_keymap]]
+[[mgr.prepend_keymap]]
 on = "l"
 run = "plugin augment-command -- enter"
 desc = "Enter a directory and skip directories with only a single subdirectory"
@@ -1118,22 +1203,22 @@ are also supported, for example:
 # ~/.config/yazi/keymap.toml on Linux and macOS
 # %AppData%\yazi\config\keymap.toml on Windows
 
-[[manager.prepend_keymap]]
+[[mgr.prepend_keymap]]
 on = "k"
 run = "plugin augment-command -- arrow -1"
 desc = "Move cursor up"
 
-[[manager.prepend_keymap]]
+[[mgr.prepend_keymap]]
 on = "r"
 run = "plugin augment-command -- rename --cursor=before_ext"
 desc = "Rename a file or directory"
 
-[[manager.prepend_keymap]]
+[[mgr.prepend_keymap]]
 on = "D"
 run = "plugin augment-command -- remove --permanently"
 desc = "Permanently delete the files"
 
-[[manager.prepend_keymap]]
+[[mgr.prepend_keymap]]
 on = ["g", "j"]
 run = "plugin augment-command -- parent_arrow 1"
 ```
@@ -1152,6 +1237,166 @@ This is the intended way to use the `extract` command instead of binding
 the `extract` command to a key in your `keymap.toml` file.
 Look at the [`extract` command section](#extract-extract)
 for details on how to do so.
+
+### Configuring the plugin's prompts
+
+If you would like to use the plugin's default prompts,
+you can skip this section entirely. Otherwise, read on.
+
+The plugin's prompts can be configured using the `th`
+object for built-in commands like `create`.
+
+New commands, or new features in existing commands introduced by the plugin,
+like `archive` or `quit`, can be configured
+using the `th.augment_command` object instead.
+
+You **must** call the plugin's `setup` function after
+configuring the plugin's prompts, otherwise,
+the prompts will remain as the default prompts.
+
+For example:
+
+```lua
+-- Prompt configurations for the plugin
+th.create_title = { "Create:", "Create (dir):" }
+th.augment_command = th.augment_command or {}
+th.augment_command.archive_title = "Archive name:"
+th.augment_command.quit_title = "Quit?"
+
+-- Call the plugin's setup function
+require("augment-command"):setup()
+```
+
+This method of configuration is to be forward compatible
+with future versions of Yazi, as mentioned
+[here](https://github.com/yazi-rs/plugins/issues/44).
+
+#### Input prompts
+
+For `input` prompts, like the prompt for the `archive` command,
+there are 3 configuration options:
+
+- `title`
+- `origin`
+- `offset`
+
+These options are documented in [Yazi's documentation][input-configuration].
+
+For example, to configure the `create` command, which is built-in:
+
+```lua
+th.create_title = { "Create:", "Create (dir):" }
+th.create_origin = "top-center"
+th.create_offset = {
+    x = 0,
+    y = 2,
+    w = 50,
+    h = 3,
+}
+```
+
+This way of configuring the `input` prompt applies to the following:
+
+- `create`
+
+Below is an example of configuring the `archive` command,
+which is provided by the plugin:
+
+```lua
+th.augment_command = th.augment_command or {}
+th.augment_command.archive_title = "Archive name:"
+th.augment_command.archive_origin = "top-center"
+th.augment_command.archive_offset = {
+    x = 0,
+    y = 2,
+    w = 50,
+    h = 3,
+}
+```
+
+This way of configuring the `input` prompt applies to the following:
+
+- `item_group`: The prompt to select an item group.
+
+- `extract_password`:
+  The prompt to enter the password when extracting an encrypted archive.
+
+- `archive`: The prompt for the archive name.
+
+- `archive_password`:
+  The prompts to enter the archive password when
+  creating an encrypted archive.
+  Note that the title for this prompt, `archive_password_title`,
+  should be a list of two strings, like this:
+
+  ```lua
+  th.augment_command = th.augment_command or {}
+  th.archive_password_title = {
+      "Archive password:",
+      "Confirm archive password:",
+  }
+  ```
+
+#### Confirmation prompts
+
+For `confirm` prompts, like the prompt for the `quit` command,
+there are 4 configuration options:
+
+- `title`
+- `content`
+- `origin`
+- `offset`
+
+These options are documented in [Yazi's documentation][confirm-configuration].
+
+The configuration for the `confirm` prompt is very
+similar to that of the `input` prompt,
+just with one more option called `content`.
+The `content` option can take either a `string`, or a list of `strings`.
+
+For example, to configure the `overwrite` part
+of the `create` and `archive` commands, which is built-in:
+
+```lua
+th.overwrite_title = "Overwrite file?"
+th.overwrite_content = "Will overwrite the following file:"
+th.overwrite_origin = "center"
+th.overwrite_offset = {
+    x = 0,
+    y = 0,
+    w = 50,
+    h = 15,
+}
+```
+
+This way of configuring the `confirm` prompt applies to the following:
+
+- `overwrite`:
+  The overwrite prompt when creating a file with
+  the same name as an existing file.
+
+Below is an example of configuring the `quit` command,
+which is provided by the plugin:
+
+```lua
+th.augment_command = th.augment_command or {}
+th.augment_command.quit_title = "Quit?"
+th.augment_command.quit_content = {
+    "There are multiple tabs open.",
+    "Are you sure you want to quit?",
+}
+th.augment_command.quit_origin = "center"
+th.augment_command.quit_offset = {
+    x = 0,
+    y = 0,
+    w = 50,
+    h = 15,
+}
+```
+
+This way of configuring the `confirm` prompt applies to the following:
+
+- `quit`: The quit prompt when quitting with multiple tabs open.
 
 ### Full configuration example
 
@@ -1181,6 +1426,8 @@ You can view the full licence in the [`LICENSE`][Licence] file.
 [yazi-yazi-toml]: https://github.com/sxyazi/yazi/blob/main/yazi-config/preset/yazi-default.toml
 [yazi-shell-variables]: https://yazi-rs.github.io/docs/configuration/keymap/#manager.shell
 [thunderbird-tip]: https://yazi-rs.github.io/docs/tips#email-selected-files-using-thunderbird
+[input-configuration]: https://yazi-rs.github.io/docs/configuration/yazi#input
+[confirm-configuration]: https://yazi-rs.github.io/docs/configuration/yazi#confirm
 [yazi-keymap-toml]: https://github.com/sxyazi/yazi/blob/main/yazi-config/preset/keymap-default.toml
 [my-keymap-toml]: https://github.com/hankertrix/Dotfiles/blob/main/.config/yazi/keymap.toml
 [my-yazi-toml]: https://github.com/hankertrix/Dotfiles/blob/main/.config/yazi/yazi.toml
@@ -1190,110 +1437,123 @@ You can view the full licence in the [`LICENSE`][Licence] file.
 
 <!-- Open command -->
 
-[open-prompt-video]: https://github.com/user-attachments/assets/624da7a1-99cc-428d-acbb-d4ce684f92cb
-[open-behaviour-video]: https://github.com/user-attachments/assets/202f1c07-2001-49d7-a9d7-7a4e7b102c41
-[open-auto-extract-archives-video]: https://github.com/user-attachments/assets/dad0572e-15d7-4dfd-bf48-00851af66b6e
-[open-recursively-extract-archives-video]: https://github.com/user-attachments/assets/b8e929ce-32cd-4f7e-ad97-ffe94bdacd71
+[open-prompt-video]: https://github.com/user-attachments/assets/a792f9d9-97f3-4fab-95cc-03b33c58dd47
+[open-behaviour-video]: https://github.com/user-attachments/assets/b2e56c10-91cd-4556-9f64-355aa8948832
+[open-auto-extract-archives-video]: https://github.com/user-attachments/assets/a406391a-b31d-4b45-afa1-b982ddd89eaf
+[open-recursively-extract-archives-video]: https://github.com/user-attachments/assets/a960f152-4391-4d55-bd0e-0a08efb42729
 
 <!-- Extract command -->
 
-[extract-must-have-hovered-item-video]: https://github.com/user-attachments/assets/6b9f347f-34ce-4ca1-8e3a-24dbeb297dc7
-[extract-hovered-item-optional-video]: https://github.com/user-attachments/assets/1596f9f8-e0f5-49e3-964c-6f94b1c24055
-[extract-prompt-video]: https://github.com/user-attachments/assets/568aef53-dc90-420e-ada9-171f56388ee1
-[extract-behaviour-video]: https://github.com/user-attachments/assets/d6ebf5fb-45d3-4ae0-adab-3e89b1ec2f4e
-[extract-recursively-extract-archives-video]: https://github.com/user-attachments/assets/d8978671-9149-45b7-9a92-21c1697baa7d
-[extract-encrypted-archive-video]: https://github.com/user-attachments/assets/24701662-0c19-4478-b576-75d9284cd695
-[extract-reveal-extracted-item-video]: https://github.com/user-attachments/assets/170bf187-dc2a-4310-aa86-5dc9a864aced
-[extract-remove-extracted-archive-video]: https://github.com/user-attachments/assets/9b2e625a-a7f8-4678-8a26-265a7d3b8e0c
+[extract-must-have-hovered-item-video]: https://github.com/user-attachments/assets/ed310a81-c482-4eed-9d54-5f50a7cc7637
+[extract-hovered-item-optional-video]: https://github.com/user-attachments/assets/85d5a6bf-ed35-4f9a-b782-faea119da7c5
+[extract-prompt-video]: https://github.com/user-attachments/assets/40f41727-7e55-44d8-816c-e706d09e27b8
+[extract-behaviour-video]: https://github.com/user-attachments/assets/6f4f68d4-d43c-4de6-8d85-7e22c0cc0cc6
+[extract-recursively-extract-archives-video]: https://github.com/user-attachments/assets/d9e7030c-9491-4dfa-a1f4-baf3a45eed64
+[extract-encrypted-archive-video]: https://github.com/user-attachments/assets/48acd16d-f285-4d58-94c3-b402d7784d94
+[extract-reveal-extracted-item-video]: https://github.com/user-attachments/assets/96d7fe43-024a-4b1e-b961-9ab9c708db83
+[extract-remove-extracted-archive-video]: https://github.com/user-attachments/assets/7b700ffc-3ce6-4185-a8b0-8ecfd09c2519
 
 <!-- Enter command -->
 
-[smart-enter-video]: https://github.com/user-attachments/assets/be950544-a58f-495a-a7e8-e37e99011070
-[enter-skip-single-subdirectory-video]: https://github.com/user-attachments/assets/1bd30cb0-611a-44f2-9839-968287af4455
+[smart-enter-video]: https://github.com/user-attachments/assets/9fc60a42-8692-4ac8-8250-652958582b98
+[enter-skip-single-subdirectory-video]: https://github.com/user-attachments/assets/8069e828-d2dd-4c69-a0b8-fe13074de715
 
 <!-- Leave command -->
 
-[leave-skip-single-subdirectory-video]: https://github.com/user-attachments/assets/735de8f7-6abb-4929-8e3d-bba470fc6063
+[leave-skip-single-subdirectory-video]: https://github.com/user-attachments/assets/01330321-b9f9-4dad-b339-8923509e759c
 
 <!-- Rename command -->
 
-[rename-must-have-hovered-item-video]: https://github.com/user-attachments/assets/b0f608df-7e8d-4e5f-958f-b3df9d0a92fa
-[rename-hovered-item-optional-video]: https://github.com/user-attachments/assets/9613d238-d8e3-4e6f-b073-f847a4f331a1
-[rename-prompt-video]: https://github.com/user-attachments/assets/6ad26e1b-dab1-4e8e-92af-bfcbf6c5232c
-[rename-behaviour-video]: https://github.com/user-attachments/assets/fdd70919-f164-4676-9046-6a4b95cd86ed
+[rename-must-have-hovered-item-video]: https://github.com/user-attachments/assets/b6ec96f9-c8a2-490c-9003-8c361e83e336
+[rename-hovered-item-optional-video]: https://github.com/user-attachments/assets/8bf0001d-6d39-4c4f-a364-b399e65208e8
+[rename-prompt-video]: https://github.com/user-attachments/assets/a3926488-f127-4d35-b9ab-7943f01abcb3
+[rename-behaviour-video]: https://github.com/user-attachments/assets/e3d65d76-34d5-45a4-918d-0b28e662840a
 
 <!-- Remove command -->
 
-[remove-must-have-hovered-item-video]: https://github.com/user-attachments/assets/fa0aeb4e-ee6a-4e34-9c6f-4d4bc0afd111
-[remove-hovered-item-optional-video]: https://github.com/user-attachments/assets/f42167dc-df59-451d-b26b-16e75be93fad
-[remove-prompt-video]: https://github.com/user-attachments/assets/dd901db3-1ab4-4cb7-bb3f-8aec335c7b94
-[remove-behaviour-video]: https://github.com/user-attachments/assets/d4087826-3480-486d-98ff-708bca548270
+[remove-must-have-hovered-item-video]: https://github.com/user-attachments/assets/3366c9fa-1a4c-4c3c-a37d-70814d23828d
+[remove-hovered-item-optional-video]: https://github.com/user-attachments/assets/01a3fc57-cc90-47f5-b744-d3eed00ac237
+[remove-prompt-video]: https://github.com/user-attachments/assets/18940b9f-4f04-4ab3-a6a9-b35ee8084bd8
+[remove-behaviour-video]: https://github.com/user-attachments/assets/e524ecdb-f94b-4e6e-b5b2-967470ac3f87
+
+<!-- Copy command -->
+
+[copy-must-have-hovered-item-video]: https://github.com/user-attachments/assets/d4ffa133-16d3-44f7-923d-bdd743fa4a77
+[copy-hovered-item-optional-video]: https://github.com/user-attachments/assets/d2a7f5cd-ab09-45fd-8865-068bb1c269f8
+[copy-prompt-video]: https://github.com/user-attachments/assets/41d372c5-2992-410c-97ae-aca2c6fea4ee
+[copy-behaviour-video]: https://github.com/user-attachments/assets/57658664-1a89-46c4-bb4b-3551b0061436
 
 <!-- Create command -->
 
-[create-and-enter-directories-video]: https://github.com/user-attachments/assets/0604e9a3-7c23-4e9c-963a-6e83955fe7ae
-[create-and-open-files-video]: https://github.com/user-attachments/assets/2feee5e5-1d56-4150-8f08-101338392950
-[create-and-open-files-and-directories-video]: https://github.com/user-attachments/assets/629a6923-6fa5-4b85-93b7-3b5495c8bbbb
-[create-behaviour-video]: https://github.com/user-attachments/assets/55b485ea-e49e-4629-b077-4f2a81031f38
-[create-default-behaviour-video]: https://github.com/user-attachments/assets/acf04af0-107f-4ebb-9ed2-2a03847071a5
+[create-and-enter-directories-video]: https://github.com/user-attachments/assets/b27756db-f6ed-4598-b54f-214b7ccbe208
+[create-and-open-files-video]: https://github.com/user-attachments/assets/b7ff1e6c-4c70-4598-a5f6-a88e1559f5d9
+[create-and-open-files-and-directories-video]: https://github.com/user-attachments/assets/90dc6dd2-c39d-4ed5-a8b1-e17a18f0219f
+[create-behaviour-video]: https://github.com/user-attachments/assets/44bdc556-cde7-4ab9-b3c0-05c4f1fa3120
+[create-default-behaviour-video]: https://github.com/user-attachments/assets/4948fd32-27a9-4546-83f9-ad6fa9c6afa8
 
 <!-- Shell command -->
 
-[shell-must-have-hovered-item-video]: https://github.com/user-attachments/assets/d9a49cb7-67fd-40fe-8f68-130561de0cca
-[shell-hovered-item-optional-video]: https://github.com/user-attachments/assets/f7fdfa7c-d7cc-4157-bb5f-63c37f82ea5b
-[shell-prompt-video]: https://github.com/user-attachments/assets/6648ad92-320f-457d-9f3e-b5da6f1c07bc
-[shell-behaviour-video]: https://github.com/user-attachments/assets/4727658f-e27c-4fbe-acd7-acfeac54cd17
-[shell-exit-if-directory-video]: https://github.com/user-attachments/assets/ef0e9818-cc81-45fc-9126-6903314ed6b3
+[shell-must-have-hovered-item-video]: https://github.com/user-attachments/assets/b68c51db-ccb7-447b-897e-fd99048c47c0
+[shell-hovered-item-optional-video]: https://github.com/user-attachments/assets/4643b23e-a2df-465f-8f62-3501747038b8
+[shell-prompt-video]: https://github.com/user-attachments/assets/929e6a68-7e3f-4614-8344-c0a482d471ad
+[shell-behaviour-video]: https://github.com/user-attachments/assets/3afd995a-225a-4cc1-8189-0241555a6345
+[shell-exit-if-directory-video]: https://github.com/user-attachments/assets/f7cef7a0-027b-462f-8fe0-b107e5844736
 
 <!-- Paste command -->
 
-[smart-paste-video]: https://github.com/user-attachments/assets/59800de2-8445-4f68-834b-10a0e394c400
+[smart-paste-video]: https://github.com/user-attachments/assets/946a8211-41a8-43a0-b56e-9c13f5a00f4d
 
 <!-- Tab create command -->
 
-[smart-tab-create-video]: https://github.com/user-attachments/assets/bf48e411-b7ed-4624-abd9-084dcdc25ab5
+[smart-tab-create-video]: https://github.com/user-attachments/assets/4ea25adc-53d0-4086-b8b3-73dcea6d5932
 
 <!-- Tab switch command -->
 
-[smart-tab-switch-video]: https://github.com/user-attachments/assets/5b94ff0f-f77c-4250-96ac-4fea67eebc46
+[smart-tab-switch-video]: https://github.com/user-attachments/assets/9e2190ad-1b4d-425e-90de-1eb41a445584
 
 <!-- Quit command -->
 
-[quit-with-confirmation-video]: https://github.com/user-attachments/assets/9e212a32-c7c3-470f-895e-bb1cba03292d
+[quit-with-confirmation-video]: https://github.com/user-attachments/assets/d3c71ae0-7024-4f06-9398-457cad0f5c1d
 
 <!-- Arrow command -->
 
-[smooth-arrow-video]: https://github.com/user-attachments/assets/990935f5-ce6e-4536-9ddc-d8a32da69803
-[wraparound-arrow-video]: https://github.com/user-attachments/assets/b8233e26-06b7-436d-bafa-1639ed12aa53
-[smooth-wraparound-arrow-video]: https://github.com/user-attachments/assets/59d3618a-59cd-448d-b552-e3cc796d109e
+[smooth-arrow-video]: https://github.com/user-attachments/assets/04683520-6028-4246-b529-eac6d3a936cf
+[wraparound-arrow-video]: https://github.com/user-attachments/assets/f2555189-4628-4745-89f4-9ecb4ef070ab
+[smooth-wraparound-arrow-video]: https://github.com/user-attachments/assets/5d603738-a527-4e19-80fd-db41ae76e42b
 
 <!-- Parent arrow command -->
 
-[parent-arrow-video]: https://github.com/user-attachments/assets/c412ed7b-a6ee-44e7-bf68-f9f2e5214a50
-[smooth-parent-arrow-video]: https://github.com/user-attachments/assets/45fdfa5f-86ef-453c-89a8-1c58d6318e93
-[wraparound-parent-arrow-video]: https://github.com/user-attachments/assets/3a429a57-2dc6-47c6-be4e-fab5844bafde
-[smooth-wraparound-parent-arrow-video]: https://github.com/user-attachments/assets/7d3d58ea-4b00-4cb2-9aea-950940b1ad1a
+[parent-arrow-video]: https://github.com/user-attachments/assets/166a83d6-c7ef-4269-b725-62dde60f078f
+[smooth-parent-arrow-video]: https://github.com/user-attachments/assets/02a7090b-3373-43db-95ed-2b3a6fe683d3
+[wraparound-parent-arrow-video]: https://github.com/user-attachments/assets/229e11f8-a5e4-4237-93f3-d6c8875c9e78
+[smooth-wraparound-parent-arrow-video]: https://github.com/user-attachments/assets/7739afe5-e34d-466e-adf2-3e8a8732f04d
 
 <!-- Archive command -->
 
-[archive-must-have-hovered-item-video]: https://github.com/user-attachments/assets/a8d667c8-a8a5-44ed-9220-aa55345c98ed
-[archive-hovered-item-optional-video]: https://github.com/user-attachments/assets/213f82d2-fe70-4c42-8f24-b09c7d7d7dfe
-[archive-prompt-video]: https://github.com/user-attachments/assets/20366432-f195-4531-bb08-9b3f0e8f848e
-[archive-behaviour-video]: https://github.com/user-attachments/assets/dcbe9909-db40-4f96-8591-c1a104b63381
-[archive-encrypt-files-video]: https://github.com/user-attachments/assets/08b98e01-2cc2-486e-bd4d-bfbe9da792db
-[archive-reveal-created-archive-video]: https://github.com/user-attachments/assets/e908afb8-c431-4e6d-8834-c02216461076
-[archive-remove-archived-files-video]: https://github.com/user-attachments/assets/d0495292-6508-4417-b378-033e6acc0c4d
+[archive-must-have-hovered-item-video]: https://github.com/user-attachments/assets/6dac06c1-a69c-4b21-86f6-63f6cc693f22
+[archive-hovered-item-optional-video]: https://github.com/user-attachments/assets/b33fbcdf-1e00-49db-aede-99c2c3a26171
+[archive-prompt-video]: https://github.com/user-attachments/assets/ddc0a2e7-9b90-416f-97e3-57af5ad5f355
+[archive-behaviour-video]: https://github.com/user-attachments/assets/437254d2-4746-41e7-9500-13cef60764b7
+[archive-encrypt-files-video]: https://github.com/user-attachments/assets/d4269378-58ce-4b58-a420-13455576c58f
+[archive-reveal-created-archive-video]: https://github.com/user-attachments/assets/86f01452-42a4-4a97-9d31-ce6f9bc10407
+[archive-remove-archived-files-video]: https://github.com/user-attachments/assets/012ed8b5-57ae-4cb3-8bf7-4e0af6bdb0d2
+
+<!-- Emit command -->
+
+[emit-yazi-command-video]: https://github.com/user-attachments/assets/d2fadf6b-1877-479f-9ac3-734cf227693f
+[emit-plugin-command-video]: https://github.com/user-attachments/assets/af28c33a-b915-413a-91b2-fc812c1d4d90
+[emit-augmented-command-video]: https://github.com/user-attachments/assets/08c2d3d6-8ae6-48e2-a045-9c9dc5d81bfd
 
 <!-- Editor command -->
 
-[editor-must-have-hovered-item-video]: https://github.com/user-attachments/assets/a0e4500d-7bfe-4fb1-9289-8c39c5c6f323
-[editor-hovered-item-optional-video]: https://github.com/user-attachments/assets/96798f1f-2ddc-464a-b6ae-48cc20f88b3c
-[editor-prompt-video]: https://github.com/user-attachments/assets/5453cc87-3721-4b80-8cc2-b730ddff5da8
-[editor-behaviour-video]: https://github.com/user-attachments/assets/f479ef38-5b78-43f1-83d4-045bef6f5f20
+[editor-must-have-hovered-item-video]: https://github.com/user-attachments/assets/ca6d4bac-57be-487e-98e7-805b396fb3d3
+[editor-hovered-item-optional-video]: https://github.com/user-attachments/assets/3481a3be-d91c-4903-b7a1-80d3048fcf6b
+[editor-prompt-video]: https://github.com/user-attachments/assets/7cdb942f-0ad3-453c-93a5-ab89df5cd644
+[editor-behaviour-video]: https://github.com/user-attachments/assets/e7537e2e-56a0-4681-9820-5b48cd583bc8
 
 <!-- Pager command -->
 
-[pager-must-have-hovered-item-video]: https://github.com/user-attachments/assets/7daa8e81-bc83-4ff3-9462-d71293565e67
-[pager-hovered-item-optional-video]: https://github.com/user-attachments/assets/e123fb58-d49e-46b6-bc33-c41eb01cf9aa
-[pager-prompt-video]: https://github.com/user-attachments/assets/cfba76a1-116e-4caf-b25a-57d631d115a0
-[pager-behaviour-video]: https://github.com/user-attachments/assets/d036f865-2909-414b-80d9-80e550b6b3dd
+[pager-must-have-hovered-item-video]: https://github.com/user-attachments/assets/292f503e-c7b0-45ad-97b3-75325f8bb0e7
+[pager-hovered-item-optional-video]: https://github.com/user-attachments/assets/ca5f1126-4761-4289-a441-4b44c7234e57
+[pager-prompt-video]: https://github.com/user-attachments/assets/45d758e0-f95c-4e2e-92b2-094c2f475c00
+[pager-behaviour-video]: https://github.com/user-attachments/assets/547ebf9c-ab85-4e72-85c0-e130739b9e68
