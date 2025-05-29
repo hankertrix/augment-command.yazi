@@ -88,16 +88,59 @@
 ---	style: ui.Style,
 ---): ui.Span
 
--- The types for the alignments of the ui.Line object
----@alias ui.Line.LEFT integer Align the line to the left.
----@alias ui.Line.CENTER integer Align the line to the center.
----@alias ui.Line.RIGHT integer Align the line to the right
+-- The types for the alignments of the UI objects
+---@alias ui.Align.LEFT integer Align the UI object to the left.
+---@alias ui.Align.CENTER integer Align the UI object to the center.
+---@alias ui.Align.RIGHT integer Align the UI object to the right.
 
--- The possible alignments of the ui.Line object
----@alias ui.Line.Alignment
----	|ui.Line.LEFT
----	|ui.Line.CENTER
----	|ui.Line.RIGHT
+-- The type of the ui.Align object
+---@class (exact) ui.Align
+---@field LEFT ui.Align.LEFT Align the UI object to the left.
+---@field CENTER ui.Align.CENTER Align the UI object to the center.
+---@field RIGHT ui.Align.RIGHT Align the UI object to the right.
+
+-- The type for all possible alignments
+---@alias ui.Alignment ui.Align.LEFT|ui.Align.CENTER|ui.Align.RIGHT
+
+-- The types for the wrapping on UI objects
+---@alias ui.Wrap.NO integer No wrapping.
+---@alias ui.Wrap.YES integer Wrap at the end of the line.
+---@alias ui.Wrap.TRIM integer ui.Wrap.YES + trim leading whitespace.
+
+-- The type of the ui.Wrap object
+---@class (exact) ui.Wrap
+---@field NO ui.Wrap.NO No wrapping.
+---@field YES ui.Wrap.YES Wrap at the end of the line.
+---@field TRIM ui.Wrap.TRIM ui.Wrap.YES + trim leading whitespace.
+
+-- The type for all possible wrap types
+---@alias ui.Wrapping ui.Wrap.NO|ui.Wrap.YES|ui.Wrap.TRIM
+
+-- The edges of the UI objects
+---@alias ui.Edge.NONE integer No edge.
+---@alias ui.Edge.TOP integer Edge on the top.
+---@alias ui.Edge.RIGHT integer Edge on the right of the object.
+---@alias ui.Edge.BOTTOM integer Edge on the bottom of the object.
+---@alias ui.Edge.LEFT integer Edge on the left of the object.
+---@alias ui.Edge.ALL integer Edges all around the object.
+
+-- The type of the ui.Edge object
+---@class (exact) ui.Edge
+---@field NONE ui.Edge.NONE No edge.
+---@field TOP ui.Edge.TOP Edge on the top.
+---@field RIGHT ui.Edge.RIGHT Edge on the right of the object.
+---@field BOTTOM ui.Edge.BOTTOM Edge on the bottom of the object.
+---@field LEFT ui.Edge.LEFT Edge on the left of the object.
+---@field ALL ui.Edge.ALL Edges all around the object.
+
+-- The type for all possible edges of UI objects
+---@alias ui.Edges
+---	|ui.Edge.NONE
+---	|ui.Edge.TOP
+---	|ui.Edge.RIGHT
+---	|ui.Edge.BOTTOM
+---	|ui.Edge.LEFT
+---	|ui.Edge.ALL
 
 -- The type of the ui.Line object
 ---@class (exact) ui.Line: ui.Style
@@ -112,38 +155,13 @@
 --- Set the alignment of the line.
 --- Arguments:
 ---	- alignment: The alignment to set.
----@field align fun(self: ui.Line, alignment: ui.Line.Alignment): ui.Line
+---@field align fun(self: ui.Line, alignment: ui.Alignment): ui.Line
 ---@field visible fun(self: ui.Line): boolean Whether the line is visible.
 ---
 --- Set the style of the line.
 --- Arguments:
 ---	- style: The style to set.
 ---@field style fun(self: ui.Line, style: ui.Style): ui.Line
----@field LEFT ui.Line.LEFT A constant for the align() method
----@field CENTER ui.Line.CENTER A constant for the align() method
----@field RIGHT ui.Line.RIGHT A constant for the align() method
-
--- The types for the alignments of the ui.Text object
----@alias ui.Text.LEFT integer Align the text to the left.
----@alias ui.Text.CENTER integer Align the text to the center.
----@alias ui.Text.RIGHT integer Align the text to the right
-
--- The possible alignments of the ui.Text object
----@alias ui.Text.Alignment
----	|ui.Text.LEFT
----	|ui.Text.CENTER
----	|ui.Text.RIGHT
-
--- The types for the wrap of the ui.Text object
----@alias ui.Text.WRAP_NO integer No wrapping.
----@alias ui.Text.WRAP integer Wrap at the end of the line.
----@alias ui.Text.WRAP_TRIM integer ui.Text.WRAP + trim leading whitespace.
-
--- The possible wrappings of the ui.Text object
----@alias ui.Text.Wrapping
----	|ui.Text.WRAP_NO
----	|ui.Text.WRAP
----	|ui.Text.WRAP_TRIM
 
 -- The type of the ui.Text object
 ---@class (exact) ui.Text: ui.Style
@@ -163,12 +181,12 @@
 --- Set the alignment of the text.
 --- Arguments:
 ---	- alignment: The alignment to set.
----@field align fun(self: ui.Text, alignment: ui.Text.Alignment): ui.Text
+---@field align fun(self: ui.Text, alignment: ui.Alignment): ui.Text
 ---
 --- Set the wrapping of the text.
 --- Arguments:
 ---	- wrapping: The wrapping to set.
----@field wrap fun(self: ui.Text, wrapping: ui.Text.Wrapping): ui.Text
+---@field wrap fun(self: ui.Text, wrapping: ui.Wrapping): ui.Text
 ---
 --- Get the maximum width of the text.
 ---@field max_width fun(self: ui.Text): integer
@@ -183,12 +201,6 @@
 ---	- x: Horizontal position to scroll to.
 ---	- y: Vertical position to scroll to.
 ---@field scroll fun(self: ui.Text, x: integer, y: integer): ui.Text
----@field LEFT ui.Text.LEFT A constant for the align() method
----@field CENTER ui.Text.CENTER A constant for the align() method
----@field RIGHT ui.Text.RIGHT A constant for the align() method
----@field WRAP_NO ui.Text.WRAP_NO A constant for the wrap() method
----@field WRAP ui.Text.WRAP A constant for the wrap() method
----@field WRAP_TRIM ui.Text.WRAP_TRIM A constant for the wrap() method
 
 -- The types for the direction of the ui.Layout object
 ---@alias ui.Layout.HORIZONTAL integer Layout horizontally.
@@ -289,23 +301,6 @@
 ---	- style: The style to set.
 ---@field style fun(self: ui.List, style: ui.Style): ui.List
 
--- The direction of the ui.Bar object
----@alias ui.Bar.NONE integer No direction.
----@alias ui.Bar.TOP integer Top direction.
----@alias ui.Bar.RIGHT integer Right direction
----@alias ui.Bar.BOTTOM integer Bottom direction.
----@alias ui.Bar.LEFT integer Left direction.
----@alias ui.Bar.ALL integer All directions.
-
--- The possible directions of the ui.Bar object
----@alias ui.Bar.Direction
----	|ui.Bar.NONE
----	|ui.Bar.TOP
----	|ui.Bar.RIGHT
----	|ui.Bar.BOTTOM
----	|ui.Bar.LEFT
----	|ui.Bar.ALL
-
 -- The type of the ui.Bar object
 ---@class (exact) ui.Bar
 ---
@@ -325,29 +320,6 @@
 --- Arguments:
 ---	- style: The style to set.
 ---@field style fun(self: ui.Bar, style: ui.Style): ui.Bar
----@field NONE string A constant for the ui.Bar() method
----@field TOP string A constant for the ui.Bar() method
----@field RIGHT string A constant for the ui.Bar() method
----@field BOTTOM string A constant for the ui.Bar() method
----@field LEFT string A constant for the ui.Bar() method
----@field ALL string A constant for the ui.Bar() method
-
--- The position of the ui.Border object
----@alias ui.Border.NONE integer No direction.
----@alias ui.Border.TOP integer Top direction.
----@alias ui.Border.RIGHT integer Right direction
----@alias ui.Border.BOTTOM integer Bottom direction.
----@alias ui.Border.LEFT integer Left direction.
----@alias ui.Border.ALL integer All directions.
-
--- The possible positions of the ui.Border object
----@alias ui.Border.Position
----	|ui.Border.NONE
----	|ui.Border.TOP
----	|ui.Border.RIGHT
----	|ui.Border.BOTTOM
----	|ui.Border.LEFT
----	|ui.Border.ALL
 
 -- The different types of the ui.Border object
 ---@alias ui.Border.PLAIN integer Plain border.
@@ -385,6 +357,12 @@
 --- Arguments:
 ---	- style: The style to set.
 ---@field style fun(self: ui.Border, style: ui.Style): ui.Border
+---@field PLAIN ui.Border.PLAIN Plain border.
+---@field ROUNDED ui.Border.ROUNDED Rounded border.
+---@field DOUBLE ui.Border.DOUBLE Double border.
+---@field THICK ui.Border.THICK Thick border.
+---@field QUADRANT_INSIDE ui.Border.QUADRANT_INSIDE Border with the quadrant inside.
+---@field QUADRANT_OUTSIDE ui.Border.QUADRANT_OUTSIDE Border with the quadrant outside.
 
 -- The type of the ui.Gauge object
 ---@class (exact) ui.Gauge
@@ -432,6 +410,9 @@
 
 -- The type of the ui global object
 ---@class (exact) Ui
+---@field Align ui.Align The possible alignments for the UI objects.
+---@field Wrap ui.Wrap The possible wrap types for the UI objects.
+---@field Edge ui.Edge The possible edges for the UI objects.
 ---@field Rect fun(params: ui.RectParams): ui.Rect Create a rectangular area.
 ---
 --- Create a padding object.
@@ -476,13 +457,13 @@
 ---
 --- Create a bar object.
 --- Arguments:
----	- direction: The direction to create the bar.
----@field Bar (fun(direction: ui.Bar.Direction): ui.Bar)|ui.Bar
+---	- edge: The edge of the bar.
+---@field Bar (fun(edge: ui.Edges): ui.Bar)|ui.Bar
 ---
 --- Create a border object.
 --- Arguments:
----	- position: The position to create the border.
----@field Border (fun(position: ui.Border.Position): ui.Border)|ui.Border
+---	- edge: The edge of the border.
+---@field Border (fun(edge: ui.Edges): ui.Border)|ui.Border
 ---@field Gauge fun(): ui.Gauge Create a gauge object.
 ---
 --- Clear the content of a specified rectangular area.
