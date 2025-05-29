@@ -46,7 +46,7 @@ plugin.
 
 ## Requirements
 
-- [Yazi][yazi-link] v25.4.8+
+- [Yazi][yazi-link] v25.5.28+
 - [`7z` or `7zz` command][7z-link]
 - [`file` command][file-command-link]
 
