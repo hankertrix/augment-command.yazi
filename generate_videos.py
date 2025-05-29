@@ -626,7 +626,7 @@ class VHSTape:
 		# The single keybind
 		keybind = "\n".join(
 			[
-				"[[manager.prepend_keymap]]",
+				"[[mgr.prepend_keymap]]",
 				f'on = [ "{key}" ]',
 				f"run = '{PLUGIN_COMMAND_TEMPLATE}'".format(command),
 			]
