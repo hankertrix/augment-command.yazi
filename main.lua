@@ -1,4 +1,4 @@
---- @since 25.5.28
+--- @since 25.5.31
 
 -- Plugin to make some Yazi commands smarter
 -- Written in Lua 5.4
@@ -938,7 +938,7 @@ local function show_overwrite_prompt(file_path_to_overwrite)
 
 		-- Wrap the string in a line and align it to the center.
 		first_line = ui.Line(overwrite_confirm_options.content)
-			:align(ui.Line.CENTER)
+			:align(ui.Align.CENTER)
 
 		-- Otherwise, just set the first line to the content given
 	else
@@ -951,9 +951,9 @@ local function show_overwrite_prompt(file_path_to_overwrite)
 		first_line,
 		ui.Line(string.rep("─", overwrite_confirm_options.pos.w - 2))
 			:style(ui.Style(th.confirm.border))
-			:align(ui.Line.LEFT),
-		ui.Line(tostring(file_path_to_overwrite)):align(ui.Line.LEFT),
-	}):wrap(ui.Text.WRAP_TRIM)
+			:align(ui.Align.LEFT),
+		ui.Line(tostring(file_path_to_overwrite)):align(ui.Align.LEFT),
+	}):wrap(ui.Wrap.TRIM)
 
 	-- Get the user's confirmation for
 	-- whether they want to overwrite the item
@@ -3886,7 +3886,7 @@ local function handle_quit(args, config)
 			content = ui.Text({
 				"There are multiple tabs open.",
 				"Are you sure you want to quit?",
-			}):wrap(ui.Text.WRAP_TRIM),
+			}):wrap(ui.Wrap.TRIM),
 		}, true, true)
 
 	-- Get the type of the quit content
@@ -3895,7 +3895,7 @@ local function handle_quit(args, config)
 	-- If the type of the quit content is a string or a list of strings
 	if quit_content_type == "string" or quit_content_type == "table" then
 		quit_confirm_options.content = ui.Text(quit_confirm_options.content)
-			:wrap(ui.Text.WRAP_TRIM)
+			:wrap(ui.Wrap.TRIM)
 	end
 
 	-- Get the user's confirmation for quitting
