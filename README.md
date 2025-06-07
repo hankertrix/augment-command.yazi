@@ -1221,7 +1221,7 @@ desc = "Permanently delete the files"
 [[mgr.prepend_keymap]]
 on = ["g", "j"]
 run = "plugin augment-command -- parent_arrow 1"
-desc = "Move the cursor up in the parent directory"
+desc = "Move the cursor down in the parent directory"
 ```
 
 For the default descriptions of the commands, you can refer to
