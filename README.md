@@ -1206,7 +1206,7 @@ are also supported, for example:
 [[mgr.prepend_keymap]]
 on = "k"
 run = "plugin augment-command -- arrow -1"
-desc = "Move cursor up"
+desc = "Move the cursor up"
 
 [[mgr.prepend_keymap]]
 on = "r"
@@ -1221,6 +1221,7 @@ desc = "Permanently delete the files"
 [[mgr.prepend_keymap]]
 on = ["g", "j"]
 run = "plugin augment-command -- parent_arrow 1"
+desc = "Move the cursor up in the parent directory"
 ```
 
 For the default descriptions of the commands, you can refer to
