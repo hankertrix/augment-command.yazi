@@ -361,8 +361,8 @@
 ---@field ROUNDED ui.Border.ROUNDED Rounded border.
 ---@field DOUBLE ui.Border.DOUBLE Double border.
 ---@field THICK ui.Border.THICK Thick border.
----@field QUADRANT_INSIDE ui.Border.QUADRANT_INSIDE Border with the quadrant inside.
----@field QUADRANT_OUTSIDE ui.Border.QUADRANT_OUTSIDE Border with the quadrant outside.
+---@field QUADRANT_INSIDE ui.Border.QUADRANT_INSIDE Quadrant inside border.
+---@field QUADRANT_OUTSIDE ui.Border.QUADRANT_OUTSIDE Quadrant outside border.
 
 -- The type of the ui.Gauge object
 ---@class (exact) ui.Gauge
@@ -470,6 +470,20 @@
 --- Arguments:
 ---	- rect: The rectangular area to clear.
 ---@field Clear fun(rect: ui.Rect): ui.Clear
+---
+--- Get the area of a section of the UI
+---
+--- The sections are:
+---	"current": The screen size of the file manager
+---	"preview": The size of the preview area
+---	"progress": The size of the progress bar
+---@field area fun(section: "current"|"preview"|"progress"): ui.Rect
+---
+--- Get the width of a string, line or span.
+---@field width fun(item: string|ui.Line|ui.Span): integer|nil
+---
+--- Redraw a UI component
+---@field redraw fun(component: table): nil
 
 -- The type for the Cha object
 ---@class (exact) Cha
@@ -1478,6 +1492,9 @@
 -- The type of the term object in the runtime
 ---@class (exact) rt.Term
 ---@field light boolean Whether the user's terminal is in light mode or not
+---
+--- Get the cell size of the terminal
+---@field cell_size fun(): cell_width: number|nil, cell_height: number|nil
 
 -- The type of the runtime object
 ---@class (exact) Rt
