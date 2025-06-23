@@ -79,6 +79,7 @@
 ---@field skip_single_subdirectory_on_leave boolean Skip single subdir on leave
 ---@field smooth_scrolling boolean Whether to smoothly scroll or not
 ---@field scroll_delay number The scroll delay in seconds for smooth scrolling
+---@field create_item_delay number Delay in seconds before revealing
 ---@field wraparound_file_navigation boolean Have wraparound navigation or not
 
 -- The full configuration for the plugin
@@ -195,6 +196,7 @@ local DEFAULT_CONFIG = {
 	skip_single_subdirectory_on_leave = true,
 	smooth_scrolling = false,
 	scroll_delay = 0.02,
+	create_item_delay = 0.25,
 	wraparound_file_navigation = true,
 }
 
@@ -3363,7 +3365,7 @@ local function execute_create(item_url, is_directory, args, config)
 	end
 
 	-- Wait for a tiny bit for the file to be created
-	ya.sleep(10e-2)
+	ya.sleep(config.create_item_delay)
 
 	-- Reveal the created item
 	ya.emit("reveal", { tostring(item_url) })
@@ -4450,7 +4452,7 @@ local function handle_archive(args, config)
 		--
 
 		-- Wait for a tiny bit for the archive to be created
-		ya.sleep(10e-2)
+		ya.sleep(config.create_item_delay)
 
 		-- Reveal the archive
 		ya.emit("reveal", { archive_path })
