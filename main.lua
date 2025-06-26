@@ -1027,8 +1027,11 @@ end
 -- Function to get whether sudo edit is supported
 ---@return boolean sudo_edit_supported Whether sudo edit is supported
 local function get_sudo_edit_supported()
-	if ya.target_family() == "windows" then return false end
 	--
+
+	-- If the platform is Windows, return false immediately
+	-- as Windows does not have sudo
+	if ya.target_family() == "windows" then return false end
 
 	-- Call the "sudo --help" command and get the handle
 	--
