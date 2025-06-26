@@ -1029,6 +1029,10 @@ end
 local function get_sudo_edit_supported()
 	--
 
+	-- If the platform is Windows, return false immediately
+	-- as Windows does not have sudo
+	if ya.target_family() == "windows" then return false end
+
 	-- Call the "sudo --help" command and get the handle
 	--
 	-- The "2>&1" redirects the standard error
