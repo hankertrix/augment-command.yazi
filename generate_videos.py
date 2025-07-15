@@ -78,6 +78,9 @@ NORMAL_TYPING_SPEED: str = "Set TypingSpeed 150ms"
 # The typing speed for set up and clean up
 FAST_TYPING_SPEED: str = "Set TypingSpeed 0.1ms"
 
+# A very long sleep time for some actions
+VERY_LONG_SLEEP_TIME: str = "Sleep 5s"
+
 # A long sleep time for some actions
 LONG_SLEEP_TIME: str = "Sleep 2s"
 
@@ -228,7 +231,7 @@ class VHSTape:
 
 		# Add the editor to the required programs if it is given
 		if self.editor:
-			self.required_programs.add(self.editor)
+			self.required_programs.add(self.editor.strip().split()[0])
 
 	@override
 	def __str__(self) -> str:
@@ -298,7 +301,7 @@ class VHSTape:
 
 			# Open the Yazi program
 			'Type "{}" Enter'.format(
-				f"EDITOR={self.editor} yazi" if self.editor else "yazi"
+				f"EDITOR='{self.editor}' yazi" if self.editor else "yazi"
 			),
 			SLEEP_TIME,
 
@@ -594,8 +597,8 @@ class VHSTape:
 		# The command to create the keymap.toml file
 		create_keymap_toml_command = "\n".join(
 			[
-				f"Type `mv '{KEYMAP_TOML_FILE_NAME}' "
-				+ f"'{KEYMAP_TOML_FILE_NAME}.bak'` Enter",
+				f"Type `mv '{KEYMAP_TOML_FILE_NAME}.tmpl' "
+				+ f"'{KEYMAP_TOML_FILE_NAME}.tmpl.bak'` Enter",
 				f'Type `echo "{fixed_contents}" > {KEYMAP_TOML_FILE_NAME}` '
 				+ "Enter",
 				APPLY_CONFIG_COMMAND,
@@ -606,8 +609,8 @@ class VHSTape:
 		clean_up_keymap_toml_command = "\n".join(
 			[
 				f"Type 'rm {KEYMAP_TOML_FILE_NAME}' Enter",
-				f"Type `mv '{KEYMAP_TOML_FILE_NAME}.bak' "
-				+ f"'{KEYMAP_TOML_FILE_NAME}'` Enter",
+				f"Type `mv '{KEYMAP_TOML_FILE_NAME}.tmpl.bak' "
+				+ f"'{KEYMAP_TOML_FILE_NAME}.tmpl'` Enter",
 				APPLY_CONFIG_COMMAND,
 			]
 		)
@@ -2516,7 +2519,7 @@ VHS_TAPES: list[VHSTape] = [
 	),
 	VHSTape(
 		name="Editor must have hovered item",
-		editor="nano",
+		editor="emacs -nw",
 		yazi_body=[
 			f'Type "/{FIRST_FILE_NAME}" Enter',
 			SLEEP_TIME,
@@ -2532,14 +2535,16 @@ VHS_TAPES: list[VHSTape] = [
 			SLEEP_TIME,
 			f'Type "/{FIRST_FILE_NAME}" Enter',
 			SLEEP_TIME,
+			#
+			# Open the editor
 			'Type "o"',
-			SLEEP_TIME,
-			"Ctrl+x",
+			VERY_LONG_SLEEP_TIME,
+			'Type ":qa!" Enter',
 		],
 	),
 	VHSTape(
 		name="Editor hovered item optional",
-		editor="nano",
+		editor="emacs -nw",
 		scripts=[
 			VHSTape.edit_plugin_config("must_have_hovered_item", False),
 		],
@@ -2553,26 +2558,26 @@ VHS_TAPES: list[VHSTape] = [
 			SLEEP_TIME,
 			'Type "l"',
 			SLEEP_TIME,
+			#
+			# Open the editor
 			'Type "o"',
-			SLEEP_TIME,
-			"Ctrl+x",
-			SLEEP_TIME,
-			"Ctrl+x",
-			SLEEP_TIME,
-			"Ctrl+x",
+			VERY_LONG_SLEEP_TIME,
+			'Type ":qa!" Enter',
 			SLEEP_TIME,
 			'Type "h"',
 			SLEEP_TIME,
 			f'Type "/{FIRST_FILE_NAME}" Enter',
 			SLEEP_TIME,
+			#
+			# Open the editor
 			'Type "o"',
-			SLEEP_TIME,
-			"Ctrl+x",
+			VERY_LONG_SLEEP_TIME,
+			'Type ":qa!" Enter',
 		],
 	),
 	VHSTape(
 		name="Editor prompt",
-		editor="nano",
+		editor="emacs -nw",
 		scripts=[
 			VHSTape.edit_plugin_config("prompt", True),
 		],
@@ -2584,54 +2589,58 @@ VHS_TAPES: list[VHSTape] = [
 			'Type "h"',
 			SLEEP_TIME,
 			"Enter",
-			SLEEP_TIME,
-			"Ctrl+x",
+			#
+			# Waiting for the editor to open
+			VERY_LONG_SLEEP_TIME,
+			'Type ":qa!" Enter',
 			SLEEP_TIME,
 			'Type "o"',
 			SLEEP_TIME,
 			'Type "s"',
 			SLEEP_TIME,
 			"Enter",
-			SLEEP_TIME,
-			"Ctrl+x",
-			SLEEP_TIME,
-			"Ctrl+x",
-			SLEEP_TIME,
-			"Ctrl+x",
+			#
+			# Waiting for the editor to open
+			VERY_LONG_SLEEP_TIME,
+			'Type ":qa!" Enter',
 			SLEEP_TIME,
 			'Type "o"',
 			SLEEP_TIME,
 			"Enter",
-			SLEEP_TIME,
-			"Ctrl+x",
+			#
+			# Waiting for the editor to open
+			VERY_LONG_SLEEP_TIME,
+			'Type ":qa!" Enter',
 		],
 	),
 	VHSTape(
 		name="Editor behaviour",
-		editor="nano",
+		editor="emacs -nw",
 		yazi_body=[
 			f'Type "/{FIRST_FILE_NAME}" Enter',
 			"Space@300ms 3",
 			SLEEP_TIME,
+			#
+			# Open the editor
 			'Type "o"',
-			SLEEP_TIME,
-			"Ctrl+x",
+			VERY_LONG_SLEEP_TIME,
+			'Type ":qa!" Enter',
 			SLEEP_TIME,
 			'Type "j"',
 			SLEEP_TIME,
+			#
+			# Open the editor
 			'Type "o"',
-			SLEEP_TIME,
-			"Ctrl+x",
+			VERY_LONG_SLEEP_TIME,
+			'Type ":qa!" Enter',
 			SLEEP_TIME,
 			'Type "kk"',
 			SLEEP_TIME,
+			#
+			# Open the editor
 			'Type "o"',
-			SLEEP_TIME,
-			"Ctrl+x",
-			SLEEP_TIME,
-			"Ctrl+x",
-			SLEEP_TIME,
-			"Ctrl+x",
+			VERY_LONG_SLEEP_TIME,
+			'Type ":qa!" Enter',
 		],
 	),
 	VHSTape(
