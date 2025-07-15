@@ -4219,7 +4219,7 @@ local function handle_parent_arrow(args, config)
 
 	-- If smooth scrolling is not wanted,
 	-- call the function to execute the parent arrow command
-	if not config.smooth_scrolling then execute_parent_arrow(args) end
+	if not config.smooth_scrolling then return execute_parent_arrow(args) end
 
 	-- Otherwise, smooth scrolling is wanted,
 	-- so get the number of steps from the arguments given
