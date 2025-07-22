@@ -1410,7 +1410,7 @@ and [my `yazi.toml` file][my-yazi-toml].
 
 ## [Licence]
 
-This plugin is licenced under the [GNU AGPL v3 licence][Licence].
+This plugin is licensed under the [GNU AGPL v3 licence][Licence].
 You can view the full licence in the [`LICENSE`][Licence] file.
 
 <!-- Regular links -->
@@ -1426,15 +1426,15 @@ You can view the full licence in the [`LICENSE`][Licence] file.
 [gnu-tar-link]: https://www.gnu.org/software/tar/
 [apple-tar-link]: https://ss64.com/mac/tar.html
 [brew-link]: https://brew.sh/
-[yazi-yazi-toml-extract-openers]: https://github.com/sxyazi/yazi/blob/main/yazi-config/preset/yazi-default.toml#L51-L54
+[yazi-yazi-toml-extract-openers]: https://github.com/sxyazi/yazi/blob/main/yazi-config/preset/yazi-default.toml#L50-L53
 [yazi-yazi-toml]: https://github.com/sxyazi/yazi/blob/main/yazi-config/preset/yazi-default.toml
-[yazi-shell-variables]: https://yazi-rs.github.io/docs/configuration/keymap/#manager.shell
-[thunderbird-tip]: https://yazi-rs.github.io/docs/tips#email-selected-files-using-thunderbird
+[yazi-shell-variables]: https://yazi-rs.github.io/docs/configuration/keymap/#mgr.shell
+[thunderbird-tip]: https://yazi-rs.github.io/docs/tips/#email-selected-files
 [input-configuration]: https://yazi-rs.github.io/docs/configuration/yazi#input
 [confirm-configuration]: https://yazi-rs.github.io/docs/configuration/yazi#confirm
 [yazi-keymap-toml]: https://github.com/sxyazi/yazi/blob/main/yazi-config/preset/keymap-default.toml
-[my-keymap-toml]: https://github.com/hankertrix/Dotfiles/blob/main/.config/yazi/keymap.toml
-[my-yazi-toml]: https://github.com/hankertrix/Dotfiles/blob/main/.config/yazi/yazi.toml
+[my-keymap-toml]: https://github.com/hankertrix/Dotfiles/blob/main/tilde/dot_config/yazi/keymap.toml.tmpl
+[my-yazi-toml]: https://github.com/hankertrix/Dotfiles/blob/main/tilde/dot_config/yazi/yazi.toml
 [Licence]: LICENSE
 
 <!-- Videos -->
