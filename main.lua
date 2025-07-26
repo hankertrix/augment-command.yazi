@@ -131,6 +131,7 @@ local Commands = {
 	Emit = "emit",
 	Editor = "editor",
 	Pager = "pager",
+	FirstFile = "first_file",
 }
 
 -- The enum for which group of items to operate on
@@ -4233,6 +4234,56 @@ local function handle_parent_arrow(args, config)
 	)
 end
 
+-- Function to execute the first file command
+---@type fun(): nil
+local execute_first_file = ya.sync(function()
+	--
+
+	-- Get the current working directory
+	local current = cx.active.current
+
+	-- Get the files in the current working directory
+	local files = current.files
+
+	-- Initialise the index of the first file
+	local first_file_index = nil
+
+	-- Iterate over the files
+	for index, file in ipairs(files) do
+		--
+
+		-- If the file isn't a directory,
+		if not file.cha.is_dir then
+			--
+
+			-- Set the first file index
+			first_file_index = index
+
+			-- Break out of the loop
+			break
+		end
+	end
+
+	-- Get the amount to move the cursor by.
+	--
+	-- The cursor index needs to be increased by 1
+	-- because the cursor index is 0-indexed
+	-- while Lua tables are 1-indexed.
+	local move_by = first_file_index - (current.cursor + 1)
+
+	-- Emit the augmented arrow command
+	emit_augmented_command("arrow", { move_by })
+end)
+
+-- Function to handle the first file command
+---@type CommandFunction
+local function handle_first_file()
+	--
+
+	-- Call the function to execute the first file command
+	execute_first_file()
+end
+
 -- Function to check if an archive supports header encryption
 ---@param archive_path string The path to the archive
 ---@param wanted boolean Whether header encryption is wanted
@@ -4666,6 +4717,7 @@ local function run_command_func(command, args, config)
 		[Commands.Quit] = handle_quit,
 		[Commands.Arrow] = handle_arrow,
 		[Commands.ParentArrow] = handle_parent_arrow,
+		[Commands.FirstFile] = handle_first_file,
 		[Commands.Archive] = handle_archive,
 		[Commands.Emit] = handle_emit,
 		[Commands.Editor] = handle_editor,
