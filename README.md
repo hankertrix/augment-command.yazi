@@ -1559,8 +1559,8 @@ You can view the full licence in the [`LICENSE`][Licence] file.
 
 <!-- First file command -->
 
-[first-file-video]: placeholder
-[smooth-first-file-video]: placeholder
+[first-file-video]: https://github.com/user-attachments/assets/4b4a1e6d-b013-47b5-919f-90279977fd98
+[smooth-first-file-video]: https://github.com/user-attachments/assets/f4c9c191-fa9f-428e-87e2-9bf654e60f72
 
 <!-- Archive command -->
 
