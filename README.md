@@ -1005,6 +1005,7 @@ in your `keymap.toml` file.
   which is the case by default.
 
   Video:
+
   [first-file-video]
 
 - It also works with smooth scrolling, so when `smooth_scrolling`
@@ -1012,6 +1013,7 @@ in your `keymap.toml` file.
   to the first file.
 
   Video:
+
   [smooth-first-file-video]
 
 - Alternatively, if you just want to get to a file
