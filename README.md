@@ -1017,9 +1017,10 @@ in your `keymap.toml` file.
   [smooth-first-file-video]
 
 - Alternatively, if you just want to get to a file
-  in the current directory, you can use the built-in "G" key bind
-  to get to the last item in the current directory,
-  which would be a file if `sort_dir_first` is set to `true`,
+  in the current directory, you can use the built-in `G` key bind
+  that calls `arrow bot` to get to the last item
+  in the current directory, which would be a file
+  if `sort_dir_first` is set to `true`,
   which is the case by default.
 
 ### Archive (`archive`)
