@@ -2204,6 +2204,37 @@ VHS_TAPES: list[VHSTape] = [
 		],
 	),
 	VHSTape(
+		name="First file",
+		yazi_body=[
+			"Type 'gf'",
+			SLEEP_TIME,
+			"Type 'gg'",
+			SLEEP_TIME,
+			"Type 'gf'",
+			SLEEP_TIME,
+			"Type 'G'",
+			SLEEP_TIME,
+			"Type 'gf'",
+		],
+	),
+	VHSTape(
+		name="Smooth first file",
+		scripts=[
+			VHSTape.edit_plugin_config("smooth_scrolling", True),
+		],
+		yazi_body=[
+			"Type 'gf'",
+			SLEEP_TIME,
+			"Type 'gg'",
+			SLEEP_TIME,
+			"Type 'gf'",
+			SLEEP_TIME,
+			"Type 'G'",
+			SLEEP_TIME,
+			"Type 'gf'",
+		],
+	),
+	VHSTape(
 		name="Archive must have hovered item",
 		files_and_directories=["demo.zip"],
 		scripts=[

@@ -32,6 +32,7 @@ plugin.
   - [Arrow (`arrow`)](#arrow-arrow)
 - [New commands](#new-commands)
   - [Parent arrow (`parent_arrow`)](#parent-arrow-parent_arrow)
+  - [First file (`first_file`)](#first-file-first_file)
   - [Archive (`archive`)](#archive-archive)
   - [Emit (`emit`)](#emit-emit)
   - [Editor (`editor`)](#editor-editor)
@@ -995,6 +996,30 @@ in your `keymap.toml` file.
   wrapping around,
   even when `wraparound_file_navigation` is set to `true`.
 
+### First file (`first_file`)
+
+- This command just moves the cursor to the first file
+  in the current directory, regardless of the current cursor position.
+- It is useful for quickly getting to the first file
+  in the current directory when `sort_dir_first` is set to `true`,
+  which is the case by default.
+
+  Video:
+  [first-file-video]
+
+- It also works with smooth scrolling, so when `smooth_scrolling`
+  is set to `true`, the command will smoothly scroll the cursor
+  to the first file.
+
+  Video:
+  [smooth-first-file-video]
+
+- Alternatively, if you just want to get to a file
+  in the current directory, you can use the built-in "G" key bind
+  to get to the last item in the current directory,
+  which would be a file if `sort_dir_first` is set to `true`,
+  which is the default case.
+
 ### Archive (`archive`)
 
 - The `archive` command adds the selected or hovered items
@@ -1531,6 +1556,11 @@ You can view the full licence in the [`LICENSE`][Licence] file.
 [smooth-parent-arrow-video]: https://github.com/user-attachments/assets/1b7ac44c-f7bc-4847-aa8a-897380aed54e
 [wraparound-parent-arrow-video]: https://github.com/user-attachments/assets/ce35b55f-98dc-485d-a5e4-005ebe3ea169
 [smooth-wraparound-parent-arrow-video]: https://github.com/user-attachments/assets/5256f0c5-b96b-4f4c-ac1d-f4a3f087cc57
+
+<!-- First file command -->
+
+[first-file-video]: placeholder
+[smooth-first-file-video]: placeholder
 
 <!-- Archive command -->
 
