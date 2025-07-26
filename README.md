@@ -1020,7 +1020,7 @@ in your `keymap.toml` file.
   in the current directory, you can use the built-in "G" key bind
   to get to the last item in the current directory,
   which would be a file if `sort_dir_first` is set to `true`,
-  which is the default case.
+  which is the case by default.
 
 ### Archive (`archive`)
 
