@@ -191,7 +191,6 @@ then it will operate on the selected items.
   [this section above][augment-section].
 
   Videos:
-
   - When `prompt` is set to `true`:
 
     [open-prompt-video]
@@ -258,7 +257,6 @@ then it will operate on the selected items.
   [this section above][augment-section].
 
   Videos:
-
   - When `must_have_hovered_item` is `true`:
 
     [extract-must-have-hovered-item-video]
@@ -467,7 +465,6 @@ then it will operate on the selected items.
   [this section above][augment-section].
 
   Videos:
-
   - When `must_have_hovered_item` is `true`:
 
     [rename-must-have-hovered-item-video]
@@ -490,7 +487,6 @@ then it will operate on the selected items.
   [this section above][augment-section].
 
   Videos:
-
   - When `must_have_hovered_item` is `true`:
 
     [remove-must-have-hovered-item-video]
@@ -513,7 +509,6 @@ then it will operate on the selected items.
   [this section above][augment-section].
 
   Videos:
-
   - When `must_have_hovered_item` is `true`:
 
     [copy-must-have-hovered-item-video]
@@ -604,7 +599,6 @@ then it will operate on the selected items.
   use the default `shell` command provided by Yazi.
 
   Videos:
-
   - When `must_have_hovered_item` is `true`:
 
     [shell-must-have-hovered-item-video]
@@ -1043,7 +1037,6 @@ in your `keymap.toml` file.
   [this section above][augment-section].
 
   Videos:
-
   - When `must_have_hovered_item` is `true`:
 
     [archive-must-have-hovered-item-video]
@@ -1149,7 +1142,6 @@ in your `keymap.toml` file.
   [this section above][augment-section].
 
   Videos:
-
   - When `must_have_hovered_item` is `true`:
 
     [editor-must-have-hovered-item-video]
@@ -1181,7 +1173,6 @@ in your `keymap.toml` file.
   causing a flash and causing Yazi to send a notification.
 
   Videos:
-
   - When `must_have_hovered_item` is `true`:
 
     [pager-must-have-hovered-item-video]
