@@ -1,4 +1,4 @@
---- @since 25.5.31
+--- @since 25.12.29
 
 -- Plugin to make some Yazi commands smarter
 -- Written in Lua 5.4
@@ -24,7 +24,7 @@
 -- The type for the archiver list items command
 ---@alias Archiver.ListItemsCommand fun(
 ---	self: Archiver,
----): output: CommandOutput|nil, error: Error|nil
+---): output: Output|nil, error: Error|nil
 
 -- The type for the archiver get items function
 ---@alias Archiver.GetItems fun(
@@ -46,7 +46,16 @@
 ---): Archiver.Result
 
 -- The type for the archiver command function
----@alias Archiver.Command fun(): output: CommandOutput|nil, error: Error|nil
+---@alias Archiver.Command fun(): output: Output|nil, error: Error|nil
+
+-- The type for the Yazi input options
+---@alias YaziInputOptions { title: string, value: string?, obscure: boolean?, pos: AsPos, realtime: boolean?, debounce: number? }
+
+-- The type for the Yazi notification options
+---@alias YaziNotificationOptions { title: string, content: string, timeout: number, level: "info"|"warn"|"error"|nil }
+
+-- The type for the Yazi confirm options
+---@alias YaziConfirmOptions { pos: AsPos, title: AsLine, body: AsText }
 
 -- The type of the function to get the password options
 ---@alias GetPasswordOptions fun(is_confirm_password: boolean): YaziInputOptions
@@ -168,7 +177,7 @@ local INPUT_AND_CONFIRM_OPTIONS = {
 	"title",
 	"origin",
 	"offset",
-	"content",
+	"body",
 }
 
 -- The default configuration for the plugin
@@ -221,7 +230,7 @@ local DEFAULT_NOTIFICATION_OPTIONS = {
 -- The values are just dummy values
 -- so that I don't have to maintain two
 -- different types for the same thing.
----@type tab.Preference
+---@type tab__Pref
 local TAB_PREFERENCE_KEYS = {
 	sort_by = "alphabetical",
 	sort_sensitive = false,
@@ -710,7 +719,7 @@ end
 local function show_warning(warning_message, options)
 	return ya.notify(
 		merge_tables({}, DEFAULT_NOTIFICATION_OPTIONS, options or {}, {
-			content = tostring(warning_message),
+			body = tostring(warning_message),
 			level = "warn",
 		})
 	)
@@ -723,7 +732,7 @@ end
 local function show_error(error_message, options)
 	return ya.notify(
 		merge_tables({}, DEFAULT_NOTIFICATION_OPTIONS, options or {}, {
-			content = tostring(error_message),
+			body = tostring(error_message),
 			level = "error",
 		})
 	)
@@ -737,7 +746,7 @@ local function throw_error(error_message, ...)
 end
 
 -- Function to get the theme from an async function
----@type fun(): Th The theme object
+---@type fun(): th The theme object
 local get_theme = ya.sync(function(state) return state.theme end)
 
 -- Function to get the component option string
@@ -752,9 +761,9 @@ end
 ---@param component BuiltInComponents|PluginComponents The name of the component
 ---@param defaults {
 ---		prompts: string|string[],    -- The default prompts
----		content: string|ui.Line|ui.Text|nil,    -- The default contents
+---		body: string|ui.Line|ui.Text|nil,    -- The default body
 ---		origin: string|nil,    -- The default origin
----		offset: Position|nil,    -- The default offset
+---		offset: ui.Pos|nil,    -- The default offset
 ---}
 ---@param is_plugin_options boolean|nil Whether the options are plugin specific
 ---@param is_confirm boolean|nil Whether the component is the confirm component
@@ -808,7 +817,7 @@ local function get_user_input_or_confirm_options(
 	end
 
 	-- Unpack the options
-	local title_option, origin_option, offset_option, content_option =
+	local title_option, origin_option, offset_option, body_option =
 		table.unpack(option_list)
 
 	-- Get the value of all the options
@@ -818,7 +827,7 @@ local function get_user_input_or_confirm_options(
 		or defaults.origin
 		or default_options[1]
 	local offset = theme_config[offset_option or ""] or {}
-	local content = theme_config[content_option or ""] or defaults.content
+	local body = theme_config[body_option or ""] or defaults.body
 
 	-- Get the title
 	local title = type(raw_title) == "string" and raw_title
@@ -837,8 +846,8 @@ local function get_user_input_or_confirm_options(
 	-- Return the options
 	return {
 		title = title,
-		[is_confirm and "pos" or "position"] = position,
-		content = content,
+		pos = position,
+		body = body,
 	}
 end
 
@@ -846,7 +855,7 @@ end
 ---@param get_password_options GetPasswordOptions Get password options function
 ---@param want_confirmation boolean|nil Whether to get a confirmation password
 ---@return string|nil password The password or nil if the user cancelled
----@return InputEvent|nil event The event for the input function
+---@return number|nil event The event for the input function
 local function get_password(get_password_options, want_confirmation)
 	--
 
@@ -920,40 +929,38 @@ local function show_overwrite_prompt(file_path_to_overwrite)
 		ConfigurableComponents.BuiltIn.Overwrite,
 		{
 			prompts = "Overwrite file?",
-			content = ui.Line("Will overwrite the following file:"),
+			body = ui.Line("Will overwrite the following file:"),
 		},
 		false,
 		true
 	)
 
-	-- Get the type of the overwrite content
-	local overwrite_content_type = type(overwrite_confirm_options.content)
+	-- Get the type of the overwrite body
+	---@cast overwrite_confirm_options YaziConfirmOptions
+	local overwrite_body_type = type(overwrite_confirm_options.body)
 
-	-- Initialise the first line of the content
+	-- Initialise the first line of the body
 	local first_line = nil
 
-	-- If the content section is a string
-	if
-		overwrite_content_type == "string"
-		or overwrite_content_type == "table"
-	then
+	-- If the body section is a string
+	if overwrite_body_type == "string" or overwrite_body_type == "table" then
 		--
 
 		-- Wrap the string in a line and align it to the center.
-		first_line = ui.Line(overwrite_confirm_options.content)
+		first_line = ui.Line(overwrite_confirm_options.body)
 			:align(ui.Align.CENTER)
 
-		-- Otherwise, just set the first line to the content given
+		-- Otherwise, just set the first line to the body given
 	else
-		first_line = overwrite_confirm_options.content
+		first_line = overwrite_confirm_options.body
 	end
 
-	-- Create the content for the overwrite prompt
+	-- Create the body for the overwrite prompt
 	---@cast first_line ui.Line|ui.Span
-	overwrite_confirm_options.content = ui.Text({
+	overwrite_confirm_options.body = ui.Text({
 		first_line,
 		ui.Line(string.rep("─", overwrite_confirm_options.pos.w - 2))
-			:style(ui.Style(th.confirm.border))
+			:style(th.confirm.border)
 			:align(ui.Align.LEFT),
 		ui.Line(tostring(file_path_to_overwrite)):align(ui.Align.LEFT),
 	}):wrap(ui.Wrap.TRIM)
@@ -1090,7 +1097,7 @@ local initialise_config = ya.sync(function(state, user_config)
 end)
 
 -- Function to initialise the theme configuration
----@type fun(): Th
+---@type fun(): th
 local initialise_theme = ya.sync(function(state)
 	--
 
@@ -1132,7 +1139,7 @@ end)
 ---@param shell_command string The shell command to check
 ---@param args string[]|nil The arguments to the shell command
 ---@return boolean shell_command_exists Whether the shell command exists
----@return CommandOutput|nil output The output of the shell command
+---@return Output|nil output The output of the shell command
 local function async_shell_command_exists(shell_command, args)
 	--
 
@@ -1196,7 +1203,7 @@ end)
 -- Function to initialise the plugin
 ---@param opts UserConfiguration|nil The options given to the plugin
 ---@return Configuration config The initialised configuration object
----@return Th theme The saved theme object
+---@return th theme The saved theme object
 local function initialise_plugin(opts)
 	--
 
@@ -1463,7 +1470,7 @@ end)
 local get_number_of_tabs = ya.sync(function() return #cx.tabs end)
 
 -- Function to get the tab preferences
----@type fun(): tab.Preference
+---@type fun(): tab__Pref
 local get_tab_preferences = ya.sync(function(_)
 	--
 
@@ -1898,7 +1905,7 @@ function SevenZip:retry_archiver(archiver_function, clean_up_wanted)
 
 			-- Set the width of the component to the input width
 			---@cast password_input_options YaziInputOptions
-			password_input_options.position.w = input_width
+			password_input_options.pos.w = input_width
 
 			-- Return the password input options
 			return password_input_options
@@ -2050,7 +2057,7 @@ end
 -- Function to extract an archive using the command
 ---@param extract_files_only boolean|nil Extract the files only or not
 ---@param extract_behaviour ExtractBehaviour|nil The extraction behaviour
----@return CommandOutput|nil output The output of the command
+---@return Output|nil output The output of the command
 ---@return Error|nil error The error if any
 function SevenZip:extract_command(extract_files_only, extract_behaviour)
 	--
@@ -2130,7 +2137,7 @@ end
 ---@param item_paths string[] The path to the items being added to the archive
 ---@param password string|nil The password to encrypt the archive with
 ---@param encrypt_headers boolean|nil Whether to encrypt the archive headers
----@return CommandOutput|nil output The output of the command
+---@return Output|nil output The output of the command
 ---@return Error|nil error The error if any
 function SevenZip:archive_command(item_paths, password, encrypt_headers)
 	--
@@ -3890,18 +3897,18 @@ local function handle_quit(args, config)
 	local quit_confirm_options =
 		get_user_input_or_confirm_options(ConfigurableComponents.Plugin.Quit, {
 			prompts = "Quit?",
-			content = ui.Text({
+			body = ui.Text({
 				"There are multiple tabs open.",
 				"Are you sure you want to quit?",
 			}):wrap(ui.Wrap.TRIM),
 		}, true, true)
 
-	-- Get the type of the quit content
-	local quit_content_type = type(quit_confirm_options.content)
+	-- Get the type of the quit body
+	local quit_body_type = type(quit_confirm_options.body)
 
-	-- If the type of the quit content is a string or a list of strings
-	if quit_content_type == "string" or quit_content_type == "table" then
-		quit_confirm_options.content = ui.Text(quit_confirm_options.content)
+	-- If the type of the quit body is a string or a list of strings
+	if quit_body_type == "string" or quit_body_type == "table" then
+		quit_confirm_options.body = ui.Text(quit_confirm_options.body)
 			:wrap(ui.Wrap.TRIM)
 	end
 
