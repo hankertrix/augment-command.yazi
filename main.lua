@@ -739,7 +739,7 @@ end
 local function show_warning(warning_message, options)
 	return ya.notify(
 		merge_tables({}, DEFAULT_NOTIFICATION_OPTIONS, options or {}, {
-			body = tostring(warning_message),
+			content = tostring(warning_message),
 			level = "warn",
 		})
 	)
@@ -752,7 +752,7 @@ end
 local function show_error(error_message, options)
 	return ya.notify(
 		merge_tables({}, DEFAULT_NOTIFICATION_OPTIONS, options or {}, {
-			body = tostring(error_message),
+			content = tostring(error_message),
 			level = "error",
 		})
 	)
