@@ -29,7 +29,7 @@
 -- The type for the archiver get items function
 ---@alias Archiver.GetItems fun(
 ---	self: Archiver,
----): files: string[], directories: string[], error: string?
+---): files: string[], dirs: string[], result: Archiver.Result
 
 -- The type for the archiver extract function
 ---@alias Archiver.Extract fun(
@@ -355,7 +355,12 @@ end
 
 -- The method to get the archive items
 ---@type Archiver.GetItems
-function Archiver:get_items() return {}, {}, BASE_ARCHIVER_ERROR end
+function Archiver:get_items()
+	return {}, {}, {
+		successful = false,
+		error = BASE_ARCHIVER_ERROR,
+	}
+end
 
 -- The method to extract the archive
 ---@type Archiver.Extract
@@ -2014,15 +2019,11 @@ function SevenZip:get_items()
 	-- Get the output
 	local output = archiver_result.output
 
-	-- Get the error
-	local error = archiver_result.error
-
 	-- If the archiver command was not successful,
 	-- or the output was nil,
-	-- then return nil the error message,
-	-- and nil as the correct password
+	-- then return the result
 	if not archiver_result.successful or not output then
-		return files, directories, error
+		return files, directories, archiver_result
 	end
 
 	-- Otherwise, split the output at the newline character
@@ -2064,9 +2065,8 @@ function SevenZip:get_items()
 		::continue::
 	end
 
-	-- Return the list of files, the list of directories,
-	-- the error message, and the password
-	return files, directories, error
+	-- Return the list of files, the list of directories and the result
+	return files, directories, archiver_result
 end
 
 -- Function to extract an archive using the command
@@ -2263,8 +2263,15 @@ function Tar:get_items()
 	---@type string[]
 	local directories = {}
 
-	-- If there is no output, return the empty lists and the error
-	if not output then return files, directories, tostring(error) end
+	-- If there is no output, return the empty lists and the result
+	if not output then
+		return files,
+			directories,
+			{
+				successful = false,
+				error = tostring(error),
+			}
+	end
 
 	-- Otherwise, split the output into lines and iterate over it
 	for _, line in ipairs(string_split(output.stdout, "\n")) do
@@ -2290,7 +2297,12 @@ function Tar:get_items()
 	end
 
 	-- Return the list of files and directories and the error
-	return files, directories, output.stderr
+	return files,
+		directories,
+		{
+			successful = true,
+			error = output.stderr,
+		}
 end
 
 -- Function to extract an archive using the command
@@ -2761,21 +2773,15 @@ local function recursively_extract_archive(
 
 	-- Get the list of archive files and directories,
 	-- the error message and the password
-	local archive_files, archive_directories, error = archiver:get_items()
+	local archive_files, archive_directories, archiver_result =
+		archiver:get_items()
 
 	-- If there are no are no archive files and directories
 	if #archive_files == 0 and #archive_directories == 0 then
 		--
 
-		-- The extraction result
-		---@type Archiver.Result
-		local extraction_result = {
-			successful = false,
-			error = error or "Archive is empty",
-		}
-
 		-- Return the extraction result
-		return add_additional_info(extraction_result)
+		return add_additional_info(archiver_result)
 	end
 
 	-- Get if the archive has only one file
