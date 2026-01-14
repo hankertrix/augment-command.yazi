@@ -24,35 +24,47 @@
 -- The type for the archiver list items command
 ---@alias Archiver.ListItemsCommand fun(
 ---	self: Archiver,
----): output: Output|nil, error: Error|nil
+---): output: Output?, error: Error?
 
 -- The type for the archiver get items function
 ---@alias Archiver.GetItems fun(
 ---	self: Archiver,
----): files: string[], directories: string[], error: string|nil
+---): files: string[], directories: string[], error: string?
 
 -- The type for the archiver extract function
 ---@alias Archiver.Extract fun(
 ---	self: Archiver,
----	has_only_one_file: boolean|nil,
+---	has_only_one_file: boolean?,
 ---): Archiver.Result
 
 -- The type for the archiver archive function
 ---@alias Archiver.Archive fun(
 ---	self: Archiver,
 ---	item_paths: string[],
----	password: string|nil,
----	encrypt_headers: boolean|nil,
+---	password: string?,
+---	encrypt_headers: boolean?,
 ---): Archiver.Result
 
 -- The type for the archiver command function
----@alias Archiver.Command fun(): output: Output|nil, error: Error|nil
+---@alias Archiver.Command fun(): output: Output?, error: Error?
 
 -- The type for the Yazi input options
----@alias YaziInputOptions { title: string, value: string?, obscure: boolean?, pos: AsPos, realtime: boolean?, debounce: number? }
+---@alias YaziInputOptions {
+--- title: string,
+---	value: string?,
+---	obscure: boolean?,
+---	pos: AsPos,
+---	realtime: boolean?,
+---	debounce: number?,
+---}
 
 -- The type for the Yazi notification options
----@alias YaziNotificationOptions { title: string, content: string, timeout: number, level: "info"|"warn"|"error"|nil }
+---@alias YaziNotificationOptions {
+---	title: string,
+---	content: string,
+---	timeout: number,
+---	level: "info"|"warn"|"error"|nil,
+---}
 
 -- The type for the Yazi confirm options
 ---@alias YaziConfirmOptions { pos: AsPos, title: AsLine, body: AsText }
@@ -102,13 +114,13 @@
 -- The type for the archiver function result
 ---@class (exact) Archiver.Result
 ---@field successful boolean Whether the archiver function was successful
----@field output string|nil The output of the archiver function
----@field cancelled boolean|nil boolean Whether the archiver was cancelled
----@field error string|nil The error message
----@field archive_path string|nil The path to the archive
----@field destination_path string|nil The path to the destination
----@field extracted_items_path string|nil The path to the extracted items
----@field archiver_name string|nil The name of the archiver
+---@field output string? The output of the archiver function
+---@field cancelled boolean? boolean Whether the archiver was cancelled
+---@field error string? The error message
+---@field archive_path string? The path to the archive
+---@field destination_path string? The path to the destination
+---@field extracted_items_path string? The path to the extracted items
+---@field archiver_name string? The name of the archiver
 
 -- The module table
 ---@class AugmentCommandPlugin
@@ -309,7 +321,7 @@ local BASE_ARCHIVER_ERROR = table.concat({
 -- The base archiver that all archivers inherit from
 ---@class Archiver
 ---@field name string The name of the archiver
----@field command string|nil The shell command for the archiver
+---@field command string? The shell command for the archiver
 ---@field commands string[] The possible archiver commands
 ---
 --- Whether the archiver supports preserving file permissions
@@ -455,8 +467,8 @@ local bat_command_pattern = "%f[%a]bat%f[%A]"
 -- Pass true as the first parameter to get the function
 -- to merge the tables recursively.
 ---@param deep_or_target table<any, any>|boolean|nil Recursively merge or not
----@param target table<any, any> The target table to merge
----@param ... table<any, any>[] The tables to merge
+---@param target table<any, any>? The target table to merge
+---@param ... table<any, any>[]? The tables to merge
 ---@return table<any, any> merged_table The merged table
 local function merge_tables(deep_or_target, target, ...)
 	--
@@ -497,6 +509,9 @@ local function merge_tables(deep_or_target, target, ...)
 		-- and the rest of the arguments
 		args = { target, ... }
 	end
+
+	-- The target table will not be nil after the checks above
+	---@cast target_table table<any, any>
 
 	-- Initialise the index variable
 	local index = #target_table + 1
@@ -558,7 +573,7 @@ end
 
 -- Function to split a string into a list
 ---@param given_string string The string to split
----@param separator string|nil The character to split the string by
+---@param separator string? The character to split the string by
 ---@return string[] splitted_strings The list of strings split by the character
 local function string_split(given_string, separator)
 	--
@@ -714,7 +729,7 @@ end
 
 -- Function to show a warning
 ---@param warning_message any The warning message
----@param options YaziNotificationOptions|nil Options for the notification
+---@param options YaziNotificationOptions? Options for the notification
 ---@return nil
 local function show_warning(warning_message, options)
 	return ya.notify(
@@ -727,7 +742,7 @@ end
 
 -- Function to show an error
 ---@param error_message any The error message
----@param options YaziNotificationOptions|nil Options for the notification
+---@param options YaziNotificationOptions? Options for the notification
 ---@return nil
 local function show_error(error_message, options)
 	return ya.notify(
@@ -762,12 +777,12 @@ end
 ---@param defaults {
 ---		prompts: string|string[],    -- The default prompts
 ---		body: string|ui.Line|ui.Text|nil,    -- The default body
----		origin: string|nil,    -- The default origin
----		offset: ui.Pos|nil,    -- The default offset
+---		origin: string?,    -- The default origin
+---		offset: ui.Pos?,    -- The default offset
 ---}
----@param is_plugin_options boolean|nil Whether the options are plugin specific
----@param is_confirm boolean|nil Whether the component is the confirm component
----@param title_index integer|nil The index to get the title
+---@param is_plugin_options boolean? Whether the options are plugin specific
+---@param is_confirm boolean? Whether the component is the confirm component
+---@param title_index integer? The index to get the title
 ---@return YaziInputOptions|YaziConfirmOptions options The resolved options
 local function get_user_input_or_confirm_options(
 	component,
@@ -853,9 +868,9 @@ end
 
 -- Function to get a password from the user
 ---@param get_password_options GetPasswordOptions Get password options function
----@param want_confirmation boolean|nil Whether to get a confirmation password
----@return string|nil password The password or nil if the user cancelled
----@return number|nil event The event for the input function
+---@param want_confirmation boolean? Whether to get a confirmation password
+---@return string? password The password or nil if the user cancelled
+---@return number? event The event for the input function
 local function get_password(get_password_options, want_confirmation)
 	--
 
@@ -974,7 +989,7 @@ local function show_overwrite_prompt(file_path_to_overwrite)
 end
 
 -- Function to merge the given configuration table with the default one
----@param config UserConfiguration|nil The configuration table to merge
+---@param config UserConfiguration? The configuration table to merge
 ---@return UserConfiguration merged_config The merged configuration table
 local function merge_configuration(config)
 	--
@@ -1076,7 +1091,7 @@ end
 
 -- Function to initialise the configuration
 ---@type fun(
----	user_config: UserConfiguration|nil,    -- The configuration object
+---	user_config: UserConfiguration?,    -- The configuration object
 ---): Configuration The initialised configuration object
 local initialise_config = ya.sync(function(state, user_config)
 	--
@@ -1137,9 +1152,9 @@ end)
 
 -- Function to try if a shell command exists
 ---@param shell_command string The shell command to check
----@param args string[]|nil The arguments to the shell command
+---@param args string[]? The arguments to the shell command
 ---@return boolean shell_command_exists Whether the shell command exists
----@return Output|nil output The output of the shell command
+---@return Output? output The output of the shell command
 local function async_shell_command_exists(shell_command, args)
 	--
 
@@ -1201,7 +1216,7 @@ local subscribe_to_augmented_extract_event = ya.sync(function(_)
 end)
 
 -- Function to initialise the plugin
----@param opts UserConfiguration|nil The options given to the plugin
+---@param opts UserConfiguration? The options given to the plugin
 ---@return Configuration config The initialised configuration object
 ---@return th theme The saved theme object
 local function initialise_plugin(opts)
@@ -1253,7 +1268,7 @@ local function standardise_mime_type(mime_type)
 end
 
 -- Function to check if a given mime type is an archive
----@param mime_type string|nil The mime type of the file
+---@param mime_type string? The mime type of the file
 ---@return boolean is_archive Whether the mime type is an archive
 local function is_archive_mime_type(mime_type)
 	--
@@ -1273,7 +1288,7 @@ end
 
 -- Function to check if a given file extension
 -- is an archive file extension
----@param file_extension string|nil The file extension of the file
+---@param file_extension string? The file extension of the file
 ---@return boolean is_archive Whether the file extension is an archive
 local function is_archive_file_extension(file_extension)
 	--
@@ -1342,8 +1357,8 @@ end
 -- Function to get a temporary directory url
 -- for the given file path
 ---@param path string The path to the item to create a temporary directory
----@param destination_given boolean|nil Whether the destination was given
----@return Url|nil url The url of the temporary directory
+---@param destination_given boolean? Whether the destination was given
+---@return Url? url The url of the temporary directory
 local function get_temporary_directory_url(path, destination_given)
 	--
 
@@ -1384,8 +1399,8 @@ local get_current_directory = ya.sync(
 
 -- Function to get the path of the hovered item
 ---@type fun(
----	quote: boolean|nil,    -- Whether to escape the characters in the path
----): string|nil The path of the hovered item
+---	quote: boolean?,    -- Whether to escape the characters in the path
+---): string? The path of the hovered item
 local get_path_of_hovered_item = ya.sync(function(_, quote)
 	--
 
@@ -1432,8 +1447,8 @@ end)
 
 -- Function to get the paths of the selected items
 ---@type fun(
----	quote: boolean|nil,    -- Whether to escape the characters in the path
----): string[]|nil The list of paths of the selected items
+---	quote: boolean?,    -- Whether to escape the characters in the path
+---): string[]? The list of paths of the selected items
 local get_paths_of_selected_items = ya.sync(function(_, quote)
 	--
 
@@ -1495,7 +1510,7 @@ end)
 -- ItemGroup.Selected for the selected items,
 -- and ItemGroup.Prompt to tell the calling function
 -- to prompt the user.
----@type fun(): ItemGroup|nil The desired item group
+---@type fun(): ItemGroup? The desired item group
 local get_item_group_from_state = ya.sync(function(state)
 	--
 
@@ -1546,7 +1561,7 @@ local get_item_group_from_state = ya.sync(function(state)
 end)
 
 -- Function to prompt the user for their desired item group
----@return ItemGroup|nil item_group The item group selected by the user
+---@return ItemGroup? item_group The item group selected by the user
 local function prompt_for_desired_item_group()
 	--
 
@@ -1554,7 +1569,7 @@ local function prompt_for_desired_item_group()
 	local config = get_config()
 
 	-- Get the default item group
-	---@type ItemGroup|nil
+	---@type ItemGroup?
 	local default_item_group = config.default_item_group_for_prompt
 
 	-- Get the input options, which the (h/s) options
@@ -1605,7 +1620,7 @@ local function prompt_for_desired_item_group()
 end
 
 -- Function to get the item group
----@return ItemGroup|nil item_group The desired item group
+---@return ItemGroup? item_group The desired item group
 local function get_item_group()
 	--
 
@@ -1626,7 +1641,7 @@ end
 -- Function to get all the items in the given directory
 ---@param directory_path string The path to the directory
 ---@param get_hidden_items boolean Whether to get hidden items
----@param directories_only boolean|nil Whether to only get directories
+---@param directories_only boolean? Whether to only get directories
 ---@return string[] directory_items The list of urls to the directory items
 local function get_directory_items(
 	directory_path,
@@ -1723,8 +1738,8 @@ end
 -- The function to create a new instance of the archiver
 ---@param archive_path string The path to the archive
 ---@param config Configuration The configuration object
----@param destination_path string|nil The path to extract to
----@return Archiver|nil instance An instance of the archiver if available
+---@param destination_path string? The path to extract to
+---@return Archiver? instance An instance of the archiver if available
 function Archiver:new(archive_path, config, destination_path)
 	--
 
@@ -1781,7 +1796,7 @@ end
 -- Function to retry the archiver
 ---@private
 ---@param archiver_function Archiver.Command Archiver command to retry
----@param clean_up_wanted boolean|nil Whether to clean up the destination path
+---@param clean_up_wanted boolean? Whether to clean up the destination path
 ---@return Archiver.Result result Result of the archiver function
 function SevenZip:retry_archiver(archiver_function, clean_up_wanted)
 	--
@@ -2055,10 +2070,10 @@ function SevenZip:get_items()
 end
 
 -- Function to extract an archive using the command
----@param extract_files_only boolean|nil Extract the files only or not
----@param extract_behaviour ExtractBehaviour|nil The extraction behaviour
----@return Output|nil output The output of the command
----@return Error|nil error The error if any
+---@param extract_files_only boolean? Extract the files only or not
+---@param extract_behaviour ExtractBehaviour? The extraction behaviour
+---@return Output? output The output of the command
+---@return Error? error The error if any
 function SevenZip:extract_command(extract_files_only, extract_behaviour)
 	--
 
@@ -2135,10 +2150,10 @@ end
 
 -- Function to call the command to add items to an archive
 ---@param item_paths string[] The path to the items being added to the archive
----@param password string|nil The password to encrypt the archive with
----@param encrypt_headers boolean|nil Whether to encrypt the archive headers
----@return Output|nil output The output of the command
----@return Error|nil error The error if any
+---@param password string? The password to encrypt the archive with
+---@param encrypt_headers boolean? Whether to encrypt the archive headers
+---@return Output? output The output of the command
+---@return Error? error The error if any
 function SevenZip:archive_command(item_paths, password, encrypt_headers)
 	--
 
@@ -2279,7 +2294,7 @@ function Tar:get_items()
 end
 
 -- Function to extract an archive using the command
----@param extract_behaviour ExtractBehaviour|nil The extract behaviour to use
+---@param extract_behaviour ExtractBehaviour? The extract behaviour to use
 function Tar:extract_command(extract_behaviour)
 	--
 
@@ -2444,8 +2459,8 @@ end
 ---@param archive_path string The path to the archive file
 ---@param command SupportedCommands The command the archiver is used for
 ---@param config Configuration The configuration for the plugin
----@param destination_path string|nil The path to the destination directory
----@return Archiver|nil archiver The archiver for the file type
+---@param destination_path string? The path to the destination directory
+---@return Archiver? archiver The archiver for the file type
 ---@return Archiver.Result result The results of getting the archiver
 local function get_archiver(archive_path, command, config, destination_path)
 	--
@@ -2543,7 +2558,7 @@ local function move_extracted_items(archive_url, destination_url)
 	-- The function to clean up the destination directory
 	-- and return the archiver result in the event of an error
 	---@param error string The error message to return
-	---@param empty_dir_only boolean|nil Whether to remove the empty dir only
+	---@param empty_dir_only boolean? Whether to remove the empty dir only
 	---@return Archiver.Result
 	local function fail(error, empty_dir_only)
 		--
@@ -2682,7 +2697,7 @@ end
 ---@param archive_path string The path to the archive
 ---@param args Arguments The arguments passed to the plugin
 ---@param config Configuration The configuration object
----@param destination_path string|nil The destination path to extract to
+---@param destination_path string? The destination path to extract to
 ---@return Archiver.Result extraction_result The extraction results
 local function recursively_extract_archive(
 	archive_path,
@@ -3281,7 +3296,7 @@ end
 
 -- Function to enter or open the created file
 ---@param item_url Url The url of the item to create
----@param is_directory boolean|nil Whether the item to create is a directory
+---@param is_directory boolean? Whether the item to create is a directory
 ---@param args Arguments The arguments passed to the plugin
 ---@param config Configuration The configuration object
 ---@return nil
@@ -4732,7 +4747,7 @@ local function run_command_func(command, args, config)
 	}
 
 	-- Get the function for the command
-	---@type CommandFunction|nil
+	---@type CommandFunction?
 	local command_func = command_table[command]
 
 	-- If the function isn't found, notify the user and exit the function
@@ -4745,7 +4760,7 @@ local function run_command_func(command, args, config)
 end
 
 -- The setup function to setup the plugin
----@param opts UserConfiguration|nil The options given to the plugin
+---@param opts UserConfiguration? The options given to the plugin
 ---@return nil
 function M:setup(opts)
 	--
