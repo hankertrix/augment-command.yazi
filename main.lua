@@ -2776,11 +2776,9 @@ local function recursively_extract_archive(
 	local archive_files, archive_directories, archiver_result =
 		archiver:get_items()
 
-	-- If there are no are no archive files and directories
+	-- If there are no are no archive files and directories,
+	-- return the extraction result
 	if #archive_files == 0 and #archive_directories == 0 then
-		--
-
-		-- Return the extraction result
 		return add_additional_info(archiver_result)
 	end
 
