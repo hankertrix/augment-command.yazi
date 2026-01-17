@@ -302,27 +302,19 @@ then it will operate on the selected items.
 
   [opener]
   extract = [
-      { run = 'ya pub augmented-extract --list "$@"', desc = "Extract here", for = "unix" },
-      { run = 'ya pub augmented-extract --list %*',   desc = "Extract here", for = "windows" },
+      { run = "ya pub augmented-extract --list %s", desc = "Extract here" },
   ]
   ```
 
-  If that exceeds your editor's line length limit,
-  another way to do it is:
+  Alternatively, another way to do it is:
 
   ```toml
   # ~/.config/yazi/yazi.toml for Linux and macOS
   # %AppData%\yazi\config\yazi.toml for Windows
 
   [[opener.extract]]
-  run = 'ya pub augmented-extract --list "$@"'
+  run = "ya pub augmented-extract --list %s"
   desc = "Extract here"
-  for = "unix"
-
-  [[opener.extract]]
-  run = 'ya pub augmented-extract --list %*'
-  desc = "Extract here"
-  for = "windows"
   ```
 
 - The `extract` command supports recursively extracting archives,
@@ -617,8 +609,8 @@ then it will operate on the selected items.
 
 - To use this command, the syntax is exactly the same as the default
   `shell` command provided by Yazi. You just provide
-  the command you want and provide any Yazi shell variable,
-  which is documented [here][yazi-shell-variables].
+  the command you want and provide any Yazi shell variable that
+  **provides the file path**, which is [documented here][yazi-shell-variables].
   The plugin will automatically replace the shell variable you give
   with the file paths for the item group before executing the command.
 
@@ -644,7 +636,7 @@ then it will operate on the selected items.
 
   [[mgr.prepend_keymap]]
   on = "i"
-  run = "plugin augment-command -- shell '$PAGER $@' --block --exit-if-dir"
+  run = "plugin augment-command -- shell '$PAGER %s' --block --exit-if-dir"
   desc = "Open the pager"
   ```
 
@@ -661,7 +653,7 @@ then it will operate on the selected items.
 
   [[mgr.prepend_keymap]]
   on = "o"
-  run = "plugin augment-command -- shell '$EDITOR $@' --block --exit-if-dir"
+  run = "plugin augment-command -- shell '$EDITOR %s' --block --exit-if-dir"
   desc = "Open the editor"
   ```
 
@@ -686,17 +678,9 @@ the shell command arguments, so here are a few ways to do it:
    # %AppData%\yazi\config\keymap.toml on Windows
    [[mgr.prepend_keymap]]
    on = "i"
-   run = "plugin augment-command -- shell --block 'bat -p --pager less $@'"
+   run = "plugin augment-command -- shell --block 'bat -p --pager less %s'"
    desc = "Open with bat"
    ```
-
-   Even though the `$@` argument above is considered
-   a shell variable in Linux and macOS,
-   the plugin automatically replaces it with the full path
-   of the items in the item group,
-   so it does not need to be quoted with
-   double quotes `"`, as it is expanded by the plugin,
-   and not meant to be expanded by the shell.
 
 2. If the arguments to the `shell` command have special
    shell variables on Linux and macOS, like `$SHELL`,
@@ -759,15 +743,11 @@ the shell command arguments, so here are a few ways to do it:
    on = "<C-e>"
    run = '''plugin augment-command --
        shell --
-           paths=$(for p in $@; do echo "$p"; done | paste -s -d,)
+           paths=$(for p in %s; do echo "$p"; done | paste -s -d,)
            thunderbird -compose "attachment='$paths'"
    '''
    desc = "Email files using Mozilla Thunderbird"
    ```
-
-   Once again, the `$@` variable above does not need to be quoted
-   in double quotes `"` as it is expanded by the plugin
-   instead of the shell.
 
 If the above few methods to avoid using backslashes
 within your shell command to escape the quotes are

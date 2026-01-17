@@ -450,7 +450,7 @@ local get_mime_type_without_prefix_template_pattern =
 
 -- The pattern to get the shell variables in a command
 ---@type string
-local shell_variable_pattern = "[%$%%][%*@0]"
+local shell_variable_pattern = "%%[hs]%d?"
 
 -- The pattern to match the bat command
 ---@type string
@@ -4667,7 +4667,7 @@ local function handle_editor(args, config)
 	if not editor then return end
 
 	-- Initialise the shell command
-	local shell_command = string.format(editor .. " $@")
+	local shell_command = editor .. " %s"
 
 	-- Get the cha object of the hovered file
 	local hovered_item_cha = fs.cha(
@@ -4679,7 +4679,7 @@ local function handle_editor(args, config)
 	-- and sudo edit is supported,
 	-- set the shell command to "sudo -e"
 	if config.sudo_edit_supported and hovered_item_cha.uid == 0 then
-		shell_command = "sudo -e $@"
+		shell_command = "sudo -e %s"
 	end
 
 	-- Call the handle shell function
@@ -4709,7 +4709,7 @@ local function handle_pager(args, config)
 	-- with the pager command
 	handle_shell(
 		merge_tables({
-			pager .. " $@",
+			pager .. " %s",
 			block = true,
 			exit_if_dir = true,
 		}, args),
