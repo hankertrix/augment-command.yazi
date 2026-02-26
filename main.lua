@@ -1411,8 +1411,8 @@ local get_path_of_hovered_item = ya.sync(function(_, quote)
 	-- If there is no hovered item, exit the function
 	if not hovered_item then return end
 
-	-- Convert the url of the hovered item to a string
-	local hovered_item_path = tostring(cx.active.current.hovered.url)
+	-- Convert the path of the hovered item to a string
+	local hovered_item_path = tostring(cx.active.current.hovered.url.path)
 
 	-- If the quote flag is passed,
 	-- then quote the path of the hovered item
@@ -1466,8 +1466,8 @@ local get_paths_of_selected_items = ya.sync(function(_, quote)
 	for _, item in pairs(selected_items) do
 		--
 
-		-- Convert the url of the item to a string
-		local item_path = tostring(item)
+		-- Convert the path of the item to a string
+		local item_path = tostring(item.path)
 
 		-- If the quote flag is passed,
 		-- then quote the path of the item
