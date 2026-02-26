@@ -452,10 +452,6 @@ local get_mime_type_without_prefix_template_pattern =
 ---@type string
 local shell_variable_pattern = "%%[hs]%d?"
 
--- The pattern to match the bat command
----@type string
-local bat_command_pattern = "%f[%a]bat%f[%A]"
-
 -- Utility functions
 
 -- Function to merge tables.
@@ -3481,11 +3477,35 @@ local function handle_create(args, config)
 	return execute_create(full_url, is_directory, args, config)
 end
 
+-- Function to match a binary name against a search string
+---@param binary_name string The name of the binary
+---@param search_string string The string to search for the binary name
+---@return string binary_pattern The pattern for the binary
+---@return string? binary_path The path to the binary
+local function match_binary_name(binary_name, search_string)
+	--
+
+	-- The binary pattern
+	local binary_pattern = "%f[%w_%-%.].*" .. binary_name .. "%f[%W%s]"
+
+	-- Get the binary path
+	local binary_path = search_string:match(binary_pattern)
+
+	-- Escape the binary path if it's not nil
+	if binary_path ~= nil then
+		binary_path = escape_replacement_string(binary_path)
+	end
+
+	-- Return the binary pattern and the path
+	return binary_pattern, binary_path
+end
+
 -- Function to remove the F flag from the less command
 ---@param command string The shell command containing the less command
+---@param less_binary_pattern string The pattern to match the less binary
 ---@return string command The command with the F flag removed
 ---@return boolean f_flag_found Whether the F flag was found
-local function remove_f_flag_from_less_command(command)
+local function remove_f_flag_from_less_command(command, less_binary_pattern)
 	--
 
 	-- Initialise the variable to store if the F flag is found
@@ -3494,9 +3514,13 @@ local function remove_f_flag_from_less_command(command)
 	-- Initialise the variable to store the replacement count
 	local replacement_count = 0
 
+	-- Initialised the modified command
+	local modified_command = command
+
 	-- Remove the F flag when it is passed at the start
 	-- of the flags given to the less command
-	command, replacement_count = command:gsub("(%f[%a]less%f[%A].*)%-F", "%1")
+	modified_command, replacement_count =
+		modified_command:gsub("(" .. less_binary_pattern .. ".*)%-F", "%1")
 
 	-- If the replacement count is not 0,
 	-- set the f_flag_found variable to true
@@ -3504,27 +3528,36 @@ local function remove_f_flag_from_less_command(command)
 
 	-- Remove the F flag when it is passed in the middle
 	-- or end of the flags given to the less command command
-	command, replacement_count =
-		command:gsub("(%f[%a]less%f[%A].*%-)(%a*)F(%a*)", "%1%2%3")
+	modified_command, replacement_count = modified_command:gsub(
+		"(" .. less_binary_pattern .. ".*%-)(%a*)F(%a*)",
+		"%1%2%3"
+	)
 
 	-- If the replacement count is not 0,
 	-- set the f_flag_found variable to true
 	if replacement_count ~= 0 then f_flag_found = true end
 
 	-- Return the command and whether or not the F flag was found
-	return command, f_flag_found
+	return modified_command, f_flag_found
 end
 
 -- Function to fix a command containing less.
 -- All this function does is remove
 -- the F flag from a command containing less.
 ---@param command string The shell command containing the less command
+---@param less_binary_pattern string The pattern to match the less binary
+---@param less_binary_path string The path to the less binary
 ---@return string command The fixed shell command
-local function fix_shell_command_containing_less(command)
+local function fix_shell_command_containing_less(
+	command,
+	less_binary_pattern,
+	less_binary_path
+)
 	--
 
 	-- Remove the F flag from the given command
-	local fixed_command = remove_f_flag_from_less_command(command)
+	local fixed_command =
+		remove_f_flag_from_less_command(command, less_binary_pattern)
 
 	-- Get the LESS environment variable
 	local less_environment_variable = os.getenv("LESS")
@@ -3536,7 +3569,10 @@ local function fix_shell_command_containing_less(command)
 	-- Otherwise, remove the F flag from the LESS environment variable
 	-- and check if the F flag was found
 	local less_command_with_modified_env_variables, f_flag_found =
-		remove_f_flag_from_less_command("less " .. less_environment_variable)
+		remove_f_flag_from_less_command(
+			string.format("%s %s", less_binary_path, less_environment_variable),
+			less_binary_pattern
+		)
 
 	-- If the F flag isn't found,
 	-- then return the given command with the F flag removed
@@ -3544,7 +3580,7 @@ local function fix_shell_command_containing_less(command)
 
 	-- Add the less environment variable flags to the less command
 	fixed_command = fixed_command:gsub(
-		"%f[%a]less%f[%A]",
+		less_binary_pattern,
 		escape_replacement_string(less_command_with_modified_env_variables)
 	)
 
@@ -3557,12 +3593,21 @@ end
 
 -- Function to fix the bat default pager command
 ---@param command string The command containing the bat default pager command
+---@param bat_binary_pattern string The pattern to match the bat binary
+---@param bat_binary_path string The path to the bat binary
 ---@return string command The fixed bat command
-local function fix_shell_command_containing_bat(command)
+local function fix_shell_command_containing_bat(
+	command,
+	bat_binary_pattern,
+	bat_binary_path
+)
 	--
 
 	-- The pattern to match the pager argument for the bat command
 	local bat_pager_pattern = "(%-%-pager)%s+(%S+)"
+
+	-- The default bat pager command without the -F flag
+	local bat_default_pager_command_without_f_flag = "less -RX"
 
 	-- Get the pager argument for the bat command
 	local _, pager_argument = command:match(bat_pager_pattern)
@@ -3606,16 +3651,13 @@ local function fix_shell_command_containing_bat(command)
 		return modified_command
 	end
 
-	-- If there is no pager argument,
-	-- initialise the default pager command for bat without the F flag
-	local bat_default_pager_command_without_f_flag = "less -RX"
-
-	-- Replace the bat command with the command to use the
-	-- bat default pager command without the F flag
+	-- Replace the bat command with the command to use
+	-- the bat default pager command without the F flag
 	local modified_command = command:gsub(
-		bat_command_pattern,
+		bat_binary_pattern,
 		string.format(
-			"bat --pager '%s'",
+			"%s --pager '%s'",
+			bat_binary_path,
 			bat_default_pager_command_without_f_flag
 		),
 		1
@@ -3631,24 +3673,43 @@ end
 local function fix_shell_command(command)
 	--
 
-	-- If the given command contains the bat command
-	if command:find(bat_command_pattern) ~= nil then
+	-- Get the bat binary pattern and path from the command
+	local bat_binary_pattern, bat_binary_path =
+		match_binary_name("bat", command)
+
+	-- Initialise the fixed command
+	local fixed_command = command
+
+	-- If the bat binary is in the command
+	if bat_binary_path ~= nil then
 		--
 
 		-- Calls the command to fix the bat command
-		command = fix_shell_command_containing_bat(command)
+		fixed_command = fix_shell_command_containing_bat(
+			command,
+			bat_binary_pattern,
+			bat_binary_path
+		)
 	end
 
-	-- If the given command includes the less command
-	if command:find("%f[%a]less%f[%A]") ~= nil then
+	-- Get the less binary pattern and path from the fixed command
+	local less_binary_pattern, less_binary_path =
+		match_binary_name("less", fixed_command)
+
+	-- If the less binary is in the command
+	if less_binary_path ~= nil then
 		--
 
 		-- Fix the command containing less
-		command = fix_shell_command_containing_less(command)
+		fixed_command = fix_shell_command_containing_less(
+			fixed_command,
+			less_binary_pattern,
+			less_binary_path
+		)
 	end
 
-	-- Return the modified command
-	return command
+	-- Return the fixed command
+	return fixed_command
 end
 
 -- Function to handle a shell command
