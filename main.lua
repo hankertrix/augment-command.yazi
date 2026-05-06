@@ -2027,7 +2027,7 @@ function SevenZip:get_items()
 
 	-- The pattern to get the information from an archive item
 	---@type string
-	local archive_item_info_pattern = "%s+([%.%a]+)%s+(%d+)%s+(%d+)%s+(.+)$"
+	local archive_item_info_pattern = "%s+([%.%a]+)%s+(%d*)%s+(%d*)%s+(.+)$"
 
 	-- Iterate over the lines of the output
 	for _, line in ipairs(output_lines) do
