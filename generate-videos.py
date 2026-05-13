@@ -18,13 +18,19 @@ DEMONSTRATION_DIRECTORY: str = os.path.join(
 )
 
 # The path to the VHS tapes directory
-VHS_TAPES_DIRECTORY: Path = Path(DEMONSTRATION_DIRECTORY, "vhs_tapes")
+VHS_TAPES_DIRECTORY: Path = Path(DEMONSTRATION_DIRECTORY, "vhs-tapes")
+
+# The protected folder
+PROTECTED_FOLDER: str = "protected-folder"
+
+# The protected directory
+PROTECTED_DIRECTORY: Path = Path(DEMONSTRATION_DIRECTORY, PROTECTED_FOLDER)
 
 # The folder with the subdirectory
-FOLDER_WITH_SUBDIRECTORY: str = "folder_with_subdirectory"
+FOLDER_WITH_SUBDIRECTORY: str = "folder-with-subdirectory"
 
 # The empty folder
-EMPTY_FOLDER: str = "empty_folder"
+EMPTY_FOLDER: str = "empty-folder"
 
 # Lorem ipsum text
 DEMONSTRATION_TEXT: str = """
@@ -39,10 +45,10 @@ sunt in culpa qui officia deserunt mollit anim id est laborum.
 """.strip()
 
 # The file name of the first file
-FIRST_FILE_NAME: str = "file_1.txt"
+FIRST_FILE_NAME: str = "file-1.txt"
 
-# The plugin file name
-PLUGIN_FILE_NAME: str = os.path.join(PYTHON_SCRIPT_DIRECTORY, "main.lua")
+# The config file name
+CONFIG_FILE_NAME: str = os.path.join(PYTHON_SCRIPT_DIRECTORY, "config.lua")
 
 # The keymap TOML file name
 KEYMAP_TOML_FILE_NAME: str = os.path.join(
@@ -53,10 +59,10 @@ KEYMAP_TOML_FILE_NAME: str = os.path.join(
 ARCHIVE_FILE_EXTENSIONS: set[str] = {".zip", ".7z"}
 
 # The plugin command template
-PLUGIN_COMMAND_TEMPLATE = "plugin augment-command -- {}"
+PLUGIN_COMMAND_TEMPLATE = "plugin augment-command.{}"
 
 # The default key to use for a command
-DEFAULT_KEY = "e"
+DEFAULT_KEY = "F"
 
 # The default text file content
 DEFAULT_TEXT_FILE_CONTENT = "Hello, world!"
@@ -99,8 +105,25 @@ CHANGE_TO_WORKING_DIRECTORY: str = f'Type "cd {DEMONSTRATION_DIRECTORY}" Enter'
 # The command to clear the screen
 CLEAR_SCREEN: str = "Type 'clear' Enter"
 
-# The command to apply the configuration
-APPLY_CONFIG_COMMAND: str = "Type 'chezmoi apply --force' Enter Wait"
+# Whether to wait after cleaning up (for debugging purposes)
+WAIT_AFTER_CLEANING_UP: bool = True
+
+
+def create_apply_config_command(*, wait: bool = True) -> str:
+	"""
+	Function to create the apply config command based on
+	whether waiting is wanted.
+	"""
+
+	# The command to apply the config
+	apply_config_command = "Type 'chezmoi apply --force' Enter"
+
+	# If waiting is wanted, add the wait command behind it
+	if wait:
+		apply_config_command += " Wait"
+
+	# Return the apply config command
+	return apply_config_command
 
 
 # Function to create the argument parser and parse the command line arguments
@@ -114,7 +137,7 @@ def get_command_line_arguments() -> argparse.Namespace:
 	parser: argparse.ArgumentParser = argparse.ArgumentParser()
 
 	# Add the arguments
-	_ = parser.add_argument(
+	parser.add_argument(
 		"-s",
 		"--search-term",
 		type=str,
@@ -186,7 +209,7 @@ class VHSTape:
 
 		# Save all the given variables
 		self.name: str = name
-		self.file_name: str = name.lower().replace(" ", "_")
+		self.file_name: str = name.lower().replace(" ", "-")
 		self.files_and_directories: list[str] = (
 			files_and_directories if files_and_directories is not None else []
 		)
@@ -247,11 +270,8 @@ class VHSTape:
 			# Add the item with the trailing slashes removed
 			files_and_directories_to_clean_up.add(item.strip("/"))
 
-			# The path object for the item
-			path_object = Path(item)
-
 			# Get the file name and the file extension
-			file_name, file_extension = path_object.stem, path_object.suffix
+			file_name, file_extension = os.path.splitext(item)
 
 			# If the file extension is an archive file extension
 			if file_extension in ARCHIVE_FILE_EXTENSIONS:
@@ -359,7 +379,7 @@ class VHSTape:
 
 	def get_file_path(self) -> str:
 		"Return the file name for the VHS tape"
-		return f"./vhs_tapes/{self.file_name}.tape"
+		return f"./vhs-tapes/{self.file_name}.tape"
 
 	def write_to_file(self) -> None:
 		"Write the VHS tape to a tape file"
@@ -369,7 +389,7 @@ class VHSTape:
 			#
 
 			# Write the VHS tape to the file
-			_ = file.write(self.to_string())
+			file.write(self.to_string())
 
 	@staticmethod
 	def edit_plugin_config(
@@ -405,26 +425,29 @@ class VHSTape:
 
 		# The template for the set command
 		sed_command_template = (
-			r"sed -i 's/\({} = \)\w\+,/\1{},/' " + PLUGIN_FILE_NAME
+			r"sed -i 's/\(\<{}\> = \).\+,/\1{},/' " + CONFIG_FILE_NAME
 		)
 
 		# The command to edit the configuration
 		edit_config_command = rf"Type `{sed_command_template}` Enter".format(
-			config_option, stringified_value
+			config_option, stringified_value.replace("/", r"\/")
 		)
 
 		# The setup commands
-		setup_commands = [edit_config_command, APPLY_CONFIG_COMMAND]
+		setup_commands = [edit_config_command, create_apply_config_command()]
 
 		# The clean up command to undo the edit to the init.lua file
 		clean_up_edit_config_command = (
 			rf"Type `{sed_command_template}` Enter".format(
-				config_option, stringified_original_value
+				config_option, stringified_original_value.replace("/", r"\/")
 			)
 		)
 
 		# The clean up commands
-		clean_up_commands = [clean_up_edit_config_command, APPLY_CONFIG_COMMAND]
+		clean_up_commands = [
+			clean_up_edit_config_command,
+			create_apply_config_command(wait=WAIT_AFTER_CLEANING_UP),
+		]
 
 		# Return the script object
 		return Script(
@@ -601,7 +624,7 @@ class VHSTape:
 				+ f"'{KEYMAP_TOML_FILE_NAME}.tmpl.bak'` Enter",
 				f'Type `echo "{fixed_contents}" > {KEYMAP_TOML_FILE_NAME}` '
 				+ "Enter",
-				APPLY_CONFIG_COMMAND,
+				create_apply_config_command(),
 			]
 		)
 
@@ -611,7 +634,7 @@ class VHSTape:
 				f"Type 'rm {KEYMAP_TOML_FILE_NAME}' Enter",
 				f"Type `mv '{KEYMAP_TOML_FILE_NAME}.tmpl.bak' "
 				+ f"'{KEYMAP_TOML_FILE_NAME}.tmpl'` Enter",
-				APPLY_CONFIG_COMMAND,
+				create_apply_config_command(wait=WAIT_AFTER_CLEANING_UP),
 			]
 		)
 
@@ -652,7 +675,7 @@ class VHSTape:
 		```python
 		{
 		    "e": "extract",
-		    1: "tab_switch 1",
+		    1: "tab-switch 1",
 		    ...
 		}
 		```
@@ -690,7 +713,7 @@ class VHSTape:
 		]
 
 		# The shell command as an argument
-		shell_command = 'shell "{}" {}'.format(
+		shell_command = 'shell -- "{}" {}'.format(
 			shell_command,
 			" ".join(standardised_flags),
 		)
@@ -708,7 +731,7 @@ class VHSTape:
 		# Create the dictionary for the keybinds
 		# by iterating from 1 to 9
 		keymap: dict[int | str, str] = {
-			number: f"tab_switch {number}" for number in range(1, 10)
+			number: f"tab-switch {number}" for number in range(1, 10)
 		}
 
 		# Return the script to create and clean up the keymap.toml file
@@ -749,7 +772,7 @@ VHS_TAPES: list[VHSTape] = [
 			'Type "h"',
 			SLEEP_TIME,
 			"Enter",
-			'Space Type "pb"',
+			'Space Type "jb"',
 			LONG_SLEEP_TIME,
 			"Ctrl+c",
 			SHORT_SLEEP_TIME,
@@ -760,7 +783,7 @@ VHS_TAPES: list[VHSTape] = [
 			'Type "s"',
 			SLEEP_TIME,
 			"Enter",
-			'Space Type "pb"',
+			'Space Type "jb"',
 			VHSTape.toggle_between_two_items(3),
 			SHORT_SLEEP_TIME,
 			"Ctrl+c",
@@ -770,7 +793,7 @@ VHS_TAPES: list[VHSTape] = [
 			'Type "l"',
 			SLEEP_TIME,
 			"Enter",
-			'Space Type "pb"',
+			'Space Type "jb"',
 			LONG_SLEEP_TIME,
 			"Ctrl+c",
 			SHORT_SLEEP_TIME,
@@ -784,7 +807,7 @@ VHS_TAPES: list[VHSTape] = [
 			"Space@300ms 3",
 			'Type "l"',
 			SLEEP_TIME,
-			'Space Type "pb"',
+			'Space Type "jb"',
 			LONG_SLEEP_TIME,
 			"Ctrl+c",
 			SHORT_SLEEP_TIME,
@@ -793,7 +816,7 @@ VHS_TAPES: list[VHSTape] = [
 			'Type "k"',
 			SHORT_SLEEP_TIME,
 			'Type "l"',
-			'Space Type "pb"',
+			'Space Type "jb"',
 			VHSTape.toggle_between_two_items(3),
 			SHORT_SLEEP_TIME,
 			"Ctrl+c",
@@ -1092,7 +1115,7 @@ VHS_TAPES: list[VHSTape] = [
 		],
 		scripts=[
 			VHSTape.create_keymap_toml_with_keymap(
-				{DEFAULT_KEY: "extract --reveal"}
+				{DEFAULT_KEY: "extract -- --reveal"}
 			),
 			VHSTape.create_nested_archive(4, "{0}"),
 		],
@@ -1119,7 +1142,7 @@ VHS_TAPES: list[VHSTape] = [
 		files_and_directories=["demo.zip"],
 		scripts=[
 			VHSTape.create_keymap_toml_with_keymap(
-				{DEFAULT_KEY: "extract --remove"}
+				{DEFAULT_KEY: "extract -- --remove"}
 			),
 			VHSTape.create_nested_archive(4, "{0}"),
 		],
@@ -1129,6 +1152,45 @@ VHS_TAPES: list[VHSTape] = [
 			f'Type "{DEFAULT_KEY}"',
 			SLEEP_TIME,
 			'Type "/{0}" Enter',
+		],
+	),
+	VHSTape(
+		name="Extract remove protected extracted archive",
+		files_and_directories=[
+			os.path.join(PROTECTED_FOLDER, "demo.zip"),
+			"demo.zip",
+		],
+		scripts=[
+			VHSTape.edit_plugin_config(
+				"protected_directories",
+				"".join(
+					[
+						r'{{"',
+						str(PROTECTED_DIRECTORY.absolute()),
+						r'"}}',
+					]
+				),
+				r"{{}}",
+			),
+			VHSTape.create_keymap_toml_with_keymap(
+				{DEFAULT_KEY: "extract -- --remove"}
+			),
+			VHSTape.create_nested_archive(4, "{0}"),
+		],
+		yazi_body=[
+			f'Type "/{PROTECTED_FOLDER}" Enter',
+			SLEEP_TIME,
+			'Type "l"',
+			SLEEP_TIME,
+			'Type "/{1}" Enter',
+			SLEEP_TIME,
+			f'Type "{DEFAULT_KEY}"',
+			SLEEP_TIME,
+			"Ctrl+c",
+			SLEEP_TIME,
+			'Type "gg"',
+			SLEEP_TIME,
+			'Type "/{1}" Enter',
 		],
 	),
 	VHSTape(
@@ -1378,6 +1440,77 @@ VHS_TAPES: list[VHSTape] = [
 			'Type "x"',
 			SLEEP_TIME,
 			"Enter",
+			SLEEP_TIME,
+			"Ctrl+c",
+		],
+	),
+	VHSTape(
+		name="Remove protected directory",
+		files_and_directories=[
+			"demo-1.txt",
+			"demo-2.txt",
+			"demo-3.txt",
+			"demo-4.txt",
+			"demo-5.txt",
+			os.path.join(PROTECTED_FOLDER, "demo-1.txt"),
+			os.path.join(PROTECTED_FOLDER, "demo-2.txt"),
+			os.path.join(PROTECTED_FOLDER, "demo-3.txt"),
+			os.path.join(PROTECTED_FOLDER, "demo-4.txt"),
+			os.path.join(PROTECTED_FOLDER, "demo-5.txt"),
+		],
+		scripts=[
+			VHSTape.edit_plugin_config(
+				"protected_directories",
+				"".join(
+					[
+						r'{{"',
+						str(PROTECTED_DIRECTORY.absolute()),
+						r'"}}',
+					]
+				),
+				r"{{}}",
+			),
+			VHSTape.create_keymap_toml_with_keymap(
+				{DEFAULT_KEY: "remove -- --permanently --force"}
+			),
+			Script(
+				setup="".join(
+					[
+						"Type `touch ",
+						" ".join("'{" + str(i) + "}'" for i in range(0, 10)),
+						"` Enter",
+					]
+				),
+				required_programs=["touch"],
+			),
+		],
+		yazi_body=[
+			'Type "/{0}" Enter',
+			"Space@300ms 3",
+			f'Type "{DEFAULT_KEY}"',
+			SLEEP_TIME,
+			'Type "k"',
+			SLEEP_TIME,
+			f'Type "{DEFAULT_KEY}"',
+			SLEEP_TIME,
+			f'Type "/{PROTECTED_FOLDER}" Enter',
+			SLEEP_TIME,
+			'Type "l"',
+			SLEEP_TIME,
+			f'Type "{DEFAULT_KEY}"',
+			SLEEP_TIME,
+			"Ctrl+c",
+			SLEEP_TIME,
+			'Type "j"',
+			SLEEP_TIME,
+			f'Type "{DEFAULT_KEY}"',
+			SLEEP_TIME,
+			"Ctrl+c",
+			SLEEP_TIME,
+			"Space@300ms 3",
+			'Type "k"',
+			SLEEP_TIME,
+			f'Type "{DEFAULT_KEY}"',
 			SLEEP_TIME,
 			"Ctrl+c",
 		],
@@ -1776,11 +1909,10 @@ VHS_TAPES: list[VHSTape] = [
 	),
 	VHSTape(
 		name="Shell prompt",
-		skip_quitting_yazi=True,
 		scripts=[
 			VHSTape.edit_plugin_config("prompt", True),
 			VHSTape.create_shell_keymap_toml(
-				DEFAULT_KEY, r"echo \$0", ["block"]
+				DEFAULT_KEY, r"echo %s | less", ["block"]
 			),
 		],
 		yazi_body=[
@@ -1791,67 +1923,52 @@ VHS_TAPES: list[VHSTape] = [
 			'Type "h"',
 			SLEEP_TIME,
 			"Enter",
-			SLEEP_TIME,
-			'Type "q"',
 			LONG_SLEEP_TIME,
-			'Type "yazi" Enter',
+			'Type "q"',
 			SLEEP_TIME,
-			f'Type "/{FIRST_FILE_NAME}" Enter',
-			"Space@300ms 3",
 			f'Type "{DEFAULT_KEY}"',
 			SLEEP_TIME,
 			'Type "s"',
 			SLEEP_TIME,
 			"Enter",
-			SLEEP_TIME,
-			'Type "q"',
 			LONG_SLEEP_TIME,
-			'Type "yazi" Enter',
+			'Type "q"',
 			SLEEP_TIME,
-			f'Type "/{FIRST_FILE_NAME}" Enter',
-			"Space@300ms 3",
 			f'Type "{DEFAULT_KEY}"',
 			SLEEP_TIME,
 			"Enter",
-			SLEEP_TIME,
-			'Type "q"',
 			LONG_SLEEP_TIME,
+			'Type "q"',
 		],
 	),
 	VHSTape(
 		name="Shell behaviour",
-		skip_quitting_yazi=True,
 		scripts=[
 			VHSTape.create_shell_keymap_toml(
-				DEFAULT_KEY, r"echo \$0", ["block"]
+				DEFAULT_KEY, r"echo %s | less", ["block"]
 			),
 		],
 		yazi_body=[
 			f'Type "/{FIRST_FILE_NAME}" Enter',
 			"Space@300ms 3",
-			f'Type "{DEFAULT_KEY}"',
 			SLEEP_TIME,
-			'Type "q"',
-			LONG_SLEEP_TIME,
-			'Type "yazi" Enter',
-			SLEEP_TIME,
-			f'Type "/{FIRST_FILE_NAME}" Enter',
-			"Space@300ms 3",
-			'Type "j"',
-			SLEEP_TIME,
-			f'Type "{DEFAULT_KEY}"',
-			'Type "q"',
-			LONG_SLEEP_TIME,
-			'Type "yazi" Enter',
-			SLEEP_TIME,
-			f'Type "/{FIRST_FILE_NAME}" Enter',
-			"Space@300ms 3",
 			'Type "k"',
 			SLEEP_TIME,
 			f'Type "{DEFAULT_KEY}"',
-			SLEEP_TIME,
-			'Type "q"',
 			LONG_SLEEP_TIME,
+			'Type "q"',
+			SLEEP_TIME,
+			'Type "j"',
+			SLEEP_TIME,
+			f'Type "{DEFAULT_KEY}"',
+			LONG_SLEEP_TIME,
+			'Type "q"',
+			SLEEP_TIME,
+			'Type "j"',
+			SLEEP_TIME,
+			f'Type "{DEFAULT_KEY}"',
+			LONG_SLEEP_TIME,
+			'Type "q"',
 		],
 	),
 	VHSTape(
@@ -1976,25 +2093,25 @@ VHS_TAPES: list[VHSTape] = [
 		yazi_body=[
 			f'Type "/{FIRST_FILE_NAME}" Enter',
 			SLEEP_TIME,
-			'Type "t"',
+			'Type "tt"',
 			SLEEP_TIME,
 			'Type "j"',
 			SLEEP_TIME,
-			'Type "t"',
+			'Type "tt"',
 			SLEEP_TIME,
 			'Type "gg"',
 			SLEEP_TIME,
-			'Type "t"',
+			'Type "tt"',
 			SLEEP_TIME,
-			'Type "t"',
+			'Type "tt"',
 			SLEEP_TIME,
 			'Type "h"',
 			SLEEP_TIME,
 			'Type "j"',
 			SLEEP_TIME,
-			'Type "t"',
+			'Type "tt"',
 			SLEEP_TIME,
-			'Type "t"',
+			'Type "tt"',
 		],
 	),
 	VHSTape(
@@ -2030,7 +2147,7 @@ VHS_TAPES: list[VHSTape] = [
 			'Type "q"',
 			'Type "yazi" Enter',
 			SLEEP_TIME,
-			'Type "t"',
+			'Type "tt"',
 			SLEEP_TIME,
 			'Type "q"',
 			SLEEP_TIME,
@@ -2049,8 +2166,8 @@ VHS_TAPES: list[VHSTape] = [
 			VHSTape.edit_plugin_config("smooth_scrolling", True),
 			VHSTape.create_keymap_toml_with_keymap(
 				{
-					"j": "arrow 10",
-					"k": "arrow -10",
+					"j": "arrow -- 10",
+					"k": "arrow -- -10",
 				}
 			),
 		],
@@ -2084,8 +2201,8 @@ VHS_TAPES: list[VHSTape] = [
 			VHSTape.edit_plugin_config("smooth_scrolling", True),
 			VHSTape.create_keymap_toml_with_keymap(
 				{
-					"d": "arrow 10",
-					"u": "arrow -10",
+					"d": "arrow -- 10",
+					"u": "arrow -- -10",
 				}
 			),
 		],
@@ -2131,8 +2248,8 @@ VHS_TAPES: list[VHSTape] = [
 			VHSTape.edit_plugin_config("smooth_scrolling", True),
 			VHSTape.create_keymap_toml_with_keymap(
 				{
-					"J": "parent_arrow 5",
-					"K": "parent_arrow -5",
+					"J": "parent-arrow -- 5",
+					"K": "parent-arrow -- -5",
 				}
 			),
 		],
@@ -2172,10 +2289,10 @@ VHS_TAPES: list[VHSTape] = [
 			VHSTape.edit_plugin_config("smooth_scrolling", True),
 			VHSTape.create_keymap_toml_with_keymap(
 				{
-					"J": "parent_arrow 1",
-					"K": "parent_arrow -1",
-					"d": "parent_arrow 5",
-					"u": "parent_arrow -5",
+					"J": "parent-arrow -- 1",
+					"K": "parent-arrow -- -1",
+					"d": "parent-arrow -- 5",
+					"u": "parent-arrow -- -5",
 				}
 			),
 		],
@@ -2439,7 +2556,7 @@ VHS_TAPES: list[VHSTape] = [
 		scripts=[
 			VHSTape.edit_plugin_config("reveal_created_archive", False),
 			VHSTape.create_keymap_toml_with_keymap(
-				{DEFAULT_KEY: "archive --encrypt --encrypt-headers"}
+				{DEFAULT_KEY: "archive -- --encrypt --encrypt-headers"}
 			),
 		],
 		yazi_body=[
@@ -2483,7 +2600,7 @@ VHS_TAPES: list[VHSTape] = [
 		scripts=[
 			VHSTape.edit_plugin_config("reveal_created_archive", False),
 			VHSTape.create_keymap_toml_with_keymap(
-				{DEFAULT_KEY: "archive --remove"}
+				{DEFAULT_KEY: "archive -- --remove"}
 			),
 			Script(
 				setup=[
@@ -2510,6 +2627,64 @@ VHS_TAPES: list[VHSTape] = [
 		],
 	),
 	VHSTape(
+		name="Archive remove protected archived files",
+		files_and_directories=[
+			os.path.join(PROTECTED_FOLDER, "demo.zip"),
+			os.path.join(PROTECTED_FOLDER, "demo-1.txt"),
+			os.path.join(PROTECTED_FOLDER, "demo-2.txt"),
+			os.path.join(PROTECTED_FOLDER, "demo-3.txt"),
+			os.path.join(PROTECTED_FOLDER, "demo-4.txt"),
+			os.path.join(PROTECTED_FOLDER, "demo-5.txt"),
+			"demo.zip",
+			"demo-1.txt",
+		],
+		scripts=[
+			VHSTape.edit_plugin_config(
+				"protected_directories",
+				"".join(
+					[
+						r'{{"',
+						str(PROTECTED_DIRECTORY.absolute()),
+						r'"}}',
+					]
+				),
+				r"{{}}",
+			),
+			VHSTape.edit_plugin_config("reveal_created_archive", False),
+			VHSTape.create_keymap_toml_with_keymap(
+				{DEFAULT_KEY: "archive -- --remove"}
+			),
+			Script(
+				setup=[
+					f"Type `echo '{DEFAULT_TEXT_FILE_CONTENT}' > "
+					+ "{"
+					+ str(i)
+					+ "}` Enter"
+					for i in range(1, 6)
+				],
+				required_programs=["echo"],
+			),
+		],
+		yazi_body=[
+			f'Type "/{PROTECTED_FOLDER}" Enter',
+			SLEEP_TIME,
+			'Type "l"',
+			SLEEP_TIME,
+			'Type "/{7}" Enter',
+			SLEEP_TIME,
+			"Space@300ms 5",
+			'Type "k"',
+			SLEEP_TIME,
+			f'Type "{DEFAULT_KEY}"',
+			SLEEP_TIME,
+			'Type "{6}" Enter',
+			SLEEP_TIME,
+			"Ctrl+c",
+			SLEEP_TIME,
+			'Type "/{6}" Enter',
+		],
+	),
+	VHSTape(
 		name="Emit Yazi command",
 		scripts=[VHSTape.create_keymap_toml_with_keymap({DEFAULT_KEY: "emit"})],
 		yazi_body=[
@@ -2522,7 +2697,7 @@ VHS_TAPES: list[VHSTape] = [
 		name="Emit plugin command",
 		scripts=[
 			VHSTape.create_keymap_toml_with_keymap(
-				{DEFAULT_KEY: "emit --plugin"}
+				{DEFAULT_KEY: "emit -- --plugin"}
 			)
 		],
 		yazi_body=[
@@ -2530,14 +2705,14 @@ VHS_TAPES: list[VHSTape] = [
 			SLEEP_TIME,
 			f'Type "{DEFAULT_KEY}"',
 			SLEEP_TIME,
-			'Type "augment-command -- parent_arrow 1" Enter',
+			'Type "augment-command.parent-arrow -- 1" Enter',
 		],
 	),
 	VHSTape(
 		name="Emit augmented command",
 		scripts=[
 			VHSTape.create_keymap_toml_with_keymap(
-				{DEFAULT_KEY: "emit --augmented"}
+				{DEFAULT_KEY: "emit -- --augmented"}
 			)
 		],
 		yazi_body=[
@@ -2545,7 +2720,7 @@ VHS_TAPES: list[VHSTape] = [
 			SLEEP_TIME,
 			f'Type "{DEFAULT_KEY}"',
 			SLEEP_TIME,
-			'Type "parent_arrow 1" Enter',
+			'Type "parent-arrow 1" Enter',
 		],
 	),
 	VHSTape(
@@ -2845,18 +3020,18 @@ async def main():
 	# Change directory to the demonstration directory
 	os.chdir(DEMONSTRATION_DIRECTORY)
 
-	# Create the VHS tapes directory if it does not exist
+	# Create the VHS tapes directory if it doesn't exist
 	if not os.path.isdir(VHS_TAPES_DIRECTORY):
 		os.mkdir(VHS_TAPES_DIRECTORY)
 
 	# Create the files and folders for the demonstration
-	for folder in [EMPTY_FOLDER, "."] + [
-		f"folder_{number}" for number in range(1, 4)
+	for folder in [EMPTY_FOLDER, PROTECTED_FOLDER, "."] + [
+		f"folder-{number}" for number in range(1, 4)
 	]:
 		#
 
-		# If the folder is the empty folder
-		if folder == EMPTY_FOLDER:
+		# If the folder is the VHS tapes directory, or the empty folder
+		if folder in [VHS_TAPES_DIRECTORY, EMPTY_FOLDER]:
 			#
 
 			# Create the folder
@@ -2866,27 +3041,27 @@ async def main():
 			continue
 
 		# Create an inner folder
-		Path(f"{folder}/inner_folder/").mkdir(parents=True)
+		Path(f"{folder}/inner-folder/").mkdir(parents=True)
 
 		# Iterate over the files for the folder
 		for file_number in range(1, 11):
 			#
 
 			# Create the file with the demonstration text
-			_ = Path(f"{folder}/file_{file_number}.txt").write_text(
+			Path(f"{folder}/file-{file_number}.txt").write_text(
 				DEMONSTRATION_TEXT
 			)
 
 	# The path to the file in the folder with subdirectory
 	file_in_folder_with_subdirectory = Path(
-		f"./{FOLDER_WITH_SUBDIRECTORY}/subdirectory/hi_there.txt"
+		f"./{FOLDER_WITH_SUBDIRECTORY}/subdirectory/hi-there.txt"
 	)
 
 	# Create the folder with the subdirectory
 	file_in_folder_with_subdirectory.parent.mkdir(parents=True)
 
 	# Write to the file in the folder with subdirectory
-	_ = file_in_folder_with_subdirectory.write_text("Skipped!")
+	file_in_folder_with_subdirectory.write_text("Skipped!")
 
 	# Get the current theme
 	darkman_result = subprocess.run(["darkman", "get"], capture_output=True)
@@ -2894,9 +3069,12 @@ async def main():
 	# Get the theme from the stdout
 	initial_theme = darkman_result.stdout.decode("utf-8").strip()
 
+	# Get if the theme is light
+	is_light_theme = initial_theme == "light"
+
 	# If the theme is light, change the theme to dark
-	if initial_theme == "light":
-		_ = subprocess.run(["darkman", "set", "dark"])
+	if is_light_theme:
+		subprocess.run(["darkman", "set", "dark"])
 
 	# Initialise the list of threads
 	threads: list[Coroutine[None, None, None]] = []
@@ -2923,7 +3101,7 @@ async def main():
 		threads.append(asyncio.to_thread(vhs_tape.write_to_file))
 
 	# Wait for all the threads to complete
-	_ = await asyncio.gather(*threads)
+	await asyncio.gather(*threads)
 
 	# Iterate over the VHS tapes
 	for vhs_tape in vhs_tapes:
@@ -2933,14 +3111,14 @@ async def main():
 		file_path = vhs_tape.get_file_path()
 
 		# Create the video for the VHS tape
-		_ = subprocess.run(["vhs", file_path], check=True)
+		subprocess.run(["vhs", file_path], check=True)
 
 	# Remove the demonstration directory
 	shutil.rmtree(DEMONSTRATION_DIRECTORY)
 
 	# Set the theme back to light if the theme was initially light
-	if initial_theme == "light":
-		_ = subprocess.run(["darkman", "set", "light"])
+	if is_light_theme:
+		subprocess.run(["darkman", "set", "light"])
 
 
 # Name safeguard

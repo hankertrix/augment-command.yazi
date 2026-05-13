@@ -1,0 +1,18 @@
+[default]
+extend-ignore-re = [
+
+	# Ignore lines that end with `# typos: disable-line`
+	"(?Rm)^.*(#|//|--)\\s*typos:\\s?disable-line$",
+
+	# Ignore the line after `# typos: ignore-next-line`:
+	"(#|//|--)\\s*typos:\\s?ignore-next-line\\n.*",
+
+	# Ignore blocks between `# typos: off` and `# typos: on`
+	"(?s)(#|//|--)\\s*typos:\\s?off.*?\\n\\s*(#|//)\\s*typos:\\s?on",
+]
+
+extend-ignore-identifiers-re = [
+
+	# Ignore identifiers that look like SSL cipher suites:
+	"\\bTLS_[A-Z0-9_]+(_anon_[A-Z0-9_]+)?\\b",
+]
