@@ -424,7 +424,7 @@ M.get_user_input_or_confirm_options = function(
 	title_index = title_index or 1
 
 	-- Get the theme object
-	local theme = require(".config").get_theme() or {}
+	local theme = require("augment-command").get_theme() or {}
 
 	-- Get whether the component is a plugin component
 	local is_plugin_component =
@@ -923,7 +923,7 @@ end)
 local function prompt_for_desired_item_group()
 
 	-- Get the configuration
-	local config = require(".config").get_config()
+	local config = require("augment-command").get_config()
 
 	-- Get the default item group
 	---@type ItemGroup?

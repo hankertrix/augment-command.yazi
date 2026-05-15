@@ -106,7 +106,7 @@ macOS, or your `%AppData%\yazi\config\init.lua` file on Windows.
 -- %AppData%\yazi\config\init.lua for Windows
 
 -- Using the default configuration
-require("augment-command.config"):setup({
+require("augment-command"):setup({
     prompt = false,
     default_item_group_for_prompt = "hovered",
     smart_enter = true,
@@ -147,7 +147,7 @@ configuration is shown below:
 -- %AppData%\yazi\config\init.lua for Windows
 
 -- Custom configuration
-require("augment-command.config"):setup({
+require("augment-command"):setup({
     prompt = true,
     default_item_group_for_prompt = "none",
     open_file_after_creation = true,
@@ -1157,7 +1157,7 @@ th.augment_command.archive_title = "Archive name:"
 th.augment_command.quit_title = "Quit?"
 
 -- Call the plugin's setup function
-require("augment-command.config"):setup()
+require("augment-command"):setup()
 ```
 
 This method of configuration is to be forward compatible with future versions of

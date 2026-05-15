@@ -10,7 +10,7 @@ local M = {}
 function M:entry(job)
 
 	-- Get the arguments and the configuration
-	local args, config = require(".config").parse_args_and_init(job)
+	local args, config = require("augment-command").parse_args_and_init(job)
 
 	-- Call the shell function
 	require(".utils-shell").handle(args, config)

@@ -16,7 +16,7 @@ local M = {}
 function M:entry(job)
 
 	-- Get the arguments
-	local args = require(".config").parse_args_and_init(job)
+	local args = require("augment-command").parse_args_and_init(job)
 
 	-- Get the command to emit given by the user
 	local given_command = table.remove(args, 1)

@@ -13,7 +13,7 @@ local M = {}
 function M:entry(job)
 
 	-- Get the arguments and the configuration
-	local args, config = require(".config").parse_args_and_init(job)
+	local args, config = require("augment-command").parse_args_and_init(job)
 
 	-- If the hovered item is not a directory or smart paste is not wanted
 	if

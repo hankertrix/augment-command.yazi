@@ -3,7 +3,7 @@
 -- The module to handle the remove command
 
 -- Import the configuration module
-local utils_config = require(".config")
+local utils_config = require("augment-command")
 
 -- The module table
 local M = {}

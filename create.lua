@@ -120,7 +120,7 @@ end
 function M:entry(job)
 
 	-- Get the arguments and the configuration
-	local args, config = require(".config").parse_args_and_init(job)
+	local args, config = require("augment-command").parse_args_and_init(job)
 
 	-- Get the directory flag
 	local dir_flag = utils.table_pop(args, "dir", false)

@@ -6,7 +6,7 @@
 local utils = require(".utils")
 
 -- Import the configuration module
-local utils_config = require(".config")
+local utils_config = require("augment-command")
 
 -- Import the required constants
 local constants = require(".constants")

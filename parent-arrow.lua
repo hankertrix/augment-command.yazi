@@ -173,7 +173,7 @@ end)
 function M:entry(job)
 
 	-- Get the arguments and the configuration
-	local args, config = require(".config").parse_args_and_init(job)
+	local args, config = require("augment-command").parse_args_and_init(job)
 
 	-- If smooth scrolling is not wanted,
 	-- call the function to execute the parent arrow command

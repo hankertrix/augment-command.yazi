@@ -16,7 +16,7 @@ local M = {}
 function M:entry(job)
 
 	-- Get the arguments and the configuration
-	local args, config = require(".config").parse_args_and_init(job)
+	local args, config = require("augment-command").parse_args_and_init(job)
 
 	-- Get the number of tabs
 	local number_of_tabs = utils.get_number_of_tabs()
