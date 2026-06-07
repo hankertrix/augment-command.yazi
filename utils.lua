@@ -49,7 +49,7 @@ local get_path_root_pattern = "^(.-)%f[/]"
 ---@param target table<any, any>? The target table to merge
 ---@param ... table<any, any>[]? The tables to merge
 ---@return table<any, any> merged_table The merged table
-M.merge_tables = function(deep_or_target, target, ...)
+function M.merge_tables(deep_or_target, target, ...)
 
 	-- Initialise the target table
 	local target_table = nil
@@ -147,7 +147,7 @@ end
 ---@param given_string string The string to split
 ---@param separator string? The character to split the string by
 ---@return string[] split_strings The list of strings split by the character
-M.string_split = function(given_string, separator)
+function M.string_split(given_string, separator)
 
 	-- If the separator isn't given, set it to the whitespace character
 	separator = separator or "%s"
@@ -169,7 +169,7 @@ end
 -- Function to trim a string
 ---@param string string The string to trim
 ---@return string trimmed_string The trimmed string
-M.string_trim = function(string)
+function M.string_trim(string)
 
 	-- Return the string with the whitespace characters
 	-- removed from the start and end
@@ -181,7 +181,7 @@ end
 ---@param given_table table The table to map over
 ---@param func fun(item: any): any The function to apply on each item
 ---@return table mapped_table The new table with the mapping function applied
-M.table_map = function(given_table, func)
+function M.table_map(given_table, func)
 
 	-- Initialise the table
 	local mapped_table = {}
@@ -202,14 +202,14 @@ end
 ---@param table table The table to get the value from
 ---@param key string|number The key to get the value from
 ---@param default any The default value to return if the key doesn't exist
-M.table_get = function(table, key, default) return table[key] or default end
+function M.table_get(table, key, default) return table[key] or default end
 
 -- Function to pop a key from a table
 ---@param table table The table to pop from
 ---@param key string|number The key to pop
 ---@param default any The default value to return if the key doesn't exist
 ---@return any value The value of the key or the default value
-M.table_pop = function(table, key, default)
+function M.table_pop(table, key, default)
 
 	-- Get the value of the key from the table
 	local value = table[key]
@@ -226,7 +226,7 @@ end
 ---@param given_table table The table to check
 ---@param item_to_check any The item to check
 ---@return boolean is_in_table Whether the item is in the table
-M.table_contains = function(given_table, item_to_check)
+function M.table_contains(given_table, item_to_check)
 
 	-- Iterate over the table and return if the item is in the table
 	for _, item in pairs(given_table) do
@@ -240,7 +240,7 @@ end
 -- Function to get the dictionary length
 ---@param dictionary table<any, any> The dictionary to get the length of
 ---@return number The length of the dictionary
-M.get_dictionary_length = function(dictionary)
+function M.get_dictionary_length(dictionary)
 
 	-- Initialise the number of items
 	local number_of_items = 0
@@ -258,7 +258,7 @@ end
 -- in the string that is being replaced
 ---@param replacement_string string The string to escape
 ---@return string replacement_result The escaped string
-M.escape_replacement_string = function(replacement_string)
+function M.escape_replacement_string(replacement_string)
 
 	-- Get the result of the replacement
 	local replacement_result = replacement_string:gsub("%%", "%%%%")
@@ -270,7 +270,7 @@ end
 -- Function to escape a match pattern
 ---@param match_pattern string The match pattern to escape
 ---@return string escaped_match_pattern The escaped match pattern
-M.escape_match_pattern = function(match_pattern)
+function M.escape_match_pattern(match_pattern)
 
 	-- The escaped match pattern
 	local escaped_match_pattern = match_pattern:gsub(
@@ -285,7 +285,7 @@ end
 -- Function to parse the number arguments to the number type
 ---@param args YaziArgs The arguments to parse
 ---@return ParsedArgs parsed_args The parsed arguments
-M.parse_number_arguments = function(args)
+function M.parse_number_arguments(args)
 
 	-- The parsed arguments
 	---@type ParsedArgs
@@ -310,7 +310,7 @@ end
 -- Function to convert a table of arguments to a string
 ---@param args ParsedArgs The arguments to convert
 ---@return string args_string The string of the arguments
-M.convert_arguments_to_string = function(args)
+function M.convert_arguments_to_string(args)
 
 	-- The table of string arguments
 	---@type string[]
@@ -360,7 +360,7 @@ end
 ---@param warning_message any The warning message
 ---@param options YaziNotificationOptions? Options for the notification
 ---@return nil
-M.show_warning = function(warning_message, options)
+function M.show_warning(warning_message, options)
 	return ya.notify(
 		M.merge_tables({}, DEFAULT_NOTIFICATION_OPTIONS, options or {}, {
 			content = tostring(warning_message),
@@ -373,7 +373,7 @@ end
 ---@param error_message any The error message
 ---@param options YaziNotificationOptions? Options for the notification
 ---@return nil
-M.show_error = function(error_message, options)
+function M.show_error(error_message, options)
 	return ya.notify(
 		M.merge_tables({}, DEFAULT_NOTIFICATION_OPTIONS, options or {}, {
 			content = tostring(error_message),
@@ -385,7 +385,7 @@ end
 -- Function to throw an error
 ---@param error_message any The error message as a format string
 ---@param ... any The items to substitute into the error message given
-M.throw_error = function(error_message, ...)
+function M.throw_error(error_message, ...)
 	return error(string.format(error_message, ...))
 end
 
@@ -393,7 +393,7 @@ end
 ---@param component BuiltInComponents|PluginComponents The component name
 ---@param option string The option
 ---@return string component_option The component option string
-M.get_component_option_string = function(component, option)
+function M.get_component_option_string(component, option)
 	return string.format("%s_%s", component, option)
 end
 
@@ -408,7 +408,7 @@ end
 ---@param is_confirm boolean? Whether the component is the confirm component
 ---@param title_index integer? The index to get the title
 ---@return YaziInputOptions|YaziConfirmOptions options The resolved options
-M.get_user_input_or_confirm_options = function(
+function M.get_user_input_or_confirm_options(
 	component,
 	defaults,
 	is_confirm,
@@ -424,7 +424,7 @@ M.get_user_input_or_confirm_options = function(
 	title_index = title_index or 1
 
 	-- Get the theme object
-	local theme = require("augment-command").get_theme() or {}
+	local theme = require(".main").get_theme() or {}
 
 	-- Get whether the component is a plugin component
 	local is_plugin_component =
@@ -495,7 +495,7 @@ end
 ---@param want_confirmation boolean? Whether to get a confirmation password
 ---@return string? password The password or nil if the user cancelled
 ---@return number? event The event for the input function
-M.get_password = function(get_password_options, want_confirmation)
+function M.get_password(get_password_options, want_confirmation)
 
 	-- Merge the obscure option with the password options
 	local password_options =
@@ -557,7 +557,7 @@ end
 -- Function to show a delete confirmation prompt
 ---@param item_paths string|string[] The path to the items to delete
 ---@return boolean delete Whether the user wants to delete the items
-M.show_delete_prompt = function(item_paths)
+function M.show_delete_prompt(item_paths)
 
 	-- If the item paths is a string, convert it to a list
 	if type(item_paths) == "string" then item_paths = { item_paths } end
@@ -602,7 +602,7 @@ end
 -- Function to show an overwrite prompt
 ---@param file_path_to_overwrite string|Url|Path The file path to overwrite
 ---@return boolean overwrite Whether the user chooses to overwrite the file
-M.show_overwrite_prompt = function(file_path_to_overwrite)
+function M.show_overwrite_prompt(file_path_to_overwrite)
 
 	-- Get the user's configuration for the overwrite prompt
 	local overwrite_confirm_options = M.get_user_input_or_confirm_options(
@@ -656,7 +656,7 @@ end
 ---@param args string[]? The arguments to the shell command
 ---@return boolean shell_command_exists Whether the shell command exists
 ---@return Output? output The output of the shell command
-M.async_shell_command_exists = function(shell_command, args)
+function M.async_shell_command_exists(shell_command, args)
 
 	-- Get the output of the shell command with the given arguments
 	local output = Command(shell_command)
@@ -673,7 +673,7 @@ end
 ---@param command string The augmented command to emit
 ---@param args ParsedArgs|string The arguments to pass to the augmented command
 ---@return nil
-M.emit_augmented_command = function(command, args)
+function M.emit_augmented_command(command, args)
 
 	-- Initialise the arguments
 	local arguments = args
@@ -696,7 +696,7 @@ end
 -- mime types returned by the file command.
 ---@param mime_type string The mime type of the file
 ---@return string standardised_mime_type The standardised mime type of the file
-M.standardise_mime_type = function(mime_type)
+function M.standardise_mime_type(mime_type)
 
 	-- Trim the whitespace from the mime type
 	local trimmed_mime_type = M.string_trim(mime_type)
@@ -724,7 +724,7 @@ end
 -- Function to get the mime type of a file
 ---@param file_path string The path to the file
 ---@return string mime_type The mime type of the file
-M.get_mime_type = function(file_path)
+function M.get_mime_type(file_path)
 
 	-- Get the output of the file command
 	local output, _ = Command("file")
@@ -760,7 +760,7 @@ end
 -- The code is taken from Yazi's source code.
 ---@param path string The path to the item to create a temporary name
 ---@return string temporary_name The temporary name for the item
-M.get_temporary_name = function(path)
+function M.get_temporary_name(path)
 	return ".tmp_"
 		.. ya.hash(string.format("extract//%s//%.10f", path, ya.time()))
 end
@@ -840,7 +840,7 @@ end)
 
 -- Function to get the path root
 ---@type fun(path: string): string? The path root
-M.get_path_root = function(path) return path:match(get_path_root_pattern) end
+function M.get_path_root(path) return path:match(get_path_root_pattern) end
 
 -- Function to get the number of tabs currently open
 ---@type fun(): number
@@ -923,7 +923,7 @@ end)
 local function prompt_for_desired_item_group()
 
 	-- Get the configuration
-	local config = require("augment-command").get_config()
+	local config = require(".main").get_config()
 
 	-- Get the default item group
 	---@type ItemGroup?
@@ -978,7 +978,7 @@ end
 -- Function to get the item group
 ---@param config Configuration The configuration object
 ---@return ItemGroup? item_group The desired item group
-M.get_item_group = function(config)
+function M.get_item_group(config)
 
 	-- Get the item group from the state
 	local item_group = get_item_group_from_state(config)
@@ -999,7 +999,7 @@ end
 ---@param get_hidden_items boolean Whether to get hidden items
 ---@param directories_only boolean? Whether to only get directories
 ---@return string[] directory_items The list of urls to the directory items
-M.get_directory_items = function(
+function M.get_directory_items(
 	directory_path,
 	get_hidden_items,
 	directories_only
@@ -1043,7 +1043,7 @@ end
 -- Function to skip child directories with only one directory
 ---@param initial_directory_path string The path of the initial directory
 ---@return nil
-M.skip_single_child_directories = function(initial_directory_path)
+function M.skip_single_child_directories(initial_directory_path)
 
 	-- Initialise the directory variable to the initial directory given
 	local directory = initial_directory_path
@@ -1091,7 +1091,7 @@ end
 ---@param config Configuration The configuration object
 ---@param modify_args ModifyArgsFunction? Function to modify the arguments
 ---@return nil
-M.handle_yazi_command = function(command, args, config, modify_args)
+function M.handle_yazi_command(command, args, config, modify_args)
 
 	-- Call the function to get the item group
 	local item_group = M.get_item_group(config)
@@ -1121,7 +1121,7 @@ end
 ---@param steps number The number of steps to scroll
 ---@param scroll_delay number The scroll delay in seconds
 ---@param scroll_func fun(step: integer): nil The function to call to scroll
-M.smoothly_scroll = function(steps, scroll_delay, scroll_func)
+function M.smoothly_scroll(steps, scroll_delay, scroll_func)
 
 	-- Initialise the direction to positive 1
 	local direction = 1

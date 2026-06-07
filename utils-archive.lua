@@ -144,7 +144,7 @@ local ARCHIVE_FILE_EXTENSIONS_WITH_HEADER_ENCRYPTION = {
 -- Function to check if a given mime type is an archive
 ---@param mime_type string? The mime type of the file
 ---@return boolean is_archive Whether the mime type is an archive
-M.is_archive_mime_type = function(mime_type)
+function M.is_archive_mime_type(mime_type)
 
 	-- If the mime type is nil, return false
 	if not mime_type then return false end
@@ -163,7 +163,7 @@ end
 -- is an archive file extension
 ---@param file_extension string? The file extension of the file
 ---@return boolean is_archive Whether the file extension is an archive
-M.is_archive_file_extension = function(file_extension)
+function M.is_archive_file_extension(file_extension)
 
 	-- If the file extension is nil, return false
 	if not file_extension then return false end
@@ -465,7 +465,7 @@ end
 ---@param config Configuration The configuration object
 ---@param destination_path string? The destination path to extract to
 ---@return Archiver.Result extraction_result The extraction results
-M.recursively_extract_archive = function(
+function M.recursively_extract_archive(
 	archive_path,
 	args,
 	config,
@@ -644,7 +644,7 @@ end
 -- Function to show an archiver error
 ---@param archiver_result Archiver.Result The result from the archiver
 ---@return nil
-M.throw_archiver_error = function(archiver_result)
+function M.throw_archiver_error(archiver_result)
 
 	-- The line for the error
 	local error_line = string.format("Error: %s", archiver_result.error)
@@ -688,7 +688,7 @@ end
 ---@param archive_path string The path to the archive
 ---@param wanted boolean Whether header encryption is wanted
 ---@return boolean supports_header_encryption Header encryption supported or not
-M.archive_supports_header_encryption = function(archive_path, wanted)
+function M.archive_supports_header_encryption(archive_path, wanted)
 
 	-- If header encryption isn't wanted, immediately return false
 	if not wanted then return false end

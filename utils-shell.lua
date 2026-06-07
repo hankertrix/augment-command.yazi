@@ -247,7 +247,7 @@ end
 -- Function to handle a shell command
 ---@param args ParsedArgs The arguments to pass to the command
 ---@param config Configuration The configuration object
-M.handle = function(args, config)
+function M.handle(args, config)
 
 	-- Get the first item of the arguments given
 	-- and set it to the command variable
