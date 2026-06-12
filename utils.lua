@@ -1147,5 +1147,37 @@ function M.smoothly_scroll(steps, scroll_delay, scroll_func)
 	end
 end
 
+-- Function to check if the file path exists in Yazi
+---@param path string The path to check for
+---@return boolean path_exists Whether the path exists in Yazi
+local path_exists_in_yazi = ya.sync(function(_, path)
+
+	-- Get the current files
+	local files = cx.active.current.files
+
+	-- Check if the path exists in the files
+	for _, file in ipairs(files) do
+
+		-- If the file's path is the same as the given path, return true
+		if tostring(file.url.path) == path then return true end
+	end
+
+	-- Otherwise, return false
+	return false
+end)
+
+-- Function to wait until the file path exists in Yazi
+---@param path string The path to check for
+function M.wait_until_path_exists_in_yazi(path)
+
+	-- Get whether the path exists in Yazi
+	local path_exists = path_exists_in_yazi(path)
+
+	-- While the path does not exist in Yazi, try again
+	while not path_exists do
+		path_exists = path_exists_in_yazi(path)
+	end
+end
+
 -- Return the module table
 return M

@@ -26,7 +26,6 @@
 ---@field skip_single_subdirectory_on_leave boolean Skip single subdir on leave
 ---@field smooth_scrolling boolean Whether to smoothly scroll or not
 ---@field scroll_delay number The scroll delay in seconds for smooth scrolling
----@field create_item_delay number Delay in seconds before revealing
 ---@field wraparound_file_navigation boolean Have wraparound navigation or not
 ---@field protected_directories string[] Directories that are safe from deletion
 
@@ -76,7 +75,6 @@ local DEFAULT_CONFIG = {
 	skip_single_subdirectory_on_leave = true,
 	smooth_scrolling = false,
 	scroll_delay = 0.02,
-	create_item_delay = 0.25,
 	wraparound_file_navigation = true,
 	protected_directories = {},
 }

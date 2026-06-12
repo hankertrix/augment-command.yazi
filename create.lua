@@ -105,8 +105,8 @@ local function exec(item_url, is_directory, args, config)
 		if not successful then return utils.throw_error(error_message) end
 	end
 
-	-- Wait for a tiny bit for the file to be created
-	ya.sleep(config.create_item_delay)
+	-- Wait for the path to exist in Yazi before revealing it
+	utils.wait_until_path_exists_in_yazi(tostring(item_url))
 
 	-- Reveal the created item
 	ya.emit("reveal", { tostring(item_url) })

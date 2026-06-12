@@ -122,6 +122,9 @@ function M:entry(job)
 	-- Get the full url of the archive path
 	local archive_url = Url(utils.get_current_directory()):join(archive_path)
 
+	-- Get the full archive path from the url
+	archive_path = tostring(archive_url.path)
+
 	-- If the archive already exists and the force flag isn't passed
 	if
 		fs.cha(archive_url, false) and not utils.table_pop(args, "force", false)
@@ -182,7 +185,7 @@ function M:entry(job)
 
 	-- Get whether to encrypt the headers or not
 	local encrypt_headers = archive_utils.archive_supports_header_encryption(
-		archive_path,
+		archive_url,
 		password
 			and (
 				config.encrypt_archive_headers
@@ -225,8 +228,8 @@ function M:entry(job)
 		config.reveal_created_archive or utils.table_pop(args, "reveal", false)
 	then
 
-		-- Wait for a tiny bit for the archive to be created
-		ya.sleep(config.create_item_delay)
+		-- Wait for the path to exist in Yazi before revealing it
+		utils.wait_until_path_exists_in_yazi(archive_path)
 
 		-- Reveal the archive
 		ya.emit("reveal", { archive_path })

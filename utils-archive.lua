@@ -685,16 +685,16 @@ function M.throw_archiver_error(archiver_result)
 end
 
 -- Function to check if an archive supports header encryption
----@param archive_path string The path to the archive
+---@param archive_url Url The url to the archive
 ---@param wanted boolean Whether header encryption is wanted
 ---@return boolean supports_header_encryption Header encryption supported or not
-function M.archive_supports_header_encryption(archive_path, wanted)
+function M.archive_supports_header_encryption(archive_url, wanted)
 
 	-- If header encryption isn't wanted, immediately return false
 	if not wanted then return false end
 
 	-- Otherwise, get the extension of the archive
-	local archive_extension = Url(archive_path).ext
+	local archive_extension = archive_url.ext
 
 	-- If the extension doesn't support header encryption
 	local supports_header_encryption =
