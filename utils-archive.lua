@@ -348,7 +348,7 @@ local function move_extracted_items(archive_url, destination_url)
 		return fail(
 			string.format(
 				"Failed to read the destination directory: %s",
-				tostring(destination_url)
+				tostring(destination_url.path)
 			)
 		)
 	end
@@ -427,7 +427,7 @@ local function move_extracted_items(archive_url, destination_url)
 	end
 
 	-- Set the target path to the string of the target url
-	local target_path = tostring(unique_target_url)
+	local target_path = tostring(unique_target_url.path)
 
 	-- Initialise the move successful variable and the error message
 	local error_message, move_successful = nil, false
@@ -499,7 +499,7 @@ function M.recursively_extract_archive(
 		archive_path,
 		M.ArchiverCommands.Extract,
 		config,
-		tostring(temp_directory_url)
+		tostring(temp_directory_url.path)
 	)
 
 	-- If there is no archiver, return the result
@@ -617,7 +617,7 @@ function M.recursively_extract_archive(
 		local full_archive_url = base_url:join(file)
 
 		-- Get the full path to the archive
-		local full_archive_path = tostring(full_archive_url)
+		local full_archive_path = tostring(full_archive_url.path)
 
 		-- Yazi is now way too quick (a good problem to have, really),
 		-- so we slow it down a little to make sure that the

@@ -53,7 +53,7 @@ function M:entry(job)
 		if not parent_directory then break end
 
 		-- Otherwise, set the new directory to the parent directory
-		directory = tostring(parent_directory)
+		directory = tostring(parent_directory.path)
 	end
 
 	-- Emit the change directory command to change to the directory variable

@@ -163,7 +163,7 @@ function M:entry(job)
 		-- exit the function
 		if
 			given_parent_directory
-			and given_parent_directory ~= tostring(parent_directory_url)
+			and given_parent_directory ~= tostring(parent_directory_url.path)
 		then
 			return
 		end

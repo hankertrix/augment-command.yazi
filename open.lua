@@ -83,7 +83,7 @@ function M:entry(job)
 		utils.merge_tables({}, args, {
 			archive_path = ya.quote(archive_path),
 			reveal = true,
-			parent_dir = ya.quote(tostring(parent_directory_url)),
+			parent_dir = ya.quote(tostring(parent_directory_url.path)),
 		})
 	)
 end

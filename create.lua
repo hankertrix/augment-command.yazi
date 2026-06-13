@@ -106,10 +106,10 @@ local function exec(item_url, is_directory, args, config)
 	end
 
 	-- Wait for the path to exist in Yazi before revealing it
-	utils.wait_until_path_exists_in_yazi(tostring(item_url))
+	utils.wait_until_path_exists_in_yazi(tostring(item_url.path))
 
 	-- Reveal the created item
-	ya.emit("reveal", { tostring(item_url) })
+	ya.emit("reveal", { tostring(item_url.path) })
 
 	-- Call the function to enter or open the created item
 	enter_or_open_created_item(item_url, is_directory, args, config)
@@ -181,7 +181,7 @@ function M:entry(job)
 	then
 
 		-- Get whether the user wants to overwrite the file
-		local should_overwrite = utils.show_overwrite_prompt(full_url)
+		local should_overwrite = utils.show_overwrite_prompt(full_url.path)
 
 		-- If the user does not want to overwrite the file,
 		-- then exit the function

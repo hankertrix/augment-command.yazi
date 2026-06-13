@@ -131,7 +131,7 @@ function M:entry(job)
 	then
 
 		-- Get whether the user wants to overwrite the existing file
-		local should_overwrite = utils.show_overwrite_prompt(archive_url)
+		local should_overwrite = utils.show_overwrite_prompt(archive_url.path)
 
 		-- If the user doesn't want to overwrite the file, exit the function
 		if not should_overwrite then return end

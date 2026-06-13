@@ -600,7 +600,7 @@ function M.show_delete_prompt(item_paths)
 end
 
 -- Function to show an overwrite prompt
----@param file_path_to_overwrite string|Url|Path The file path to overwrite
+---@param file_path_to_overwrite string|Path The file path to overwrite
 ---@return boolean overwrite Whether the user chooses to overwrite the file
 function M.show_overwrite_prompt(file_path_to_overwrite)
 
@@ -768,7 +768,7 @@ end
 -- Function to get the current working directory
 ---@type fun(): string Returns the current working directory as a string
 M.get_current_directory = ya.sync(
-	function(_) return tostring(cx.active.current.cwd) end
+	function(_) return tostring(cx.active.current.cwd.path) end
 )
 
 -- Function to get the path of the hovered item
@@ -1030,7 +1030,7 @@ function M.get_directory_items(
 		if directories_only and not item.cha.is_dir then goto continue end
 
 		-- Otherwise, add the item path to the list of directory items
-		table.insert(directory_items, tostring(item.url))
+		table.insert(directory_items, tostring(item.url.path))
 
 		-- The continue label to continue the loop
 		::continue::
