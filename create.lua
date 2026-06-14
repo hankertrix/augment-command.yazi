@@ -56,6 +56,7 @@ end
 
 -- Function to execute the create command
 ---@param item_url Url The url of the item to create
+---@param is_directory boolean Whether the item to create is a directory
 ---@param args ParsedArgs The arguments passed to the plugin
 ---@param config Configuration The configuration object
 ---@return nil
@@ -85,7 +86,7 @@ local function exec(item_url, is_directory, args, config)
 	-- Otherwise, the item to create is a file
 	else
 
-		-- Otherwise, create the parent directory if it doesn't exist
+		-- Create the parent directory if it doesn't exist
 		if not fs.cha(parent_directory_url, false) then
 
 			-- Call the function to create the parent directory
@@ -97,7 +98,7 @@ local function exec(item_url, is_directory, args, config)
 			if not successful then return utils.throw_error(error_message) end
 		end
 
-		-- Otherwise, create the file
+		-- Create the file
 		local successful, error_message = fs.write(item_url, "")
 
 		-- If the function is not successful,

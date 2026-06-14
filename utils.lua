@@ -1147,10 +1147,48 @@ function M.smoothly_scroll(steps, scroll_delay, scroll_func)
 	end
 end
 
--- Function to check if the file path exists in Yazi
+-- Function to get the part of the path
+-- that is in Yazi's current working directory
+---@param given_path string|Url The path to get the part of
+---@return Url path_part The part of the path that is in Yazi's CWD
+local function get_part_of_path_in_yazi_cwd(given_path)
+
+	-- If the given path is a string, turn it into a url
+	if type(given_path) == "string" then given_path = Url(given_path) end
+
+	-- Get the current working directory
+	local current_working_directory = Url(M.get_current_directory())
+
+	-- Strip the current working directory from the front of the given path
+	local remaining_path = given_path:strip_prefix(current_working_directory)
+
+	-- Get the root of the remaining path
+	local remaining_path_root = M.get_path_root(tostring(remaining_path))
+
+	-- Initialise the path part
+	local path_part
+
+	-- If the remaining path root does not exist
+	if remaining_path_root == nil then
+
+		-- Set the path part to the given path,
+		-- since the whole path is in Yazi's current working directory
+		path_part = given_path
+
+	-- Otherwise, set the path part to the current working directory
+	-- joined with the remaining path root
+	else
+		path_part = current_working_directory:join(remaining_path_root)
+	end
+
+	-- Return the path part
+	return path_part
+end
+
+-- Function to check if the path exists in Yazi's current working directory
 ---@param path string The path to check for
 ---@return boolean path_exists Whether the path exists in Yazi
-local path_exists_in_yazi = ya.sync(function(_, path)
+local path_exists_in_yazi_cwd = ya.sync(function(_, path)
 
 	-- Get the current files
 	local files = cx.active.current.files
@@ -1166,16 +1204,19 @@ local path_exists_in_yazi = ya.sync(function(_, path)
 	return false
 end)
 
--- Function to wait until the file path exists in Yazi
----@param path string The path to check for
-function M.wait_until_path_exists_in_yazi(path)
+-- Function to wait until the given path exists in Yazi
+---@param given_path string|Url The path to check for
+function M.wait_until_path_exists_in_yazi(given_path)
+
+	-- Get the part of the path in Yazi's current working directory
+	local path_part = tostring(get_part_of_path_in_yazi_cwd(given_path))
 
 	-- Get whether the path exists in Yazi
-	local path_exists = path_exists_in_yazi(path)
+	local path_exists = path_exists_in_yazi_cwd(path_part)
 
 	-- While the path does not exist in Yazi, try again
 	while not path_exists do
-		path_exists = path_exists_in_yazi(path)
+		path_exists = path_exists_in_yazi_cwd(path_part)
 	end
 end
 
