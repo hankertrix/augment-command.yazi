@@ -163,7 +163,8 @@ function M:entry(job)
 		-- exit the function
 		if
 			given_parent_directory
-			and given_parent_directory ~= tostring(parent_directory_url.path)
+			and given_parent_directory
+				~= tostring(parent_directory_url.path)
 		then
 			return
 		end
@@ -178,12 +179,16 @@ function M:entry(job)
 		-- If the extracted item is not a directory
 		if not extracted_items_cha.is_dir then
 
+			-- Wait until the file exists in Yazi
+			utils.wait_until_path_exists_in_yazi(extracted_items_url)
+
 			-- Reveal the item and exit the function
+			-- Note that extracted_items_url is destroyed here
 			return ya.emit("reveal", { extracted_items_url })
 		end
 
-		-- Otherwise, change the directory to the extracted item.
-		-- Note that extracted_items_url is destroyed here.
+		-- Otherwise, change the directory to the extracted item
+		-- Note that extracted_items_url is destroyed here
 		ya.emit("cd", { extracted_items_url })
 
 		-- If the user wants to skip single subdirectories on enter,
@@ -194,7 +199,7 @@ function M:entry(job)
 		then
 
 			-- Call the function to skip child directories
-			utils.skip_single_child_directories(extracted_items_path)
+			utils.skip_single_child_directories(Url(extracted_items_path))
 		end
 	end
 end
