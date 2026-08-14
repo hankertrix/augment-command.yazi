@@ -6,7 +6,7 @@
 local utils = require(".utils")
 
 -- Import the configuration module
-local utils_config = require("augment-command")
+local config_utils = require(".main")
 
 -- Import the required constants
 local ItemGroup = require(".constants").ItemGroup
@@ -69,7 +69,7 @@ end
 function M:entry(job)
 
 	-- Get the arguments and the configuration
-	local args, config = utils_config.parse_args_and_init(job)
+	local args, config = config_utils.parse_args_and_init(job)
 
 	-- Get the archive paths
 	local archive_paths = get_archive_paths(args, config)
@@ -129,7 +129,7 @@ function M:entry(job)
 	if utils.table_pop(args, "remove", false) then
 
 		-- If the current directory is protected
-		if utils_config.current_directory_protected() then
+		if config_utils.current_directory_protected() then
 
 			-- Show the delete confirmation prompt
 			local user_confirmation = utils.show_delete_prompt(archive_path)
