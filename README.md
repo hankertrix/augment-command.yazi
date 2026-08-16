@@ -45,7 +45,7 @@ inspired by the [Yazi tips page][yazi-tips-page], the
 
 ## Requirements
 
-- [Yazi][yazi-link] v26.5.6+
+- [Yazi][yazi-link] v26.8.15+
 - [`7z` or `7zz` command][7z-link]
 - [`file` command][file-command-link]
 

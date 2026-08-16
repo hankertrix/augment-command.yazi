@@ -1,4 +1,4 @@
---- @since 26.5.6
+--- @since 26.8.15
 
 -- The module to handle the enter command
 
@@ -13,7 +13,7 @@ local M = {}
 function M:entry(job)
 
 	-- Get the arguments and the configuration
-	local args, config = require("augment-command").parse_args_and_init(job)
+	local args, config = require(".main").parse_args_and_init(job)
 
 	-- If the hovered item is not a directory
 	if not utils.hovered_item_is_dir() then

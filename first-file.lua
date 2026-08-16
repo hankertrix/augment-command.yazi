@@ -1,4 +1,4 @@
---- @since 26.5.6
+--- @since 26.8.15
 
 -- The module to handle the first file command
 

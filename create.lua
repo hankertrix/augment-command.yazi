@@ -1,4 +1,4 @@
---- @since 26.5.6
+--- @since 26.8.15
 
 -- The module to handle the create command
 
@@ -12,7 +12,7 @@ local ConfigurableComponents = require(".constants").ConfigurableComponents
 local M = {}
 
 -- Function to enter or open the created file
----@param item_url Url The url of the item to create
+---@param item_url Url The url of the created item
 ---@param is_directory boolean? Whether the item to create is a directory
 ---@param args ParsedArgs The arguments passed to the plugin
 ---@param config Configuration The configuration object
@@ -33,6 +33,9 @@ local function enter_or_open_created_item(item_url, is_directory, args, config)
 			return
 		end
 
+		-- Wait until the directory exists in Yazi
+		utils.wait_until_path_exists_in_yazi(item_url)
+
 		-- Otherwise, call the function change to the created directory
 		return ya.emit("cd", { item_url })
 	end
@@ -50,70 +53,11 @@ local function enter_or_open_created_item(item_url, is_directory, args, config)
 		return
 	end
 
+	-- Wait until the file exists in Yazi
+	utils.wait_until_path_exists_in_yazi(item_url)
+
 	-- Call the function to open the file
 	return ya.emit("open", { hovered = true })
-end
-
--- Function to execute the create command
----@param item_url Url The url of the item to create
----@param is_directory boolean Whether the item to create is a directory
----@param args ParsedArgs The arguments passed to the plugin
----@param config Configuration The configuration object
----@return nil
-local function exec(item_url, is_directory, args, config)
-
-	-- Get the parent directory of the file to create
-	local parent_directory_url = item_url.parent
-
-	-- If the parent directory doesn't exist,
-	-- then show an error and exit the function
-	if not parent_directory_url then
-		return utils.throw_error(
-			"Parent directory of the item to create doesn't exist"
-		)
-	end
-
-	-- If the item to create is a directory
-	if is_directory then
-
-		-- Call the function to create the directory
-		local successful, error_message = fs.create("dir_all", item_url)
-
-		-- If the function is not successful,
-		-- show the error message and exit the function
-		if not successful then return utils.throw_error(error_message) end
-
-	-- Otherwise, the item to create is a file
-	else
-
-		-- Create the parent directory if it doesn't exist
-		if not fs.cha(parent_directory_url, false) then
-
-			-- Call the function to create the parent directory
-			local successful, error_message =
-				fs.create("dir_all", parent_directory_url)
-
-			-- If the function is not successful,
-			-- show the error message and exit the function
-			if not successful then return utils.throw_error(error_message) end
-		end
-
-		-- Create the file
-		local successful, error_message = fs.write(item_url, "")
-
-		-- If the function is not successful,
-		-- show the error message and exit the function
-		if not successful then return utils.throw_error(error_message) end
-	end
-
-	-- Wait for the path to exist in Yazi before revealing it
-	utils.wait_until_path_exists_in_yazi(tostring(item_url.path))
-
-	-- Reveal the created item
-	ya.emit("reveal", { tostring(item_url.path) })
-
-	-- Call the function to enter or open the created item
-	enter_or_open_created_item(item_url, is_directory, args, config)
 end
 
 -- Function to handle the create command
@@ -121,7 +65,7 @@ end
 function M:entry(job)
 
 	-- Get the arguments and the configuration
-	local args, config = require("augment-command").parse_args_and_init(job)
+	local args, config = require(".main").parse_args_and_init(job)
 
 	-- Get the directory flag
 	local dir_flag = utils.table_pop(args, "dir", false)
@@ -143,15 +87,15 @@ function M:entry(job)
 	-- exit the function
 	if not user_input or event ~= 1 then return end
 
-	-- Get the current working directory as a url
-	local current_working_directory = Url(utils.get_current_directory())
+	-- Get the position of the path delimiter
+	local path_delimiter_position = user_input:find("[/\\]$")
 
-	-- Get whether the url ends with a path delimiter
-	local ends_with_path_delimiter = user_input:find("[/\\]$")
+	-- Initialise if the is_directory variable
+	local is_directory = dir_flag
 
-	-- Get the whether the given item is a directory or not based
-	-- on the default conditions for a directory
-	local is_directory = ends_with_path_delimiter or dir_flag
+	-- If the path delimiter position exists,
+	-- set the is_directory variable to true
+	if path_delimiter_position then is_directory = true end
 
 	-- Get the url from the user's input
 	local item_url = Url(user_input)
@@ -172,25 +116,16 @@ function M:entry(job)
 		is_directory = is_directory or not file_extension
 	end
 
-	-- Get the full url of the item to create
-	local full_url = current_working_directory:join(item_url)
+	-- Create the item
+	ya.emit("create", { user_input, dir = is_directory })
 
-	-- If the path to the item to create already exists,
-	-- and the user did not pass the force flag
-	if
-		fs.cha(full_url, false) and not utils.table_pop(args, "force", false)
-	then
-
-		-- Get whether the user wants to overwrite the file
-		local should_overwrite = utils.show_overwrite_prompt(full_url.path)
-
-		-- If the user does not want to overwrite the file,
-		-- then exit the function
-		if not should_overwrite then return end
-	end
-
-	-- Call the function to execute the create command
-	return exec(full_url, is_directory, args, config)
+	-- Call the function to enter or open the created item
+	enter_or_open_created_item(
+		utils.get_current_directory():join(user_input),
+		is_directory,
+		args,
+		config
+	)
 end
 
 -- Return the module table

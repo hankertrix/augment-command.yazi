@@ -1,4 +1,4 @@
---- @since 26.5.6
+--- @since 26.8.15
 
 -- The module to handle the leave command
 
@@ -13,7 +13,7 @@ local M = {}
 function M:entry(job)
 
 	-- Get the arguments and the configuration
-	local args, config = require("augment-command").parse_args_and_init(job)
+	local args, config = require(".main").parse_args_and_init(job)
 
 	-- Always emit the leave command
 	ya.emit("leave", args)
@@ -46,14 +46,14 @@ function M:entry(job)
 		if #directory_items ~= 1 then break end
 
 		-- Get the parent directory of the current directory
-		local parent_directory = Url(directory).parent
+		local parent_directory = directory.parent
 
 		-- If the parent directory is nil,
 		-- break the loop
 		if not parent_directory then break end
 
 		-- Otherwise, set the new directory to the parent directory
-		directory = tostring(parent_directory.path)
+		directory = parent_directory
 	end
 
 	-- Emit the change directory command to change to the directory variable

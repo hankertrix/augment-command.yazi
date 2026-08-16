@@ -1,4 +1,4 @@
---- @since 26.5.6
+--- @since 26.8.15
 
 -- The module to handle the rename command
 
@@ -10,7 +10,7 @@ local M = {}
 function M:entry(job)
 
 	-- Get the arguments and the configuration
-	local args, config = require("augment-command").parse_args_and_init(job)
+	local args, config = require(".main").parse_args_and_init(job)
 
 	-- Call the rename command with item group handling
 	return require(".utils").handle_yazi_command("rename", args, config)

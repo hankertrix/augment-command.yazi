@@ -1,9 +1,9 @@
---- @since 26.5.6
+--- @since 26.8.15
 
 -- The module to handle the remove command
 
 -- Import the configuration module
-local utils_config = require("augment-command")
+local config_utils = require(".main")
 
 -- The module table
 local M = {}
@@ -13,7 +13,7 @@ local M = {}
 function M:entry(job)
 
 	-- Get the arguments and the configuration
-	local args, config = utils_config.parse_args_and_init(job)
+	local args, config = config_utils.parse_args_and_init(job)
 
 	-- Call the remove command with item group handling
 	return require(".utils").handle_yazi_command(
@@ -24,7 +24,7 @@ function M:entry(job)
 
 			-- If the current directory is protected,
 			-- remove the force flag from the given arguments
-			if utils_config.current_directory_protected() then
+			if config_utils.current_directory_protected() then
 				require(".utils").table_pop(arguments, "force")
 			end
 

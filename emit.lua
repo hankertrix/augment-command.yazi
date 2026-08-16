@@ -1,4 +1,4 @@
---- @since 26.5.6
+--- @since 26.8.15
 
 -- The module to handle the emit command
 
@@ -16,7 +16,7 @@ local M = {}
 function M:entry(job)
 
 	-- Get the arguments
-	local args = require("augment-command").parse_args_and_init(job)
+	local args = require(".main").parse_args_and_init(job)
 
 	-- Get the command to emit given by the user
 	local given_command = table.remove(args, 1)
@@ -91,12 +91,18 @@ function M:entry(job)
 		-- If the emit input options is nil, exit the function
 		if not emit_input_options then return end
 
+		-- Initialise the event
+		local event
+
 		-- Prompt the user for the command
 		---@cast emit_input_options YaziInputOptions
-		given_command = ya.input(emit_input_options) or ""
+		given_command, event = ya.input(emit_input_options)
+
+		-- If the user did not confirm the input, exit the function
+		if event ~= 1 then return end
 
 		-- If the given command is empty, then exit the function
-		if #utils.string_trim(given_command) < 1 then return end
+		if #utils.string_trim(given_command or "") < 1 then return end
 
 		-- Emit the command to call the plugin's emit function
 		-- with the user's command

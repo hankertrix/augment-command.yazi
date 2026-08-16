@@ -766,10 +766,8 @@ function M.get_temporary_name(path)
 end
 
 -- Function to get the current working directory
----@type fun(): string Returns the current working directory as a string
-M.get_current_directory = ya.sync(
-	function(_) return tostring(cx.active.current.cwd.path) end
-)
+---@type fun(): Url Returns the current working directory as a Url
+M.get_current_directory = ya.sync(function(_) return cx.active.current.cwd end)
 
 -- Function to get the path of the hovered item
 ---@type fun(
@@ -995,22 +993,18 @@ function M.get_item_group(config)
 end
 
 -- Function to get all the items in the given directory
----@param directory_path string The path to the directory
+---@param directory Url The Url to the directory
 ---@param get_hidden_items boolean Whether to get hidden items
 ---@param directories_only boolean? Whether to only get directories
----@return string[] directory_items The list of urls to the directory items
-function M.get_directory_items(
-	directory_path,
-	get_hidden_items,
-	directories_only
-)
+---@return Url[] directory_items The list of urls to the directory items
+function M.get_directory_items(directory, get_hidden_items, directories_only)
 
 	-- Initialise the list of directory items
 	---@type string[]
 	local directory_items = {}
 
 	-- Read the contents of the directory
-	local directory_contents, _ = fs.read_dir(Url(directory_path), {})
+	local directory_contents, _ = fs.read_dir(directory, {})
 
 	-- If there are no directory contents,
 	-- then return the empty list of directory items
@@ -1030,7 +1024,7 @@ function M.get_directory_items(
 		if directories_only and not item.cha.is_dir then goto continue end
 
 		-- Otherwise, add the item path to the list of directory items
-		table.insert(directory_items, tostring(item.url.path))
+		table.insert(directory_items, item.url)
 
 		-- The continue label to continue the loop
 		::continue::
@@ -1041,12 +1035,12 @@ function M.get_directory_items(
 end
 
 -- Function to skip child directories with only one directory
----@param initial_directory_path string The path of the initial directory
+---@param initial_directory Url The Url of the initial directory
 ---@return nil
-function M.skip_single_child_directories(initial_directory_path)
+function M.skip_single_child_directories(initial_directory)
 
 	-- Initialise the directory variable to the initial directory given
-	local directory = initial_directory_path
+	local directory = initial_directory
 
 	-- Get the tab preferences
 	local tab_preferences = M.get_tab_preferences()
@@ -1157,7 +1151,7 @@ local function get_part_of_path_in_yazi_cwd(given_path)
 	if type(given_path) == "string" then given_path = Url(given_path) end
 
 	-- Get the current working directory
-	local current_working_directory = Url(M.get_current_directory())
+	local current_working_directory = M.get_current_directory()
 
 	-- Strip the current working directory from the front of the given path
 	local remaining_path = given_path:strip_prefix(current_working_directory)

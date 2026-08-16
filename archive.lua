@@ -1,4 +1,4 @@
---- @since 26.5.6
+--- @since 26.8.15
 
 -- The module to handle the archive command
 
@@ -6,7 +6,7 @@
 local utils = require(".utils")
 
 -- Import the configuration module
-local utils_config = require("augment-command")
+local config_utils = require(".main")
 
 -- Import the required constants
 local constants = require(".constants")
@@ -52,7 +52,7 @@ end
 function M:entry(job)
 
 	-- Get the arguments and the configuration
-	local args, config = utils_config.parse_args_and_init(job)
+	local args, config = config_utils.parse_args_and_init(job)
 
 	-- Get the item group
 	local item_group = utils.get_item_group(config)
@@ -209,7 +209,7 @@ function M:entry(job)
 	then
 
 		-- If the current directory is protected
-		if utils_config.current_directory_protected() then
+		if config_utils.current_directory_protected() then
 
 			-- Show the delete confirmation prompt
 			local user_confirmation = utils.show_delete_prompt(item_paths)
