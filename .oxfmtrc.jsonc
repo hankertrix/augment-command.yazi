@@ -1,0 +1,18 @@
+{
+	"$schema": "https://raw.githubusercontent.com/oxc-project/oxc/refs/heads/main/npm/oxfmt/configuration_schema.json",
+	"arrowParens": "avoid",
+	"printWidth": 80,
+	"proseWrap": "always",
+	"sortImports": true,
+	"tabWidth": 4,
+	"useTabs": true,
+	"overrides": [
+		{
+			"files": ["*.md", "*.yaml", "*.yml"],
+			"options": {
+				"useTabs": false,
+				"tabWidth": 2,
+			},
+		},
+	],
+}
