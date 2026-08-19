@@ -122,13 +122,9 @@ function SevenZip:retry_archiver(archiver_function, clean_up_wanted)
 		-- Execute the archiver function
 		local output, error = archiver_function()
 
-		-- If there is no output
+		-- If there is no output,
+		-- return the result of the archiver function
 		if not output then
-
-			-- Clean up the extracted files
-			clean_up()
-
-			-- Return the result of the archiver function
 			return {
 				successful = false,
 				error = tostring(error),
@@ -145,7 +141,17 @@ function SevenZip:retry_archiver(archiver_function, clean_up_wanted)
 			}
 		end
 
-		-- Clean up the extracted files
+		-- Clean up the extracted files.
+		--
+		-- While the calling function (recursively_extract_archive)
+		-- already cleans up the temporary directory on failure,
+		-- this clean up is required, otherwise 7z will keep dumping empty files
+		-- that match the file names of the items in the archive,
+		-- but contain no data.
+		--
+		-- When using the rename flag, these empty files will
+		-- keep being created whenever the user inputs the wrong password,
+		-- resulting in a lot of empty files in the final extracted directory.
 		clean_up()
 
 		-- Set the error message to the standard error
@@ -224,10 +230,6 @@ function SevenZip:retry_archiver(archiver_function, clean_up_wanted)
 			}
 		end
 	end
-
-	-- If all the tries have been exhausted,
-	-- call the clean up function
-	clean_up()
 
 	-- Return the result of the archiver command
 	return {
