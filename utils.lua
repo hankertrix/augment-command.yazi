@@ -1040,7 +1040,7 @@ end
 function M.skip_single_child_directories(initial_directory)
 
 	-- Initialise the directory variable to the initial directory given
-	local directory = initial_directory
+	local directory = Url(initial_directory)
 
 	-- Get the tab preferences
 	local tab_preferences = M.get_tab_preferences()
@@ -1053,15 +1053,15 @@ function M.skip_single_child_directories(initial_directory)
 			M.get_directory_items(directory, tab_preferences.show_hidden)
 
 		-- If the number of directory items is not 1,
-		-- then break out of the loop.
-		if #directory_items ~= 1 then break end
+		-- then exit the function
+		if #directory_items ~= 1 then return end
 
 		-- Otherwise, get the directory item
 		local directory_item = table.unpack(directory_items)
 
 		-- Get the cha object of the directory item
 		-- and don't follow symbolic links
-		local directory_item_cha = fs.cha(Url(directory_item), false)
+		local directory_item_cha = fs.cha(directory_item, false)
 
 		-- If the cha object of the directory item is nil
 		-- then break the loop
@@ -1072,7 +1072,7 @@ function M.skip_single_child_directories(initial_directory)
 		if not directory_item_cha.is_dir then break end
 
 		-- Otherwise, set the directory to the inner directory
-		directory = directory_item
+		directory = Url(directory_item)
 	end
 
 	-- Emit the change directory command to change to the directory variable
