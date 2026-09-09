@@ -34,7 +34,10 @@ local function enter_or_open_created_item(item_url, is_directory, args, config)
 		end
 
 		-- Wait until the directory exists in Yazi
-		utils.wait_until_path_exists_in_yazi(item_url)
+		local timed_out = utils.wait_until_path_exists_in_yazi(item_url)
+
+		-- If the wait timed out, exit the function
+		if timed_out then return end
 
 		-- Otherwise, call the function change to the created directory
 		return ya.emit("cd", { item_url })
@@ -54,10 +57,13 @@ local function enter_or_open_created_item(item_url, is_directory, args, config)
 	end
 
 	-- Wait until the file exists in Yazi
-	utils.wait_until_path_exists_in_yazi(item_url)
+	local timed_out = utils.wait_until_path_exists_in_yazi(item_url)
 
-	-- Call the function to open the file
-	return ya.emit("open", { hovered = true })
+	-- If the wait timed out, exit the function
+	if timed_out then return end
+
+	-- Otherwise, call the function to open the file
+	ya.emit("open", { hovered = true })
 end
 
 -- Function to handle the create command

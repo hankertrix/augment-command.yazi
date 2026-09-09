@@ -229,9 +229,12 @@ function M:entry(job)
 	then
 
 		-- Wait for the path to exist in Yazi before revealing it
-		utils.wait_until_path_exists_in_yazi(archive_path)
+		local timed_out = utils.wait_until_path_exists_in_yazi(archive_path)
 
-		-- Reveal the archive
+		-- If the wait timed out, exit the function
+		if timed_out then return end
+
+		-- Otherwise, reveal the archive
 		ya.emit("reveal", { archive_path })
 	end
 end

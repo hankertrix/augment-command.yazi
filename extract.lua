@@ -180,9 +180,13 @@ function M:entry(job)
 		if not extracted_items_cha.is_dir then
 
 			-- Wait until the file exists in Yazi
-			utils.wait_until_path_exists_in_yazi(extracted_items_url)
+			local timed_out =
+				utils.wait_until_path_exists_in_yazi(extracted_items_url)
 
-			-- Reveal the item and exit the function
+			-- If the wait timed out, exit the function
+			if timed_out then return end
+
+			-- Otherwise, reveal the item and exit the function
 			-- Note that extracted_items_url is destroyed here
 			return ya.emit("reveal", { extracted_items_url })
 		end

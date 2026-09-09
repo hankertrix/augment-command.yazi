@@ -340,7 +340,8 @@ local function move_extracted_items(archive_url, destination_url)
 	-- There is a limit of 2 as we just need to
 	-- know if the destination contains only
 	-- a single item or not.
-	local extracted_items = fs.read_dir(destination_url, { limit = 2 })
+	local extracted_items =
+		fs.read_dir(utils.copy_url(destination_url), { limit = 2 })
 
 	-- If the extracted items doesn't exist,
 	-- clean up and return the error
@@ -444,7 +445,7 @@ local function move_extracted_items(archive_url, destination_url)
 
 		-- Rename the destination directory itself to the target path
 		move_successful, error_message =
-			fs.rename(Url(destination_url), Url(target_path))
+			fs.rename(utils.copy_url(destination_url), Url(target_path))
 	end
 
 	-- Clean up the destination directory
@@ -566,8 +567,10 @@ function M.recursively_extract_archive(
 	end
 
 	-- Get the result of moving the extracted items
-	local move_result =
-		move_extracted_items(Url(archive_path), temp_directory_url)
+	local move_result = move_extracted_items(
+		Url(archive_path),
+		utils.copy_url(temp_directory_url)
+	)
 
 	-- Get the extracted items path
 	local extracted_items_path = move_result.extracted_items_path
@@ -638,11 +641,6 @@ function M.recursively_extract_archive(
 
 		-- Get the full path to the archive
 		local full_archive_path = tostring(full_archive_url.path)
-
-		-- Yazi is now way too quick (a good problem to have, really),
-		-- so we slow it down a little to make sure that the
-		-- extracted files are not overwritten by each other
-		ya.sleep(10e-3)
 
 		-- Recursively extract the archive
 		utils.emit_augmented_command(
