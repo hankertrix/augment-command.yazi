@@ -992,11 +992,6 @@ function M.get_item_group(config)
 	end
 end
 
--- Function to create a copy of a Url
----@param url Url The Url to copy
----@return Url copied_url The copied Url
-function M.copy_url(url) return Url(tostring(url)) end
-
 -- Function to get all the items in the given directory
 ---@param directory Url The Url to the directory
 ---@param get_hidden_items boolean Whether to get hidden items
@@ -1045,7 +1040,7 @@ end
 function M.skip_single_child_directories(initial_directory)
 
 	-- Initialise the directory variable to the initial directory given
-	local directory = M.copy_url(initial_directory)
+	local directory = initial_directory
 
 	-- Get the tab preferences
 	local tab_preferences = M.get_tab_preferences()

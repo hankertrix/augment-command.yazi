@@ -341,7 +341,7 @@ local function move_extracted_items(archive_url, destination_url)
 	-- know if the destination contains only
 	-- a single item or not.
 	local extracted_items =
-		fs.read_dir(utils.copy_url(destination_url), { limit = 2 })
+		fs.read_dir(destination_url, { limit = 2 })
 
 	-- If the extracted items doesn't exist,
 	-- clean up and return the error
@@ -445,7 +445,7 @@ local function move_extracted_items(archive_url, destination_url)
 
 		-- Rename the destination directory itself to the target path
 		move_successful, error_message =
-			fs.rename(utils.copy_url(destination_url), Url(target_path))
+			fs.rename(destination_url, Url(target_path))
 	end
 
 	-- Clean up the destination directory
@@ -569,7 +569,7 @@ function M.recursively_extract_archive(
 	-- Get the result of moving the extracted items
 	local move_result = move_extracted_items(
 		Url(archive_path),
-		utils.copy_url(temp_directory_url)
+		temp_directory_url
 	)
 
 	-- Get the extracted items path
