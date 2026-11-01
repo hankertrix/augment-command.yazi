@@ -2,6 +2,9 @@
 
 -- The module to handle the remove command
 
+-- Import the utilities module
+local utils = require(".utils")
+
 -- Import the configuration module
 local config_utils = require(".main")
 
@@ -16,16 +19,20 @@ function M:entry(job)
 	local args, config = config_utils.parse_args_and_init(job)
 
 	-- Call the remove command with item group handling
-	return require(".utils").handle_yazi_command(
+	return utils.handle_yazi_command(
 		"remove",
 		args,
 		config,
-		function(arguments)
+		function(arguments, paths)
 
-			-- If the current directory is protected,
-			-- remove the force flag from the given arguments
-			if config_utils.current_directory_protected() then
-				require(".utils").table_pop(arguments, "force")
+			-- Iterate over the given paths
+			for _, path in ipairs(paths) do
+
+				-- If the path is protected
+				-- remove the force flag from the given arguments
+				if config_utils.path_is_protected(path) then
+					utils.table_pop(arguments, "force")
+				end
 			end
 
 			-- Return the modified arguments

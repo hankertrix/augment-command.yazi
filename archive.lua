@@ -209,7 +209,7 @@ function M:entry(job)
 	then
 
 		-- If the current directory is protected
-		if config_utils.current_directory_protected() then
+		if config_utils.path_is_protected() then
 
 			-- Show the delete confirmation prompt
 			local user_confirmation = utils.show_delete_prompt(item_paths)

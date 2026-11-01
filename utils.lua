@@ -6,7 +6,10 @@
 ---@alias ParsedArgs table<string|number, string|number|boolean>
 
 -- The type for the function to modify the arguments
----@alias ModifyArgsFunction fun(args: ParsedArgs): ParsedArgs
+---@alias ModifyArgsFunction fun(
+---	args: ParsedArgs,
+---	paths: string[]?,
+---): ParsedArgs
 
 -- Import the constants needed
 local constants = require(".constants")
@@ -1090,21 +1093,29 @@ function M.handle_yazi_command(command, args, config, modify_args)
 	-- Call the function to get the item group
 	local item_group = M.get_item_group(config)
 
-	-- If the function to modify the arguments is given,
-	-- modify the arguments with it
-	if modify_args then args = modify_args(args) end
-
 	-- If no item group is returned, exit the function
 	if not item_group then return end
 
 	-- If the item group is the selected items
 	if item_group == ItemGroup.Selected then
 
+		-- Modify the arguments if it is given
+		-- and pass the paths of selected items
+		if modify_args then
+			args = modify_args(args, M.get_paths_of_selected_items())
+		end
+
 		-- Emit the command to operate on the selected items
 		ya.emit(command, args)
 
 	-- If the item group is the hovered item
 	elseif item_group == ItemGroup.Hovered then
+
+		-- Modify the arguments if it is given
+		-- and pass the paths of selected items
+		if modify_args then
+			args = modify_args(args, { M.get_path_of_hovered_item() })
+		end
 
 		-- Emit the command with the hovered option
 		ya.emit(command, M.merge_tables({}, args, { hovered = true }))

@@ -27,7 +27,7 @@
 ---@field smooth_scrolling boolean Whether to smoothly scroll or not
 ---@field scroll_delay number The scroll delay in seconds for smooth scrolling
 ---@field wraparound_file_navigation boolean Have wraparound navigation or not
----@field protected_directories string[] Directories that are safe from deletion
+---@field protected_path_patterns string[] Lua patterns of protected paths
 
 -- The full configuration for the plugin
 ---@class (exact) Configuration: UserConfiguration
@@ -76,7 +76,7 @@ local DEFAULT_CONFIG = {
 	smooth_scrolling = false,
 	scroll_delay = 0.02,
 	wraparound_file_navigation = true,
-	protected_directories = {},
+	protected_path_patterns = {},
 }
 
 -- Function to merge the given configuration table with the default one
@@ -325,21 +325,24 @@ function M.parse_args_and_init(job)
 	return args, config
 end
 
--- Function to check if the current directory
--- is in the list of protected directories
----@type fun(): boolean
-M.current_directory_protected = ya.sync(function(state)
+-- Function to check if the given path
+-- is in the list of protected directories.
+--
+-- If no path is given, the current directory is used instead.
+---@type fun(given_path: string?): boolean
+M.path_is_protected = ya.sync(function(state, given_path)
 
-	-- Get the current directory
-	local current_directory_path = tostring(cx.active.current.cwd.path)
+	-- Get the current directory if the path isn't given
+	given_path = given_path or tostring(cx.active.current.cwd.path)
 
-	-- Iterate over all the directories in the list of protected directories
-	for _, protected_directory in ipairs(state.config.protected_directories) do
+	-- Get the protected path patterns
+	local protected_path_patterns = state.config.protected_path_patterns
 
-		-- Match the current directory on the protected directory
-		local match = current_directory_path:match(
-			utils.escape_match_pattern(protected_directory)
-		)
+	-- Iterate over all the patterns in the list of protected path patterns
+	for _, protected_path_pattern in ipairs(protected_path_patterns) do
+
+		-- Match the given path on the protected path pattern
+		local match = given_path:match(protected_path_pattern)
 
 		-- If there is a match, immediately return true
 		if match then return true end

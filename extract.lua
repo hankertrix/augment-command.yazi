@@ -129,7 +129,7 @@ function M:entry(job)
 	if utils.table_pop(args, "remove", false) then
 
 		-- If the current directory is protected
-		if config_utils.current_directory_protected() then
+		if config_utils.path_is_protected() then
 
 			-- Show the delete confirmation prompt
 			local user_confirmation = utils.show_delete_prompt(archive_path)

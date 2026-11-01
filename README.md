@@ -94,7 +94,7 @@ ya pkg upgrade
 | `smooth_scrolling`                  | `true` or `false`                                         | `false`   | Self-explanatory, this option enables smooth scrolling.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | `scroll_delay`                      | A floating point number, like `0.02`, `0.05`, `0.1`, etc. | `0.02`    | The delay, in seconds, between each call of the `arrow` command to scroll through the file list. The smaller the `scroll_delay`, the faster the file list is scrolled. Avoid setting a `scroll_delay` that is more than `1` second. This is due to the plugin being asynchronous, which will result in the plugin continuing to call the `arrow` command even when the directory has changed, or when you are in a different application that doesn't block Yazi, resulting in unexpected behaviour.                                                                                                                                                                                                                                                                                                                              |
 | `wraparound_file_navigation`        | `true` or `false`                                         | `true`    | Wrap around from the bottom to the top or from the top to the bottom when using the `arrow` or `parent-arrow` command to navigate.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
-| `protected_directories`             | `string[]`                                                | `{}`      | A list of **absolute** paths to directories that are excluded from forced deletion. Basically, if an item is in one of the directories in `protected_directories`, the confirmation prompt will appear even when the `--force` flag is passed. This option also causes a prompt to appear when using the `--remove` flag for the `extract` and `archive` commands.                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `protected_path_patterns`           | `string[]`                                                | `{}`      | A list of **Lua patterns** to paths that are excluded from forced deletion. Basically, if an item matches one of the patterns in `protected_path_patterns`, the confirmation prompt will appear even when the `--force` flag is passed. This option also causes a prompt to appear when using the `--remove` flag for the `extract` and `archive` commands.                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 
 If you would like to use the default configuration, which is shown below, you
 don't need to add anything to your `~/.config/yazi/init.lua` file on Linux and
@@ -130,7 +130,7 @@ require("augment-command"):setup({
     smooth_scrolling = false,
     scroll_delay = 0.02,
     wraparound_file_navigation = true,
-    protected_directories = {},
+    protected_path_patterns = {},
 })
 ```
 
@@ -154,7 +154,7 @@ require("augment-command"):setup({
     encrypt_archives = true,
     smooth_scrolling = true,
     wraparound_file_navigation = false,
-    protected_directories = {"/bin/", "/usr/bin/"},
+    protected_path_patterns = {"/bin/", "/usr/bin/"},
 })
 ```
 
@@ -278,7 +278,7 @@ is also selected, then it will operate on the selected items.
 
   [opener]
   extract = [
-      { run = "ya pub augmented-extract --list %s", desc = "Extract here" },
+    { run = "ya pub augmented-extract --list %s", desc = "Extract here" },
   ]
   ```
 
@@ -363,8 +363,8 @@ is also selected, then it will operate on the selected items.
 
   [extract-remove-extracted-archive-video]
 
-- When the item being removed by the `--remove` flag is in the list of
-  `protected_directories`, the plugin prompts for confirmation instead of
+- When the item being removed by the `--remove` flag matches an item in the list
+  of `protected_path_patterns`, the plugin prompts for confirmation instead of
   immediately removing the item even when the `--force` flag is passed.
 
   Video:
@@ -458,9 +458,9 @@ is also selected, then it will operate on the selected items.
 
     [remove-behaviour-video]
 
-- When removing an item that is in the list of `protected_directories`, the
-  plugin prompts for confirmation instead of immediately removing the item even
-  when the `--force` flag was passed.
+- When removing an item matches an item in the list of
+  `protected_path_patterns`, the plugin prompts for confirmation instead of
+  immediately removing the item even when the `--force` flag was passed.
 
   Video:
 
@@ -959,8 +959,8 @@ of writing the shell command inline in your `keymap.toml` file.
 
   [archive-remove-archived-files-video]
 
-- When the item being removed by the `--remove` flag is in the list of
-  `protected_directories`, the plugin prompts for confirmation instead of
+- When the item being removed by the `--remove` flag matches an item in the list
+  of `protected_path_patterns`, the plugin prompts for confirmation instead of
   immediately removing the item even when the `--force` flag is passed.
 
   Video:

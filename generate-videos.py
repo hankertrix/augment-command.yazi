@@ -1162,7 +1162,7 @@ VHS_TAPES: list[VHSTape] = [
 		],
 		scripts=[
 			VHSTape.edit_plugin_config(
-				"protected_directories",
+				"protected_path_patterns",
 				"".join(
 					[
 						r'{{"',
@@ -1460,7 +1460,7 @@ VHS_TAPES: list[VHSTape] = [
 		],
 		scripts=[
 			VHSTape.edit_plugin_config(
-				"protected_directories",
+				"protected_path_patterns",
 				"".join(
 					[
 						r'{{"',
@@ -2640,7 +2640,7 @@ VHS_TAPES: list[VHSTape] = [
 		],
 		scripts=[
 			VHSTape.edit_plugin_config(
-				"protected_directories",
+				"protected_path_patterns",
 				"".join(
 					[
 						r'{{"',
