@@ -15,6 +15,21 @@ function M:entry(job)
 	-- Get the arguments and the configuration
 	local args, config = require(".main").parse_args_and_init(job)
 
+	-- The function to paste the items
+	---@type fun(): nil
+	local function paste()
+
+		-- Always paste the items
+		ya.emit("paste", args)
+
+		-- If unyanking after pasting is wanted, emit the unyank command
+		if
+			config.unyank_after_paste or utils.table_pop(args, "unyank", false)
+		then
+			ya.emit("unyank", {})
+		end
+	end
+
 	-- If the hovered item is not a directory or smart paste is not wanted
 	if
 		not utils.hovered_item_is_dir()
@@ -23,17 +38,18 @@ function M:entry(job)
 
 		-- Just paste the items inside the current directory
 		-- and exit the function
-		return ya.emit("paste", args)
+		return paste()
 	end
 
 	-- Otherwise, enter the directory
 	ya.emit("enter", {})
 
 	-- Paste the items inside the directory
-	ya.emit("paste", args)
+	paste()
 
 	-- Leave the directory
 	ya.emit("leave", {})
+
 end
 
 -- Return the module table

@@ -27,6 +27,7 @@
 ---@field smooth_scrolling boolean Whether to smoothly scroll or not
 ---@field scroll_delay number The scroll delay in seconds for smooth scrolling
 ---@field wraparound_file_navigation boolean Have wraparound navigation or not
+---@field unyank_after_paste boolean Emit unyank command after pasting or not
 ---@field protected_path_patterns string[] Lua patterns of protected paths
 
 -- The full configuration for the plugin
@@ -76,6 +77,7 @@ local DEFAULT_CONFIG = {
 	smooth_scrolling = false,
 	scroll_delay = 0.02,
 	wraparound_file_navigation = true,
+	unyank_after_paste = false,
 	protected_path_patterns = {},
 }
 

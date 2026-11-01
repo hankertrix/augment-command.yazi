@@ -94,6 +94,7 @@ ya pkg upgrade
 | `smooth_scrolling`                  | `true` or `false`                                         | `false`   | Self-explanatory, this option enables smooth scrolling.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | `scroll_delay`                      | A floating point number, like `0.02`, `0.05`, `0.1`, etc. | `0.02`    | The delay, in seconds, between each call of the `arrow` command to scroll through the file list. The smaller the `scroll_delay`, the faster the file list is scrolled. Avoid setting a `scroll_delay` that is more than `1` second. This is due to the plugin being asynchronous, which will result in the plugin continuing to call the `arrow` command even when the directory has changed, or when you are in a different application that doesn't block Yazi, resulting in unexpected behaviour.                                                                                                                                                                                                                                                                                                                              |
 | `wraparound_file_navigation`        | `true` or `false`                                         | `true`    | Wrap around from the bottom to the top or from the top to the bottom when using the `arrow` or `parent-arrow` command to navigate.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `unyank_after_paste`                | `true` or `false`                                         | `false`   | Self-explanatory, this option causes the plugin to emit the `unyank` command after emitting the `paste` command. You can also enable this behaviour by passing the `--unyank` flag to the `paste` command.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | `protected_path_patterns`           | `string[]`                                                | `{}`      | A list of **Lua patterns** to paths that are excluded from forced deletion. Basically, if an item matches one of the patterns in `protected_path_patterns`, the confirmation prompt will appear even when the `--force` flag is passed. This option also causes a prompt to appear when using the `--remove` flag for the `extract` and `archive` commands.                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 
 If you would like to use the default configuration, which is shown below, you
@@ -130,6 +131,7 @@ require("augment-command"):setup({
     smooth_scrolling = false,
     scroll_delay = 0.02,
     wraparound_file_navigation = true,
+    unyank_after_paste = true,
     protected_path_patterns = {},
 })
 ```
@@ -154,7 +156,8 @@ require("augment-command"):setup({
     encrypt_archives = true,
     smooth_scrolling = true,
     wraparound_file_navigation = false,
-    protected_path_patterns = {"/bin/", "/usr/bin/"},
+    unyank_after_paste = true,
+    protected_path_patterns = {"/bin", "/usr/bin"},
 })
 ```
 
@@ -705,6 +708,13 @@ of writing the shell command inline in your `keymap.toml` file.
 
 ### Paste (`paste`)
 
+- When `unyank_after_paste` is set to `true`, the `paste` command will emit the
+  `unyank` command after pasting the items.
+- `--unyank` flag to emit the `unyank` command after pasting the items. This
+  flag will cause the `paste` command to always emit the `unyank` command even
+  when `unyank_after_paste` is set to `false`. This allows you to set a key to
+  use this behaviour with the `paste` command instead of using it for every
+  `paste` command.
 - When `smart_paste` is set to `true`, the `paste` command will paste items into
   the hovered directory without entering it. If the hovered item is not a
   directory, the command pastes in the current directory instead. Otherwise,
