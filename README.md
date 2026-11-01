@@ -131,7 +131,7 @@ require("augment-command"):setup({
     smooth_scrolling = false,
     scroll_delay = 0.02,
     wraparound_file_navigation = true,
-    unyank_after_paste = true,
+    unyank_after_paste = false,
     protected_path_patterns = {},
 })
 ```
