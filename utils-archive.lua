@@ -340,8 +340,7 @@ local function move_extracted_items(archive_url, destination_url)
 	-- There is a limit of 2 as we just need to
 	-- know if the destination contains only
 	-- a single item or not.
-	local extracted_items =
-		fs.read_dir(destination_url, { limit = 2 })
+	local extracted_items = fs.read_dir(destination_url, { limit = 2 })
 
 	-- If the extracted items doesn't exist,
 	-- clean up and return the error
@@ -567,10 +566,8 @@ function M.recursively_extract_archive(
 	end
 
 	-- Get the result of moving the extracted items
-	local move_result = move_extracted_items(
-		Url(archive_path),
-		temp_directory_url
-	)
+	local move_result =
+		move_extracted_items(Url(archive_path), temp_directory_url)
 
 	-- Get the extracted items path
 	local extracted_items_path = move_result.extracted_items_path

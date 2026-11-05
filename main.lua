@@ -290,10 +290,10 @@ local subscribe_to_augmented_extract_event = ya.sync(function()
 end)
 
 -- Function to initialise the plugin
----@param opts UserConfiguration? The options given to the plugin
----@return Configuration config The initialised configuration object
----@return th theme The saved theme object
-function M:setup(opts)
+---@type fun(
+--- opts: UserConfiguration?,  -- The options given to the plugin
+---): config: Configuration, theme: th
+M.setup = ya.sync(function(_, opts)
 
 	-- Subscribe to the augmented extract event
 	subscribe_to_augmented_extract_event()
@@ -301,12 +301,12 @@ function M:setup(opts)
 	-- Initialise the configuration object
 	local config = initialise_config(opts)
 
-	-- Add the theme configuration to the config
-	local theme = initialise_theme()
+	-- Initialise the theme configuration
+	initialise_theme()
 
 	-- Return the configuration object
-	return config, theme
-end
+	return config
+end)
 
 -- Function to parse the arguments and initialise the plugin
 ---@param job { args: YaziArgs } The job object given by Yazi
@@ -323,7 +323,7 @@ function M.parse_args_and_init(job)
 	-- If the configuration hasn't been initialised yet,
 	-- then initialise the plugin with the default configuration,
 	-- as it hasn't been initialised either
-	if not config then config = M:setup() end
+	if not config then config = M.setup() end
 
 	-- Return the arguments and the configuration
 	return args, config
