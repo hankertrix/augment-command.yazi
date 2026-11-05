@@ -5,6 +5,7 @@
 ---@class (exact) UserConfiguration
 ---@field prompt boolean Whether or not to prompt the user
 ---@field default_item_group_for_prompt ItemGroup The default prompt item group
+---@field use_yazi_item_group boolean Whether to use Yazi's default item group
 ---@field smart_enter boolean Whether to use smart enter
 ---@field smart_paste boolean Whether to use smart paste
 ---@field smart_tab_create boolean Whether to use smart tab create
@@ -55,6 +56,7 @@ local M = {}
 local DEFAULT_CONFIG = {
 	prompt = false,
 	default_item_group_for_prompt = ItemGroup.Hovered,
+	use_yazi_item_group = false,
 	smart_enter = true,
 	smart_paste = false,
 	smart_tab_create = false,

@@ -874,11 +874,18 @@ end)
 ---@type fun(config: Configuration): ItemGroup? The desired item group
 local get_item_group_from_state = ya.sync(function(_, config)
 
+	-- Cast the configuration to the correct type
+	---@cast config Configuration
+
 	-- Get the hovered item
 	local hovered_item = cx.active.current.hovered
 
 	-- The boolean representing that there are no selected items
 	local no_selected_items = #cx.active.selected == 0
+
+	-- If the user wants to use Yazi's default item group,
+	-- return the enum for the selected items and exit the function
+	if config.use_yazi_item_group then return ItemGroup.Selected end
 
 	-- If there is no hovered item
 	if not hovered_item then
