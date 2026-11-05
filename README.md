@@ -911,6 +911,11 @@ of writing the shell command inline in your `keymap.toml` file.
 
 ### Archive (`archive`)
 
+> [!WARNING]
+> This command has been deprecated and will be removed in the next Yazi stable
+> release. Please use the official [compress.yazi] plugin instead if you are
+> using nightly Yazi.
+
 - The `archive` command adds the selected or hovered items to an archive, with
   the plugin prompting for an archive name. The archive file extension given
   will be used to determine the type of archive to create.
@@ -1339,6 +1344,7 @@ the full licence in the [`LICENSE`][Licence] file.
 [my-yazi-toml]:
   https://github.com/hankertrix/Dotfiles/blob/main/tilde/dot_config/yazi/yazi.toml
 [Licence]: LICENSE
+[compress.yazi]: https://github.com/yazi-rs/plugins/tree/main/compress.yazi
 
 <!-- Videos -->
 
