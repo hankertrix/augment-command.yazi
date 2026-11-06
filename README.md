@@ -17,9 +17,7 @@ inspired by the [Yazi tips page][yazi-tips-page], the
   - [Extract (`extract`)](#extract-extract)
   - [Enter (`enter`)](#enter-enter)
   - [Leave (`leave`)](#leave-leave)
-  - [Rename (`rename`)](#rename-rename)
   - [Remove (`remove`)](#remove-remove)
-  - [Copy (`copy`)](#copy-copy)
   - [Create (`create`)](#create-create)
   - [Shell (`shell`)](#shell-shell)
     - [Passing arguments to the `shell` command](#passing-arguments-to-the-shell-command)
@@ -29,6 +27,7 @@ inspired by the [Yazi tips page][yazi-tips-page], the
   - [Quit (`quit`)](#quit-quit)
   - [Arrow (`arrow`)](#arrow-arrow)
 - [New commands](#new-commands)
+  - [Augment (`augment`)](#augment-augment)
   - [Parent arrow (`parent-arrow`)](#parent-arrow-parent-arrow)
   - [First file (`first-file`)](#first-file-first-file)
   - [Archive (`archive`)](#archive-archive)
@@ -167,7 +166,7 @@ require("augment-command"):setup({
 ## What about the commands are augmented?
 
 All commands that can operate on multiple files and directories, like `open`,
-`rename`, `remove` and `shell`, as well as the new commands `extract`,
+`remove` and `shell`, as well as the new commands `augment`, `extract`,
 `archive`, `editor` and `pager`, now determine an item group to operate on. By
 default, the command will operate on the hovered item, unless the hovered item
 is also selected, then it will operate on the selected items.
@@ -420,28 +419,6 @@ is also selected, then it will operate on the selected items.
   `true`. This allows you to set a key to navigate out of directories without
   skipping the directories that contain only one subdirectory.
 
-### Rename (`rename`)
-
-- The `rename` command is augmented as stated in [this section
-  above][augment-section].
-
-  Videos:
-  - When `must_have_hovered_item` is `true`:
-
-    [rename-must-have-hovered-item-video]
-
-  - When `must_have_hovered_item` is `false`:
-
-    [rename-hovered-item-optional-video]
-
-  - When `prompt` is set to `true`:
-
-    [rename-prompt-video]
-
-  - When `prompt` is set to `false`:
-
-    [rename-behaviour-video]
-
 ### Remove (`remove`)
 
 - The `remove` command is augmented as stated in [this section
@@ -471,28 +448,6 @@ is also selected, then it will operate on the selected items.
   Video:
 
   [remove-protected-directory-video]
-
-### Copy (`copy`)
-
-- The `copy` command is augmented as stated in [this section
-  above][augment-section].
-
-  Videos:
-  - When `must_have_hovered_item` is `true`:
-
-    [copy-must-have-hovered-item-video]
-
-  - When `must_have_hovered_item` is `false`:
-
-    [copy-hovered-item-optional-video]
-
-  - When `prompt` is set to `true`:
-
-    [copy-prompt-video]
-
-  - When `prompt` is set to `false`:
-
-    [copy-behaviour-video]
 
 ### Create (`create`)
 
@@ -828,6 +783,105 @@ of writing the shell command inline in your `keymap.toml` file.
   when `wraparound_file_navigation` is set to `true`.
 
 ## New commands
+
+### Augment (`augment`)
+
+- The `augment` command is the command that can augment any arbitrary Yazi
+  command, including plugin commands, as long as they follow Yazi's default
+  behaviour and always act on the selected items, and provide the `--hovered`
+  flag to only operate on the hovered item.
+- This command applies the augment stated in [this section
+  above][augment-section].
+- To make use of this command, add `augment-command.augment --` in front of any
+  Yazi command to apply the augment stated in [this section
+  above][augment-section], as long as they meet the requirements.
+
+  Examples using the `rename` command:
+
+  ```toml
+  [[mgr.prepend_keymap]]
+  on = "r"
+  run = "plugin augment-command.augment -- rename --cursor=before_ext"
+  desc = "Rename a file or directory"
+
+  [[mgr.prepend_keymap]]
+  on = "R"
+  run = "plugin augment-command.augment -- rename --empty=all"
+  desc = "Rename file and remove the whole file name"
+
+  [[mgr.prepend_keymap]]
+  on = "I"
+  run = "plugin augment-command.augment -- rename --cursor=start"
+  desc = "Rename file at the start of the file name"
+
+  [[mgr.prepend_keymap]]
+  on = "A"
+  run = "plugin augment-command.augment -- rename --cursor=end"
+  desc = "Rename file with the cursor at the end of the file name"
+
+  [[mgr.prepend_keymap]]
+  on = "C"
+  run = "plugin augment-command.augment -- rename --empty=all"
+  desc = "Rename file and remove the whole file name"
+  ```
+
+  Videos:
+  - When `must_have_hovered_item` is `true`:
+
+    [rename-must-have-hovered-item-video]
+
+  - When `must_have_hovered_item` is `false`:
+
+    [rename-hovered-item-optional-video]
+
+  - When `prompt` is set to `true`:
+
+    [rename-prompt-video]
+
+  - When `prompt` is set to `false`:
+
+    [rename-behaviour-video]
+
+  Examples using the `copy` command:
+
+  ```toml
+  [[mgr.prepend_keymap]]
+  on = ["c", "c"]
+  run = "plugin augment-command.augment -- copy path"
+  desc = "Copy the file path"
+
+  [[mgr.prepend_keymap]]
+  on = ["c", "d"]
+  run = "plugin augment-command.augment -- copy dirname"
+  desc = "Copy the directory path"
+
+  [[mgr.prepend_keymap]]
+  on = ["c", "f"]
+  run = "plugin augment-command.augment -- copy filename"
+  desc = "Copy the filename"
+
+  [[mgr.prepend_keymap]]
+  on = ["c", "n"]
+  run = "plugin augment-command.augment -- copy name_without_ext"
+  desc = "Copy the filename without extension"
+  ```
+
+  Videos:
+  - When `must_have_hovered_item` is `true`:
+
+    [copy-must-have-hovered-item-video]
+
+  - When `must_have_hovered_item` is `false`:
+
+    [copy-hovered-item-optional-video]
+
+  - When `prompt` is set to `true`:
+
+    [copy-prompt-video]
+
+  - When `prompt` is set to `false`:
+
+    [copy-behaviour-video]
 
 ### Parent arrow (`parent-arrow`)
 
