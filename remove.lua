@@ -3,7 +3,7 @@
 -- The module to handle the remove command
 
 -- Import the configuration module
-local config_utils = require(".main")
+local config_utils = require(".config")
 
 -- The module table
 local M = {}

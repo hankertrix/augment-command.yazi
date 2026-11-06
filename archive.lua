@@ -6,7 +6,7 @@
 local utils = require(".utils")
 
 -- Import the configuration module
-local config_utils = require(".main")
+local config_utils = require(".config")
 
 -- Import the required constants
 local constants = require(".constants")
@@ -55,7 +55,7 @@ function M:entry(job)
 	local args, config = config_utils.parse_args_and_init(job)
 
 	-- Get the item group
-	local item_group = utils.get_item_group(config)
+	local item_group = require(".augment").get_item_group(config)
 
 	-- If there is no item group, exit the function
 	if not item_group then return end

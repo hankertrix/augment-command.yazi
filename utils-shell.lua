@@ -272,7 +272,7 @@ function M.handle(args, config)
 	command = fix_shell_command(command)
 
 	-- Call the function to get the item group
-	local item_group = utils.get_item_group(config)
+	local item_group = require(".augment").get_item_group(config)
 
 	-- If no item group is returned, exit the function
 	if not item_group then return end

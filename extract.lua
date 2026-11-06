@@ -6,7 +6,7 @@
 local utils = require(".utils")
 
 -- Import the configuration module
-local config_utils = require(".main")
+local config_utils = require(".config")
 
 -- Import the required constants
 local ItemGroup = require(".constants").ItemGroup
@@ -32,7 +32,7 @@ local function get_archive_paths(args, config)
 	if archive_path then return archive_path end
 
 	-- Otherwise, get the item group
-	local item_group = utils.get_item_group(config)
+	local item_group = require(".augment").get_item_group(config)
 
 	-- If there is no item group
 	if not item_group then return end

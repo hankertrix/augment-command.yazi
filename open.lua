@@ -16,10 +16,10 @@ local M = {}
 function M:entry(job)
 
 	-- Get the arguments and configuration for the plugin
-	local args, config = require(".main").parse_args_and_init(job)
+	local args, config = require(".config").parse_args_and_init(job)
 
 	-- Call the function to get the item group
-	local item_group = utils.get_item_group(config)
+	local item_group = require(".augment").get_item_group(config)
 
 	-- If no item group is returned, exit the function
 	if not item_group then return end
