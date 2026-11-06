@@ -791,7 +791,8 @@ of writing the shell command inline in your `keymap.toml` file.
   behaviour and always act on the selected items, and provide the `--hovered`
   flag to only operate on the hovered item.
 - This command applies the augment stated in [this section
-  above][augment-section].
+  above][augment-section] to any arbitrary Yazi command, which includes plugin
+  commands.
 - To make use of this command, add `augment-command.augment --` in front of any
   Yazi command to apply the augment stated in [this section
   above][augment-section], as long as they meet the requirements.
