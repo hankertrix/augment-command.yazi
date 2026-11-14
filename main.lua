@@ -20,6 +20,11 @@ local ERROR_STRING = table.concat({
 	"For example, use `plugin augment-command.open` for the open command.",
 }, "\n\n")
 
+-- Function to setup the plugin using the config module
+---@param opts UserConfiguration?
+---@return nil
+function M:setup(opts) require(".config").setup(opts) end
+
 -- Function to tell the user that they should call a specific file
 -- in the plugin instead of the plugin itself
 function M:entry() return utils.show_error(ERROR_STRING, { timeout = 10 }) end
